@@ -24,7 +24,7 @@ else
 end
 if ( exist(filename, 'file') ~= 2 )
   disp( 'Creating config files ...' );
-  brains.config.create();
+  dsp2.config.create();
 end
 
 loaded = load( filename );
