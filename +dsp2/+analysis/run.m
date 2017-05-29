@@ -6,16 +6,16 @@ function run(varargin)
 %     If unspecified, the config file dsp2/+config/config.mat will be
 %     loaded.
 %
-%     run( 'measure_type', '' ) runs the analysis for the specified
-%     'measure_type'.
+%     run( 'measure_type', measure_type ) runs the analysis for the given
+%     `measure_type`.
 %     
-%     run( ..., 'config', conf ) instead runs the analysis using the
-%     config `conf`.
+%     run( ..., 'config', conf ) runs the analysis using the config `conf`
+%     instead of the saved config file.
 %
 %     run_coherence( ..., 'sessions', sessions ) runs the analysis using
 %     the sessions in `sessions`. 
 %
-%     run_coherence( ... 'sessions', 'new' ) runs the analysis on the
+%     run_coherence( ..., 'sessions', 'new' ) runs the analysis on the
 %     sessions in the pre-processed signals folder for which there is no
 %     data in the analysis folder; i.e., only on the newly added sessions.
 %     If there are no new sessions, the function will return early. This is
