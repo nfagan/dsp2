@@ -9,13 +9,17 @@ opts = struct();
 
 % - PATHS - %
 PATHS.signals = 'H:\SIGNALS';
-PATHS.database = 'H:\SIGNALS\database';
+PATHS.database = 'E:\SIGNALS\dictator\database';
 PATHS.analyses = 'E:\nick_data\ANALYSES';
 PATHS.analysis_subfolder = 'E:\nick_data\ANALYSES\020317';
 PATHS.pre_processed_signals = 'H:\SIGNALS\processed';
+PATHS.H5.signals = 'Signals';
+PATHS.H5.measures = 'Measures';
+PATHS.H5.signal_measures = 'Measures/Signals';
 
 % - DATABASES - %
 DATABASES.sqlite_file = 'dictator_signals.sqlite';
+DATABASES.h5_file = 'measures.h5';
 DATABASES.allow_overwrite = false;
 
 % - EPOCHS - %

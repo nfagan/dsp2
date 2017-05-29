@@ -165,7 +165,7 @@ end
 
 signals = signals.rm_fields( setdiff(fieldnames(EPOCHS), epochs) );
 signals = signals.each( @(x) dsp__post_process(x) );
-ids = dsp__get_trial_ids( signals{1} );
+ids = dsp2.process.get_trial_ids( signals{1} );
 
 converted_signals = Structure();
 for i = 1:numel(epochs)

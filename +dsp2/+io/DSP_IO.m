@@ -225,8 +225,16 @@ classdef DSP_IO < handle
               freqs = current.frequencies;
               trial_ids = zeros( n_trials, 1 );
               trial_stats = current.trial_stats;
-              trial_stats = structfun( @(x) zeros(n_trials, size(x, 2)), trial_stats, 'un', false );
+%               trial_stats = structfun( @(x) zeros(n_trials, size(x, 2)), trial_stats, 'un', false );
               stat_fields = fieldnames( trial_stats );
+              for j = 1:numel(stat_fields)
+                current_field = trial_stats.(stat_fields{j});
+                n_cols = size( current_field, 2 );
+                if ( n_cols == 0 )
+                  n_cols = 1;
+                end
+                trial_stats.(stat_fields{j}) = zeros( n_trials, n_cols );
+              end
             else
               is_signal_container = false;
             end
@@ -235,8 +243,10 @@ classdef DSP_IO < handle
           if ( is_signal_container )
             %   update trial stats
             for j = 1:numel(stat_fields)
-              trial_stats.(stat_fields{j})(stp:stp+current_n_rows-1, :) = ...
-                current.trial_stats.(stat_fields{j});
+              if ( ~isempty(current.trial_stats.(stat_fields{j})) )
+                trial_stats.(stat_fields{j})(stp:stp+current_n_rows-1, :) = ...
+                  current.trial_stats.(stat_fields{j});
+              end
             end
             %   update trial_ids
             trial_ids(stp:stp+current_n_rows-1) = current.trial_ids;

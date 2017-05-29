@@ -22,9 +22,9 @@ function run(varargin)
 %     the default behavior.
 
 import dsp2.analysis.util.*;
-import dsp2.analysis.reference.*;
+import dsp2.process.reference.*;
 
-io = dsp2.io.DSP_IO();
+io = dsp2.io.get_dsp_h5();
 
 defaults.config = dsp2.config.load();
 defaults.sessions = 'new';
@@ -45,21 +45,23 @@ else
   is_norm_power = false;
 end
 
-load_path = fullfile( conf.PATHS.pre_processed_signals, ref_type );
-save_path = fullfile( conf.PATHS.analysis_subfolder, ref_type, measure_type );
+load_path = io.fullfile( conf.PATHS.H5.signals, ref_type, 'complete' );
+save_path = io.fullfile( conf.PATHS.H5.measures, 'Signals', ref_type ...
+  , measure_type, 'complete' );
 
 epochs = dsp2.config.get.active_epochs( 'config', conf );
 epochs = cellfun( @(x) conf.SIGNALS.epoch_mapping.(x), epochs, 'un', false );
 
 for i = 1:numel(epochs)  
-  full_savepath = fullfile( save_path, epochs{i} );
-  full_loadpath = fullfile( load_path, epochs{i} );
-  full_loadpath_baseline = fullfile( load_path, baseline_epoch );
+  full_savepath = io.fullfile( save_path, epochs{i} );
+  full_loadpath = io.fullfile( load_path, epochs{i} );
+  full_loadpath_baseline = io.fullfile( load_path, baseline_epoch );
 
   if ( isequal(params.sessions, 'new') )
-    if ( io.header_file_exists(full_savepath) )
+    if ( io.is_group(full_savepath) )
       current_days = io.get_days( full_savepath );
     else
+      io.create_group( full_savepath );
       current_days = {};
     end
     all_days = io.get_days( full_loadpath );
@@ -74,9 +76,9 @@ for i = 1:numel(epochs)
   end
   
   for k = 1:numel(new_days)
-    signals = io.load( full_loadpath, 'only', new_days{k} );
+    signals = io.read( full_loadpath, 'only', new_days{k} );
     if ( is_norm_power )
-      baseline = io.load( full_loadpath_baseline, 'only', new_days{k} );
+      baseline = io.read( full_loadpath_baseline, 'only', new_days{k} );
     end
     switch ( reference_type )
       case 'non_common_averaged'
@@ -104,7 +106,7 @@ for i = 1:numel(epochs)
         measure = signals.run_norm_power( baseline );
     end
     
-    io.save( measure, full_savepath );
+    io.add( measure, full_savepath );
   end
 end
 

@@ -6,7 +6,7 @@ function add_processed_signals(varargin)
 %     IN:
 %       - `varargin` ('name', value)
 
-io = dsp2.io.DSP_IO();
+io = dsp2.io.get_dsp_h5();
 db = dsp2.database.get_sqlite_db();
 
 defaults.config = dsp2.config.load();
@@ -17,8 +17,7 @@ conf = params.config;
 
 reference_type = conf.SIGNALS.reference_type;
 
-base_savepath = conf.PATHS.pre_processed_signals;
-base_savepath = fullfile( base_savepath, reference_type );
+base_savepath = io.fullfile( conf.PATHS.H5.signals, reference_type );
 
 epochs = dsp2.config.get.active_epochs( 'config', conf );
 epoch_folders = cellfun( @(x) conf.SIGNALS.epoch_mapping.(x), epochs, 'un', false );
@@ -31,10 +30,12 @@ for i = 1:numel( epochs )
   conf = dsp2.config.set.inactivate_epochs( 'all', conf );
   conf = dsp2.config.set.activate_epochs( epochs{i}, conf );
   
-  full_savepath = fullfile( base_savepath, epoch_folders{i} );
-  if ( io.header_file_exists(full_savepath) )
+  full_savepath = io.fullfile( base_savepath, 'complete', epoch_folders{i} );
+  
+  if ( io.is_group(full_savepath) )
     current_saved_days = io.get_days( full_savepath );
   else
+    io.create_group( full_savepath );
     current_saved_days = {};
   end
   
@@ -47,8 +48,7 @@ for i = 1:numel( epochs )
   
   signals = dsp2.io.get_signals( 'config', conf, 'sessions', days_to_add );
   signal_container = signals{1};
-  io.save( signal_container, full_savepath );
- 
+  io.add( signal_container, full_savepath ); 
 end
 
 db.close();
