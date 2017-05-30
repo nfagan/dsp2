@@ -6,6 +6,10 @@ function [signals, time_info] = get_signals(varargin)
 %
 %     IN:
 %       - `varargin` ('name', value)
+%     OUT:
+%       - `signals` (Structure) -- Structure array of SignalContainer
+%         objects.
+%       - `time_info` (struct) -- Windows / epoch definitions.
 
 defaults = struct();
 defaults.sessions = 'all';
@@ -23,15 +27,9 @@ defaults.DATA_FIELDS = DATA_FIELDS;
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
-%   use all sessions in the database by default; this can be changed to a)
-%   a cell array of session names, or b) a path to a subfolder housing the
-%   desired sessions -- in this case, call get_folder_names( subfolder ) to
-%   get the names of the sessions within. Only works if the session names
-%   are the names of the folders.
-
 %   DATABASE
 
-db = dsp2.io.get_sqlite_db();
+db = dsp2.database.get_sqlite_db( 'config', params.config );
 
 if ( isequal(params.sessions, 'all') )
   SESSIONS = unique( db.get_fields('session', 'signals') );

@@ -16,6 +16,7 @@ PATHS.pre_processed_signals = 'H:\SIGNALS\processed';
 PATHS.H5.signals = 'Signals';
 PATHS.H5.measures = 'Measures';
 PATHS.H5.signal_measures = 'Measures/Signals';
+PATHS.H5.behavior_measures = 'Measures/Behavior';
 
 % - DATABASES - %
 DATABASES.sqlite_file = 'dictator_signals.sqlite';

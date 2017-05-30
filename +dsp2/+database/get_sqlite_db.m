@@ -1,12 +1,20 @@
-function db = get_sqlite_db()
+function db = get_sqlite_db(varargin)
 
 %   GET_SQLITE_DB -- Return a DictatorSignalsDB object whose .sqlite file
 %     is the .sqlite file as defined by dsp2.config.create()
 %
+%     IN:
+%       - `varargin` ('name', value) -- Optionally specify a different
+%         config file with 'config', conf
+%
 %     OUT:
 %       - `db` (DictatorSignalsDB) -- Database manager object.
 
-opts = dsp2.config.load();
+defaults.config = dsp2.config.load();
+
+params = dsp2.util.general.parsestruct( defaults, varargin );
+
+opts = params.config;
 db_path = opts.PATHS.database;
 db_name = opts.DATABASES.sqlite_file;
 
