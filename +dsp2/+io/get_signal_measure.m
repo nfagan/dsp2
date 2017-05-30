@@ -16,7 +16,7 @@ params = dsp2.util.general.parsestruct( defaults, varargin );
 
 conf = params.config;
 
-io = dsp2.io.get_dsp_h5();
+io = dsp2.io.get_dsp_h5( 'config', conf );
 
 load_path = dsp2.io.get_signal_measure_path( kind, depth, epoch, 'config', conf );
 
