@@ -66,6 +66,9 @@ SIGNALS.signal_container_params = struct( ...
   , 'removeNormPowerErrors',  true ...
 );
 
+SIGNALS.meaned.mean_within = { 'administration', 'days' ...
+  , 'channels', 'regions', 'outcomes', 'trialtypes' };
+
 % - SAVE - %
 opts.PATHS =      PATHS;
 opts.DATABASES =  DATABASES;

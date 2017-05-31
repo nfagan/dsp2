@@ -56,6 +56,12 @@ classdef dsp_h5 < h5_api
             end
           end
         end
+        
+        %   check whether props match.
+        if ( isa(container, 'SignalContainer') )
+          props = obj.get_incoming_props_( container );
+          obj.assert__props_are_equivalent( gname, props );
+        end
       end
       
       write_container_@h5_api( obj, container, gname, start );
@@ -79,17 +85,8 @@ classdef dsp_h5 < h5_api
       %       - `gname` (char) -- Path to the group to which to save.
       
       gname = obj.ensure_leading_backslash( gname );
-      atts = { 'fs', 'start', 'stop', 'window_size', 'step_size', 'params', 'frequencies' };
-      props = struct();
-      for i = 1:numel(atts)
-        props.(atts{i}) = container.(atts{i});
-      end
-      prop_group_path = [ gname '/props' ];
-      if ( obj.is_group(prop_group_path) )
-        current_props = obj.read( prop_group_path );
-        assert( isequal(props, current_props), ['The incoming SignalContainer' ...
-          , ' properties do not match the current properties.'] );
-      end
+      props = obj.get_incoming_props_( container );
+      prop_group_path = obj.fullfile( gname, 'props' );
       obj.write( props, prop_group_path );
       trial_stats = container.trial_stats;
       assert( ~isfield(trial_stats, 'trial_ids') ...
@@ -116,6 +113,42 @@ classdef dsp_h5 < h5_api
       end
     end
     
+    function tf = props_are_equivalent(obj, gname, incoming_props)
+      
+      %   PROPS_ARE_EQUIVALENT -- Return whether the properties of a
+      %     SignalContainer match those already saved.
+      %
+      %     IN:
+      %       - `gname` (char) -- Path to the SignalContainer group.
+      %       - `incoming_props` (struct)
+      %     OUT:
+      %       - `tf` (logical) |SCALAR|
+      
+      prop_group_path = [ gname '/props' ];
+      obj.assert__is_group( prop_group_path );
+      current_props = obj.read( prop_group_path );
+      tf = isequaln( incoming_props, current_props );
+    end
+    
+    function props = get_incoming_props_(obj, container)
+      
+      %   GET_INCOMING_PROPS_ -- Return a struct of
+      %     properties to save.
+      %
+      %     IN:
+      %       - `container` (SignalContainer)
+      %     OUT:
+      %       - `props` (struct)
+      
+      obj.assert__isa( container, 'SignalContainer', 'the container object' );
+      atts = { 'fs', 'start', 'stop', 'window_size', 'step_size' ...
+        , 'params', 'frequencies' };
+      props = struct();
+      for i = 1:numel(atts)
+        props.(atts{i}) = container.(atts{i});
+      end
+    end
+    
     function props = get_signal_container_props_(obj, gname, ind)
       
       %   GET_SIGNAL_CONTAINER_PROPS_ -- Get non-trial stats properties of
@@ -127,7 +160,9 @@ classdef dsp_h5 < h5_api
       %     OUT:
       %       - `props` (struct)
       
+      obj.assert__is_group( gname );
       prop_set_path = [ gname, '/props' ];
+      obj.assert__is_group( prop_set_path );
       props = obj.read( prop_set_path );
       container_sets = obj.CONTAINER_FIELDS;
       addtl = setdiff( obj.get_set_names(gname), container_sets );
@@ -144,7 +179,7 @@ classdef dsp_h5 < h5_api
       props.trial_stats = trial_stats;
     end
     
-    function cont = read_container_(obj, gname)
+    function cont = read_container_(obj, gname, varargin)
       
       %   READ_CONTAINER_ -- Load a Container or SignalContainer from the
       %     given group.
@@ -152,6 +187,8 @@ classdef dsp_h5 < h5_api
       %     IN:
       %       - `gname` (char) -- Path to the group housing /data and
       %         /labels datasets.
+      %       - `varargin` (cell array) -- Optionally specify starts and
+      %         counts at which to read data.
       %     OUT:
       %       - `cont` (Container, SignalContainer)
       
@@ -161,7 +198,7 @@ classdef dsp_h5 < h5_api
       obj.assert__is_set( data_set_path );
       labels = obj.read_labels_( gname );
       
-      data = h5read( obj.h5_file, data_set_path );
+      data = obj.read( data_set_path, varargin{:} );
       kind = obj.readatt( data_set_path, 'subclass' );
       
       switch ( kind )
@@ -181,7 +218,7 @@ classdef dsp_h5 < h5_api
       end
     end
     
-    function cont = read_container_selected_(obj, gpath, selector_type, selectors)
+    function cont = read_container_selected_(obj, gpath, varargin)
       
       %   READ_CONTAINER_SELECTED_ -- Read a subset of the data in a
       %     Container group associated with the specified selectors and
@@ -196,19 +233,123 @@ classdef dsp_h5 < h5_api
       %       - `cont` (Container, SignalContainer) -- Loaded Container
       %         object.
       
-      [cont, ind] = read_container_selected_@h5_api( obj, gpath ...
-        , selector_type, selectors );
+      defaults.frequencies = [];
+      defaults.time = [];
+      selectors_present = cellfun( @(x) any(strcmp(varargin, x)) ...
+        , obj.SELECTOR_TYPES );
+      if ( any(selectors_present) )
+        msg1 = [ 'Selectors must be in the format ''selector_type'',' ...
+          , ' ''selector_value'', or ''selector_type'', { ''selector_value'' }' ];
+        assert( sum(selectors_present) == 1, msg1 );
+        assert( find(selectors_present) ~= numel(varargin), msg1 );
+        selector_type = varargin{ selectors_present };
+        selector_ind = find( selectors_present ) + 1;
+        selectors = varargin{ selector_ind };
+        selectors_present( selector_ind ) = true;
+        varargin( selectors_present ) = [];
+      end
+      %   get frequencies + time
+      params = dsp2.util.general.parsestruct( defaults, varargin );
+      frequencies = params.frequencies;
+      time = params.time;
       kind = obj.get_container_class( gpath );
       if ( isequal(kind, 'Container') )
+        msg2 = 'Cannot select frequencies or time for Container objects.';
+        assert( isempty(frequencies) && isempty(time), msg2 );
+        cont = read_container_selected_@h5_api( obj, gpath ...
+          , selector_type, selectors );
         return;
-      end      
+      elseif ( isequal(kind, 'SignalContainer') )
+        sz = obj.get_set_size( obj.fullfile(gpath, 'data') );
+        dims = numel( sz );
+        if ( dims == 2 )
+          assert( isempty(time) && isempty(frequencies), ['Cannot select' ...
+            , ' by frequency or time with 2-d data.'] );
+          assert( any(selectors_present), msg1 );
+          [cont, ind] = read_container_selected_@h5_api( obj, gpath ...
+            , selector_type, selectors );
+          do_update_freqs_and_times = false;
+        else
+          do_update_freqs_and_times = true;
+          %   otherwise, check to see what frequencies + times to read
+          current_props = obj.read( obj.fullfile(gpath, 'props') );
+          current_freqs = current_props.frequencies;
+          current_time = current_props.start:current_props.step_size:current_props.stop;
+          %   get start index and number of elements to read for frequencies
+          %   and time. frequencies are stored in the second dimension; time
+          %   in the third dimension.
+          [freq_start, freq_count] = ...
+            parse_freqs_and_time( frequencies, current_freqs, 'frequencies', 2 );
+          [time_start, time_count] = ...
+            parse_freqs_and_time( time, current_time, 'time', 3 );
+          starts = [ freq_start, time_start ];
+          counts = [ freq_count, time_count ];
+          if ( any(selectors_present) )
+            [cont, ind] = read_container_selected_@h5_api( obj, gpath ...
+              , selector_type, selectors, starts, counts );
+          else
+            %   add the starts and counts for the first dimension.
+            d1_start = 1;
+            d1_count = sz( 1 );
+            starts = [ d1_start, starts ];
+            counts = [ d1_count, counts ];
+            cont = obj.read_container_( gpath, starts, counts );
+            ind = true( shape(cont, 1), 1 );
+          end
+        end
+      else
+        error( 'Unrecognized subclass ''%s''', kind );
+      end
       cont = SignalContainer( cont.data, cont.labels );
       props = obj.get_signal_container_props_( gpath, ind );
       prop_fields = fieldnames( props );
       for i = 1:numel(prop_fields)
         cont.(prop_fields{i}) = props.(prop_fields{i});
       end
+      %   handle changes to frequencies and times
       cont.frequencies = cont.frequencies(:);
+      if ( do_update_freqs_and_times )
+        cont.frequencies = cont.frequencies( freq_start:freq_start+freq_count-1 );
+        cont.start = current_time( time_start );
+        cont.stop = current_time( time_start+time_count-1 );
+      end
+      
+      %   - helpers
+      
+      function [start, count] = parse_freqs_and_time( incoming, current, kind, dim )
+        
+        %   PARSE_FREQS_AND_TIME -- Get appropriate starts + counts for
+        %     requested frequencies and times, in accordance with the
+        %     current frequencies and time.
+        
+        if ( ~isempty(incoming) )
+          assert( ~any(isnan(current)), ['No %s have been defined' ...
+            , ' for the SignalContainer object housed in ''%s'''], kind, gpath );
+          ind_ = get_index( current, incoming, kind );
+          [start, count] = get_start_count_from_index( ind_ );
+        else
+          start = 1;
+          count = sz( dim );
+        end
+      end
+      function ind = get_index( mat, bounds, kind )
+        
+        %   GET_INDEX -- Get a logical index of frequencies or time to
+        %     include.
+        
+        assert( numel(bounds) == 2, ['Expected %s to have two values; %d' ...
+          , ' were present.'], kind, numel(bounds) );
+        ind = mat >= bounds(1) & mat <= bounds(2);
+        assert( any(ind), 'No data matched the given %s criterion.', kind );
+      end
+      function [start, count] = get_start_count_from_index( ind )
+        
+        %   GET_START_COUNT_FROM_INDEX
+        
+        start = find( ind, 1, 'first' );
+        stop = find( ind, 1, 'last' );
+        count = stop - start + 1;
+      end
     end
     
     function days = get_days(obj, gpath)
@@ -225,6 +366,24 @@ classdef dsp_h5 < h5_api
       labs = obj.read( [gpath, '/labels'] );
       cats = obj.read( [gpath, '/categories'] );
       days = labs( strcmp(cats, 'days') );
+    end
+    
+    %{
+        assertions
+    %}
+    
+    function assert__props_are_equivalent(obj, gname, incoming_props)
+      
+      %   ASSERT__PROPS_ARE_EQUIVALENT -- Ensure incoming SignalContainer
+      %     properties match current properties.
+      %
+      %     IN:
+      %       - `gname` (char) -- Path to the SignalContainer group
+      %       -   incoming_props` (struct)
+      
+      assert( obj.props_are_equivalent(gname, incoming_props) ...
+        , ['The incoming SignalContainer properties do not match the' ...
+        , ' current properties.'] );
     end
   end
   

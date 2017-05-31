@@ -37,7 +37,7 @@ if ( isempty(days_to_add) )
 end
 
 % get the proper format for the database
-inds = cellfun( @(x) find(strcmp(days_to_add, x)), reformatted_db_sessions );
+inds = get_original_index( reformatted_db_sessions, days_to_add );
 db_days_to_add = current_db_sessions( inds );
 
 [behav, key] = dsp2.io.get_behavior( 'config', conf, 'sessions', db_days_to_add );
@@ -48,5 +48,16 @@ io.add( behav, savepath );
 io.write( key, io.fullfile(savepath, 'Key') );
 
 db.close();
+
+end
+
+function ind = get_original_index( reformatted, days_to_add )
+
+ind = false( numel(reformatted), 1 );
+for i = 1:numel(days_to_add)
+  current = strcmp( reformatted, days_to_add{i} );
+  assert( any(current), 'Wrong format.' );
+  ind = ind | current;
+end
 
 end

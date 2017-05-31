@@ -76,11 +76,13 @@ for i = 1:numel(epochs)
   end
   
   for k = 1:numel(new_days)
+    fprintf( '\n Processing ''%s'' (%d of %d)', new_days{k}, k, numel(new_days) );
+    
     signals = io.read( full_loadpath, 'only', new_days{k} );
     if ( is_norm_power )
       baseline = io.read( full_loadpath_baseline, 'only', new_days{k} );
     end
-    switch ( reference_type )
+    switch ( ref_type )
       case 'non_common_averaged'
         signals = reference_subtract_within_day( signals );
         signals = signals.update_range();
@@ -103,9 +105,14 @@ for i = 1:numel(epochs)
         measure = signals.run_raw_power();
       case 'normalized_power'
         baseline.params = signal_container_params;
-        measure = signals.run_norm_power( baseline );
+        measure = signals.run_normalized_power( baseline );
     end
     
+    %   remove days that exist already, if we manually specified days.
+    if ( io.contains_labels(new_days{k}, full_savepath) )
+      io.remove( new_days{k}, full_savepath );
+    end
+    %   add in the data.
     io.add( measure, full_savepath );
   end
 end

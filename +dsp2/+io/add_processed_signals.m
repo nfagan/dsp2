@@ -8,6 +8,7 @@ function add_processed_signals(varargin)
 %         with 'config', conf
 
 io = dsp2.io.get_dsp_h5();
+io.ALLOW_REWRITE = true;
 db = dsp2.database.get_sqlite_db();
 
 defaults.config = dsp2.config.load();
@@ -48,14 +49,29 @@ for i = 1:numel( epochs )
   end
   
   % get the proper format for the database
-  inds = cellfun( @(x) find(strcmp(reformatted_db_sessions, x)), days_to_add );
+  inds = get_original_index( reformatted_db_sessions, days_to_add );
   db_days_to_add = current_db_sessions( inds );
   
-  signals = dsp2.io.get_signals( 'config', conf, 'sessions', db_days_to_add );
-  signal_container = signals{1};
-  io.add( signal_container, full_savepath ); 
+  for k = 1:numel(db_days_to_add)
+    db_day = db_days_to_add{k};
+    signals = dsp2.io.get_signals( 'config', conf, 'sessions', db_day );
+    signal_container = signals{1};
+    signal_container.params = conf.SIGNALS.signal_container_params;
+    io.add( signal_container, full_savepath );
+  end
 end
 
 db.close();
+
+end
+
+function ind = get_original_index( reformatted, days_to_add )
+
+ind = false( numel(reformatted), 1 );
+for i = 1:numel(days_to_add)
+  current = strcmp( reformatted, days_to_add{i} );
+  assert( any(current), 'Wrong format.' );
+  ind = ind | current;
+end
 
 end

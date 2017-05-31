@@ -1,28 +1,41 @@
-function pathstr = get_signal_measure_path( measure, depth, epoch, varargin )
+function pathstr = get_signal_measure_path(varargin)
 
 %   GET_SIGNAL_MEASURE_PATH -- Get the path to a signal measure.
 %
+%     pathstr = dsp2.io.get_signal_measure_path(); without arguments,
+%     returns the path to the group housing signal measures, according to
+%     the current `reference_type`.
+%
+%     pathstr = dsp2.io.get_signal_measure_path( measure_type, depth, ... )
+%     joins the base signal measure pathstr with any additional specifiers.
+%     In this case the path is not guaranteed to be valid.
+%
+%     pathstr = dsp2.io.get_signal_measure_path( ..., 'config', conf ) uses
+%     the config file `conf` instead of the default config file.
+%
 %     IN:
-%       - `measure` (char) -- E.g., 'coherence', 'raw_power'
-%       - `depth` (char) -- E.g, 'complete', 'meaned'
-%       - `epoch` (char) -- E.g., 'reward'
-%       - `varargin` ('name', value) -- Optionally specify the config file
-%         with 'config', conf
+%       - `varargin` (cell array) -- 
+
+conf_ind = strcmp( varargin, 'config' );
+if ( any(conf_ind) )
+  to_parse = varargin( find(conf_ind):end );
+  varargin( find(conf_ind):end ) = [];
+else
+  to_parse = {};
+end
 
 defaults.config = dsp2.config.load();
-params = dsp2.util.general.parsestruct( defaults, varargin );
+params = dsp2.util.general.parsestruct( defaults, to_parse );
 
 conf = params.config;
 
-dsp2.util.assertions.assert__isa( measure, 'char', 'the measure kind' );
-dsp2.util.assertions.assert__isa( depth, 'char', 'the depth specifier' );
-dsp2.util.assertions.assert__isa( epoch, 'char', 'the epoch' );
+dsp2.util.assertions.assert__is_cellstr( varargin, 'the path components' );
 
 io = dsp2.io.get_dsp_h5( 'config', conf );
 
 ref_type = conf.SIGNALS.reference_type;
 measure_path = conf.PATHS.H5.signal_measures;
 
-pathstr = io.fullfile( measure_path, ref_type, measure, depth, epoch );
+pathstr = io.fullfile( measure_path, ref_type, varargin{:} );
 
 end
