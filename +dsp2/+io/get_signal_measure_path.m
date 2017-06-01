@@ -14,7 +14,7 @@ function pathstr = get_signal_measure_path(varargin)
 %     the config file `conf` instead of the default config file.
 %
 %     IN:
-%       - `varargin` (cell array) -- 
+%       - `varargin` (cell array)
 
 conf_ind = strcmp( varargin, 'config' );
 if ( any(conf_ind) )

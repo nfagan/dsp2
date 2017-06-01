@@ -49,6 +49,7 @@ SIGNALS.coherence_func.coherence =  'chronux';
 SIGNALS.coherence_func.coherence_non_multitapered = 'mscohere';
 
 SIGNALS.normalized_power_type =     'normalized_power';
+SIGNALS.normalized_power_within =   { 'blocks' };
 SIGNALS.normalized_power_method =   'divide';
 SIGNALS.baseline_epoch =            'magcue';
 
@@ -66,7 +67,7 @@ SIGNALS.signal_container_params = struct( ...
   , 'removeNormPowerErrors',  true ...
 );
 
-SIGNALS.meaned.mean_within = { 'administration', 'days' ...
+SIGNALS.meaned.mean_within = { 'blocks', 'days' ...
   , 'channels', 'regions', 'outcomes', 'trialtypes' };
 
 % - SAVE - %

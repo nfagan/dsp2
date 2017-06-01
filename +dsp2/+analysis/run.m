@@ -1,4 +1,4 @@
-function run(varargin)
+function run(measure_type, varargin)
 
 %   RUN -- Calculate coherence, normalized power, or raw power
 %     trial-by-trial, day-by-day according to the current config options.
@@ -6,7 +6,7 @@ function run(varargin)
 %     If unspecified, the config file dsp2/+config/config.mat will be
 %     loaded.
 %
-%     run( 'measure_type', measure_type ) runs the analysis for the given
+%     run( measure_type ) runs the analysis for the given
 %     `measure_type`.
 %     
 %     run( ..., 'config', conf ) runs the analysis using the config `conf`
@@ -20,6 +20,11 @@ function run(varargin)
 %     data in the analysis folder; i.e., only on the newly added sessions.
 %     If there are no new sessions, the function will return early. This is
 %     the default behavior.
+%
+%     IN:
+%       - `measure_type` (char) -- 'coherence', 'normalized_power',
+%         'raw_power'
+%       - `varargin` ('name', value)
 
 import dsp2.analysis.util.*;
 import dsp2.process.reference.*;
@@ -28,7 +33,6 @@ io = dsp2.io.get_dsp_h5();
 
 defaults.config = dsp2.config.load();
 defaults.sessions = 'new';
-defaults.measure_type = 'coherence';
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
@@ -36,7 +40,6 @@ conf = params.config;
 
 signal_container_params = conf.SIGNALS.signal_container_params;
 ref_type = conf.SIGNALS.reference_type;
-measure_type = params.measure_type;
 baseline_epoch = conf.SIGNALS.baseline_epoch;
 
 if ( isequal(measure_type, 'normalized_power') )
@@ -52,7 +55,9 @@ save_path = io.fullfile( conf.PATHS.H5.measures, 'Signals', ref_type ...
 epochs = dsp2.config.get.active_epochs( 'config', conf );
 epochs = cellfun( @(x) conf.SIGNALS.epoch_mapping.(x), epochs, 'un', false );
 
-for i = 1:numel(epochs)  
+for i = 1:numel(epochs)
+  fprintf( '\n Processing ''%s'' (%d of %d)', epochs{i}, i, numel(epochs) );
+  
   full_savepath = io.fullfile( save_path, epochs{i} );
   full_loadpath = io.fullfile( load_path, epochs{i} );
   full_loadpath_baseline = io.fullfile( load_path, baseline_epoch );
@@ -76,12 +81,16 @@ for i = 1:numel(epochs)
   end
   
   for k = 1:numel(new_days)
-    fprintf( '\n Processing ''%s'' (%d of %d)', new_days{k}, k, numel(new_days) );
+    fprintf( '\n\t Processing ''%s'' (%d of %d)', new_days{k}, k, numel(new_days) );
+    fprintf( '\n\t Loading ... ' );
     
     signals = io.read( full_loadpath, 'only', new_days{k} );
     if ( is_norm_power )
       baseline = io.read( full_loadpath_baseline, 'only', new_days{k} );
     end
+    
+    fprintf( 'Done' );
+    
     switch ( ref_type )
       case 'non_common_averaged'
         signals = reference_subtract_within_day( signals );
@@ -96,7 +105,9 @@ for i = 1:numel(epochs)
         error( 'Unrecognized reference type ''%s''', reference_type );
     end    
     
-    signals.params = signal_container_params;    
+    signals.params = signal_container_params;
+    
+    fprintf( '\n\t Calculating ''%s'' ... ', measure_type );
     
     switch ( measure_type )
       case 'coherence'
@@ -105,15 +116,40 @@ for i = 1:numel(epochs)
         measure = signals.run_raw_power();
       case 'normalized_power'
         baseline.params = signal_container_params;
-        measure = signals.run_normalized_power( baseline );
+        %   run normalized power separately for each unique combination of
+        %   labels in `conf.SIGNALS.normalized_power_within` fields, or
+        %   across all fields if `conf.SIGNALS.normalized_power_within` is
+        %   isempty.
+        norm_within = conf.SIGNALS.normalized_power_within;
+        if ( ~isempty(norm_within) )
+          signals_ = signals.enumerate( norm_within );
+          baseline_ = baseline.enumerate( norm_within );
+          assert( numel(signals_) == numel(baseline_), ['Number of' ...
+            , ' baseline and %s items must match.'], epochs{i} );
+          measure = Container();
+          for j = 1:numel(signals_)
+            sig = signals_{j};
+            base = baseline_{j};
+            measure_ = sig.run_normalized_power( base );
+            measure = measure.append( measure_ );
+          end
+        else
+          measure = signals.run_normalized_power( baseline );
+        end
     end
+    
+    fprintf( 'Done' );
     
     %   remove days that exist already, if we manually specified days.
     if ( io.contains_labels(new_days{k}, full_savepath) )
+      fprintf( '\n\t Removing expired data from ''%s'' ... ', full_savepath );
       io.remove( new_days{k}, full_savepath );
+      fprintf( 'Done' );
     end
+    fprintf( '\n\t Saving ... ' );
     %   add in the data.
     io.add( measure, full_savepath );
+    fprintf( 'Done' );
   end
 end
 

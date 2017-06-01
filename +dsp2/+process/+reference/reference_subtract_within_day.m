@@ -15,7 +15,7 @@ others = remove( obj, 'ref' );
 indices = get_indices( others, { 'days', 'regions' } );
 
 for i = 1:numel(indices)
-  fprintf( '\n ! reference_subtract_within_day: Processing %d of %d' ...
+  fprintf( '\n\t ! reference_subtract_within_day: Processing %d of %d' ...
     , i, numel(indices) );
   extr = others( indices{i} );
   ref_complement = ref.only( char(unique(extr('days'))) );

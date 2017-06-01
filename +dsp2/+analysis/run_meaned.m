@@ -1,9 +1,9 @@
-function run_meaned(varargin)
+function run_meaned(measure_type, varargin)
 
 %   RUN_MEANED -- Construct and save an average of a complete signal
 %     measure, as specified in the config file.
 %
-%     run_meaned( 'measure_type', measure_type ) constructs the average of
+%     run_meaned( measure_type ) constructs the average of
 %     the specified `measure_type`. `measure_type` must exist in the .h5
 %     file under a /complete group.
 %
@@ -11,19 +11,18 @@ function run_meaned(varargin)
 %     of the default config.
 %
 %     IN:
+%       - `measure_type` (char) -- 'coherence', 'normalized_power',
+%         'raw_power'
 %       - `varargin` ('name', value)
 
 io = dsp2.io.get_dsp_h5();
 
 defaults.config = dsp2.config.load();
 defaults.sessions = 'new';
-defaults.measure_type = 'coherence';
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
 conf = params.config;
-
-measure_type = params.measure_type;
 
 m_within = conf.SIGNALS.meaned.mean_within;
 
@@ -33,6 +32,7 @@ base_mean_path = dsp2.io.get_signal_measure_path( measure_type, 'meaned' );
 epochs = io.get_component_group_names( base_complete_path );
 
 for i = 1:numel(epochs)
+  fprintf( '\n Processing ''%s'' (%d of %d)', epochs{i}, i, numel(epochs) );
   
   full_complete_path = io.fullfile( base_complete_path, epochs{i} );
   full_mean_path = io.fullfile( base_mean_path, epochs{i} );
@@ -69,7 +69,7 @@ for i = 1:numel(epochs)
   end
   
   for k = 1:numel(new_days)
-    fprintf( '\n Processing ''%s'' (%d of %d)', new_days{k}, k, numel(new_days) );
+    fprintf( '\n\t Processing ''%s'' (%d of %d)', new_days{k}, k, numel(new_days) );
     complete = io.read( full_complete_path, 'only', new_days{k} );
     meaned = complete.do( m_within, @mean );
     io.add( meaned, full_mean_path );
