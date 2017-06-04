@@ -139,6 +139,7 @@ for i = 1:numel(SESSIONS)
       signal_info = struct();
       signal_info.channel = channels{j};
       signal_info.region = regions{j};
+      signal_info.site = j;
       %   since the labels will be the same for each epoch, region, and
       %   channel (except for those categories), only create the 
       %   SparseLabels object once; then update the epoch, region, and
@@ -149,9 +150,11 @@ for i = 1:numel(SESSIONS)
         epoch_ind = strcmp( labels.categories, 'epochs' );
         channel_ind = strcmp( labels.categories, 'channels' );
         region_ind = strcmp( labels.categories, 'regions' );
+        site_ind = strcmp( labels.categories, 'sites' );
         labels.labels(epoch_ind) = { epoch };
         labels.labels(channel_ind) = channels(j);
         labels.labels(region_ind) = regions(j);
+        labels.labels(site_ind) = { sprintf('site__%d', j) };
       end
       signals.(epochs{k}) = append( signals.(epochs{k}), Container(signal, labels) );
     end
@@ -358,6 +361,8 @@ for i = 1:numel(trials)
   current_ind = indices.trial == trials(i);
   inds.trials.(sprintf('trial__%d', trials(i))) = current_ind;
 end
+%   define sites
+inds.sites = struct( sprintf('site__%d', signal_info.site), complete_true );
 
 categories = fieldnames( inds );
 sparse_labels_inputs = {};

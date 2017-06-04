@@ -22,7 +22,8 @@ for i = 1:numel(indices)
   channels = unique( extr('channels') );
   for k = 1:numel(channels)
     ind = extr.where( channels{k} );
-    subtracted = opc( extr(ind), ref_complement, {'channels', 'regions'}, @minus );
+    subtracted = opc( extr(ind), ref_complement ...
+      , {'channels', 'regions', 'sites'}, @minus );
     if ( ~any(subtracted.data(:) > 0) )
       error( 'subtracted a channel from itself' );
     end

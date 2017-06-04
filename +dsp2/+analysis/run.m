@@ -64,7 +64,11 @@ for i = 1:numel(epochs)
 
   if ( isequal(params.sessions, 'new') )
     if ( io.is_group(full_savepath) )
-      current_days = io.get_days( full_savepath );
+      if ( io.is_container_group(full_savepath) )
+        current_days = io.get_days( full_savepath );
+      else
+        current_days = {};
+      end
     else
       io.create_group( full_savepath );
       current_days = {};
@@ -141,10 +145,12 @@ for i = 1:numel(epochs)
     fprintf( 'Done' );
     
     %   remove days that exist already, if we manually specified days.
-    if ( io.contains_labels(new_days{k}, full_savepath) )
-      fprintf( '\n\t Removing expired data from ''%s'' ... ', full_savepath );
-      io.remove( new_days{k}, full_savepath );
-      fprintf( 'Done' );
+    if ( io.is_container_group(full_savepath) )
+      if ( io.contains_labels(new_days{k}, full_savepath) )
+        fprintf( '\n\t Removing expired data from ''%s'' ... ', full_savepath );
+        io.remove( new_days{k}, full_savepath );
+        fprintf( 'Done' );
+      end
     end
     fprintf( '\n\t Saving ... ' );
     %   add in the data.

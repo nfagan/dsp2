@@ -26,6 +26,8 @@ conf = params.config;
 
 m_within = conf.SIGNALS.meaned.mean_within;
 
+pre_mean_ops = conf.SIGNALS.meaned.pre_mean_operations;
+
 base_complete_path = dsp2.io.get_signal_measure_path( measure_type, 'complete' );
 base_mean_path = dsp2.io.get_signal_measure_path( measure_type, 'meaned' );
 
@@ -45,7 +47,11 @@ for i = 1:numel(epochs)
   
   if ( isequal(params.sessions, 'new') )
     if ( io.is_group(full_mean_path) )
-      mean_days = io.get_days( full_mean_path );
+      if ( io.is_container_group(full_mean_path) )
+        mean_days = io.get_days( full_mean_path );
+      else
+        mean_days = {};
+      end
     else
       io.create_group( full_mean_path );
       mean_days = {};
@@ -57,7 +63,9 @@ for i = 1:numel(epochs)
       , ' specified days are not present in the complete measure ''%s''.'] ...
       , measure_type );
     if ( io.is_group(full_mean_path) )
-      io.remove( new_days, full_mean_path );
+      if ( io.is_container_group(full_mean_path) )
+        io.remove( new_days, full_mean_path );
+      end
     else
       io.create_group( full_mean_path );
     end
@@ -70,9 +78,23 @@ for i = 1:numel(epochs)
   
   for k = 1:numel(new_days)
     fprintf( '\n\t Processing ''%s'' (%d of %d)', new_days{k}, k, numel(new_days) );
+    fprintf( '\n\t Loading ... ' );
     complete = io.read( full_complete_path, 'only', new_days{k} );
-    meaned = complete.do( m_within, @mean );
+    fprintf( 'Done' );
+    %   perform pre-mean operations, as defined in the config file.
+    fprintf( '\n\t Performing pre-mean operations ... ' );
+    for h = 1:numel(pre_mean_ops)
+      func = pre_mean_ops{h}{1};
+      args = pre_mean_ops{h}{2};
+      complete = func( complete, args{:} );
+    end
+    fprintf( 'Done' );
+    fprintf( '\n\t Averaging ... ' );
+    meaned = complete.do( m_within, @nanmean );
+    fprintf( 'Done' );
+    fprintf( '\n\t Saving ... ' );
     io.add( meaned, full_mean_path );
+    fprintf( 'Done' );
   end
 end
 
