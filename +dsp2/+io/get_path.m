@@ -44,5 +44,8 @@ switch ( path_type )
     error( 'Unrecognized path_type ''%s''', path_type );
 end
 
+if ( ~io.is_set(pathstr) && ~io.is_group(pathstr) )
+  warning( 'The path ''%s'' might not be valid.', pathstr );
+end
 
 end

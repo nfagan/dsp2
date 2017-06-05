@@ -15,24 +15,21 @@ if ( ~obj.labels.contains_fields('sites') )
   obj = obj.add_field( 'sites' );
 end
 
+days = obj( 'days' );
+
 labs = obj.labels;
 
-days = labs.get_fields( 'days' );
-
-new_labs = SparseLabels();
-
 for i = 1:numel(days)
-  
   extr = labs.only( days{i} );
-  inds = extr.get_indices( 'channels' );
-  
-  for k = 1:numel(inds)
-    extr = extr.set_field( 'sites', sprintf('site__%d', k), inds{k} );
+  channels = extr.get_fields( 'channels' );
+  stp = 1;
+  for k = 1:numel(channels)
+    ind = labs.where( {days{i}, channels{k}} );
+    labs = labs.set_field( 'sites', sprintf('site__%d', stp), ind );
+    stp = stp + 1;
   end
-  
-  new_labs = new_labs.append( extr );
 end
 
-obj.labels = new_labs;
+obj.labels = labs;
 
 end

@@ -20,7 +20,7 @@ assert__categories_exist( obj.labels, {'days', 'sessions', 'blocks'} );
 
 obj = obj.do( 'days', @dsp2.process.format.fix_block_number );
 
-datefmt = 'mmddyyyy';
+datefmt = conf.LABELS.datefmt;
 
 days = obj( 'days' );
 dates = datenum( cellfun(@(x) x(6:end), days, 'un', false), datefmt );

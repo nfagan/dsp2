@@ -13,6 +13,8 @@ PATHS.database = 'E:\SIGNALS\dictator\database';
 PATHS.analyses = 'E:\nick_data\ANALYSES';
 PATHS.analysis_subfolder = 'E:\nick_data\ANALYSES\020317';
 PATHS.pre_processed_signals = 'H:\SIGNALS\processed';
+PATHS.plots = 'E:\nick_data\PLOTS';
+
 PATHS.H5.signals = 'Signals';
 PATHS.H5.measures = 'Measures';
 PATHS.H5.signal_measures = 'Measures/Signals';
@@ -79,6 +81,7 @@ SIGNALS.meaned.pre_mean_operations = {
 % - LABELS - %
 LABELS.administration.first_two_block_day = 'day__01142017';
 LABELS.administration.last_two_block_day = 'day__02172017';
+LABELS.datefmt = 'mmddyyyy';
 
 % - SAVE - %
 opts.PATHS =      PATHS;
