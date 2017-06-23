@@ -7,15 +7,15 @@ function add_processed_signals(varargin)
 %       - `varargin` ('name', value) -- Optionally pass in a config file
 %         with 'config', conf
 
-io = dsp2.io.get_dsp_h5();
-io.ALLOW_REWRITE = true;
-db = dsp2.database.get_sqlite_db();
-
 defaults.config = dsp2.config.load();
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
 conf = params.config;
+
+io = dsp2.io.get_dsp_h5( 'config', conf );
+io.ALLOW_REWRITE = true;
+db = dsp2.database.get_sqlite_db( 'config', conf );
 
 reference_type = conf.SIGNALS.reference_type;
 
@@ -51,6 +51,8 @@ for i = 1:numel( epochs )
   % get the proper format for the database
   inds = get_original_index( reformatted_db_sessions, days_to_add );
   db_days_to_add = current_db_sessions( inds );
+  reformat_days_to_add = reformatted_db_sessions( inds );
+  db_days_to_add = group_by_day( reformat_days_to_add, db_days_to_add );
   
   for k = 1:numel(db_days_to_add)
     db_day = db_days_to_add{k};
@@ -67,11 +69,38 @@ end
 
 function ind = get_original_index( reformatted, days_to_add )
 
+%   GET_ORIGINAL_INDEX -- Get the index of the database sessions to add,
+%     based on the reformatted days to add.
+%
+%     IN:
+%       - `reformatted` (cell array of strings)
+%       - `days_to_add` (cell array of strings)
+%     OUT:
+%       - `ind` (logical)
+
 ind = false( numel(reformatted), 1 );
 for i = 1:numel(days_to_add)
   current = strcmp( reformatted, days_to_add{i} );
   assert( any(current), 'Wrong format.' );
   ind = ind | current;
+end
+
+end
+
+function grps = group_by_day( reformatted, db_sessions )
+
+%   GROUP_BY_DAY -- Group database sessions by day.
+%
+%     IN:
+%       - `reformatted` (cell array of strings)
+%       - `db_sessions` (cell array of strings)
+%     OUT:
+%       - `grps` (cell array of strings)
+
+days = unique( reformatted );
+grps = cell( size(days) );
+for i = 1:numel(days)
+  grps{i} = db_sessions( strcmp(reformatted, days{i}) );
 end
 
 end

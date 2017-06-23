@@ -98,13 +98,20 @@ for i = 1:numel(epochs)
     switch ( ref_type )
       case 'non_common_averaged'
         signals = reference_subtract_within_day( signals );
+        signals = signals.filter();
         signals = signals.update_range();
         if ( is_norm_power )
           baseline = reference_subtract_within_day( baseline );
+          baseline = baseline.filter();
           baseline = baseline.update_range();
         end
       case 'common_averaged'
-        %
+        signals = signals.filter();
+        signals = signals.update_range();
+        if ( is_norm_power )
+          baseline = baseline.filter();
+          baseline = baseline.update_range();
+        end
       otherwise
         error( 'Unrecognized reference type ''%s''', reference_type );
     end    

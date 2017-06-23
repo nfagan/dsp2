@@ -4,7 +4,8 @@ new_datafolder = 'H:\SIGNALS\raw\kuro_64';
 dsp2.io.add_raw_data_to_database( new_datafolder );
 
 %%  add processed signals + basic behavioral data
-
+% conf = dsp2.config.load();
+% conf.SIGNALS.handle_missing_trials = 'skip';
 dsp2.io.add_processed_signals();
 dsp2.io.add_processed_behavior();
 

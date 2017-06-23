@@ -46,6 +46,9 @@ SIGNALS.epoch_mapping = epoch_mapping;
 SIGNALS.reference_on_load = false;
 SIGNALS.reference_type = 'non_common_averaged';   % reference subtracted
 SIGNALS.voltage_threshold = .3;
+% 'error' or 'skip' -- throw an error if trials are out of .pl2 recording
+% bounds, or skip them.
+SIGNALS.handle_missing_trials = 'error';
 
 SIGNALS.coherence_type =            'coherence'; % non multitapered coherence
 SIGNALS.coherence_func.coherence =  'chronux';

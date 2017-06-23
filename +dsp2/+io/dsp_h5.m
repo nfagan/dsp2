@@ -235,8 +235,11 @@ classdef dsp_h5 < h5_api
       
       defaults.frequencies = [];
       defaults.time = [];
-      selectors_present = cellfun( @(x) any(strcmp(varargin, x)) ...
-        , obj.SELECTOR_TYPES );
+      char_scalars = cellfun( @(x) ischar(x), varargin );
+      selectors_present_ = cellfun( @(x) any(strcmp(obj.SELECTOR_TYPES, x)) ...
+        , varargin(char_scalars) );
+      selectors_present = false( size(varargin) );
+      selectors_present( char_scalars ) = selectors_present_;
       if ( any(selectors_present) )
         msg1 = [ 'Selectors must be in the format ''selector_type'',' ...
           , ' ''selector_value'', or ''selector_type'', { ''selector_value'' }' ];

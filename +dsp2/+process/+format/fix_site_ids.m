@@ -11,7 +11,9 @@ function obj = fix_site_ids(obj)
 dsp2.util.assertions.assert__isa( obj, 'Container', 'the object to fix' );
 assert__categories_exist( obj.labels, {'days', 'sites'} );
 
-obj = obj.require_fields( 'sitesxdays' );
+field_name = 'sitesxdays';
+
+obj = obj.require_fields( field_name );
 
 days = obj( 'days' );
 labs = obj.labels;
@@ -23,7 +25,7 @@ for i = 1:numel( days )
   sites = extr.get_fields( 'sites' );
   for j = 1:numel(sites)
     ind = labs.where( {days{i}, sites{j}} );
-    obj( 'sitexday', ind ) = sprintf( 'sitesxdays__%d', stp );
+    obj( field_name, ind ) = sprintf( '%s__%d', field_name, stp );
     stp = stp + 1;
   end
 end

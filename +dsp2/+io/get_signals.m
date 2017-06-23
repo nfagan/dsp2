@@ -27,9 +27,11 @@ defaults.DATA_FIELDS = DATA_FIELDS;
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
+conf = params.config;
+
 %   DATABASE
 
-db = dsp2.database.get_sqlite_db( 'config', params.config );
+db = dsp2.database.get_sqlite_db( 'config', conf );
 
 if ( isequal(params.sessions, 'all') )
   SESSIONS = unique( db.get_fields('session', 'signals') );
@@ -37,12 +39,12 @@ else
   SESSIONS = dsp2.util.general.ensure_cell( params.sessions );
 end
 
-EPOCHS = params.config.SIGNALS.EPOCHS;
+EPOCHS = conf.SIGNALS.EPOCHS;
 
 SAMPLING_RATE = params.fs;
 
-COMMON_AVERAGE_REFERENCE = params.config.SIGNALS.reference_on_load && ...
-  isequal(params.config.SIGNALS.reference_type, 'common_averaged' );
+COMMON_AVERAGE_REFERENCE = conf.SIGNALS.reference_on_load && ...
+  isequal(conf.SIGNALS.reference_type, 'common_averaged' );
 
 %   VALIDATE
 
@@ -135,7 +137,7 @@ for i = 1:numel(SESSIONS)
     for j = 1:numel(channels)
       fprintf( '\n\t\t - Processing Channel "%s" (%d of %d)', channels{j}, j, numel(channels) );
       signal = get_signals_( plex{j}, id_times, epoch_events, start_stop ...
-        , win_size, SAMPLING_RATE );
+        , win_size, SAMPLING_RATE, conf );
       signal_info = struct();
       signal_info.channel = channels{j};
       signal_info.region = regions{j};
@@ -408,7 +410,7 @@ end
 
 end
 
-function all_signals = get_signals_( plex, id_times, events, start_stop, w_size, fs )
+function all_signals = get_signals_( plex, id_times, events, start_stop, w_size, fs, conf )
 
 %   GET_SIGNALS -- Given a vector of event times, get a signal vector of
 %     desired length aligned to those events.
@@ -430,6 +432,7 @@ function all_signals = get_signals_( plex, id_times, events, start_stop, w_size,
 %         start of the signal vector such that the center of each window is
 %         the time-point associated with that window.
 %       - `fs` (double) |SCALAR| -- Sampling rate of the signals in `plex`.
+%       - `conf` (struct) -- The config file.
 %     OUT:
 %       - `all_signals` (double) -- Matrix of signals in which each
 %         row(i, :) corresponds to each `events`(i). Rows of `all_signals`
@@ -440,6 +443,9 @@ assert( size(events, 2) == 1, ['Expected there to be only 1 column of events' ..
 assert( numel(start_stop) == 2, 'Specify `start_stop` as a two-element vector' );
 assert( start_stop(2) > start_stop(1), ['`start_stop`(2) must be greater than' ...
   , ' `start_stop`(1)'] );
+
+handle_missing = conf.SIGNALS.handle_missing_trials;
+skip_missing = strcmp( handle_missing, 'skip' );
 
 is_zero = events(:,1) == 0;
 non_zero_events = events( ~is_zero, : );
@@ -459,7 +465,17 @@ for i = 1:size(non_zero_events, 1)
   [~, index] = histc( current_time, id_times );
   out_of_bounds_msg = ['The id_times do not properly correspond to the' ...
     , ' inputted events'];
-  assert( index ~= 0 && (index+amount_ms-1) <= numel(plex), out_of_bounds_msg );
+  is_in_bounds = index ~= 0 && (index+amount_ms-1) <= numel( plex );
+  if ( ~skip_missing )
+    assert( is_in_bounds, out_of_bounds_msg );
+  elseif ( ~is_in_bounds )
+    msg = ['Trial number %d in this block did not have neural (.pl2)' ...
+      , ' recording data associated with it. The config file has' ...
+      , ' handle_missing_trials set to ''skip'', so these trials will' ...
+      , ' not have neural data associated with them.'];
+    warning( msg, i );
+    continue;
+  end
   check = abs( current_time - id_times(index) ) < abs( current_time - id_times(index+1) );
   if ( ~check ), index = index + 1; end;
   signals(i, :) = plex( index:index+amount_ms-1 );
