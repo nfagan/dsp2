@@ -4,7 +4,7 @@ function spectrogram(varargin)
 %     epochs, and manipulations.
 
 defaults.config = dsp2.config.load();
-defaults.date = '062217';
+defaults.date = '072017';
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
@@ -12,11 +12,13 @@ conf = params.config;
 
 base_save_path = fullfile( conf.PATHS.plots, params.date, 'spectra' );
 
-formats = { 'png', 'epsc' };
+formats = { 'png', 'epsc', 'fig' };
+
+summary_function = conf.PLOT.summary_function;
 
 %   loop over the combinations of each of these
-measures = { 'normalized_power', 'coherence' };
-epochs = { 'reward', 'targacq' };
+measures = { 'coherence' };
+epochs = { 'reward' };
 % manipulations = { ...
 %     'pro_v_anti', 'pro_minus_anti', 'pro_v_anti_drug' ...
 %   , 'pro_minus_anti_drug', 'pro_v_anti_drug_minus_sal' ...
@@ -25,11 +27,13 @@ epochs = { 'reward', 'targacq' };
 % manipulations = { 'pro_minus_anti_drug_minus_sal' };
 manipulations = { 'pro_v_anti' };
 
-to_collapse = { {'sites', 'trials'}, {'sites', 'trials', 'monkeys'} };
+to_collapse = { {'trials', 'monkeys'}, {'trials'} };
 
 C = dsp2.util.general.allcomb( {measures, epochs, manipulations, to_collapse} );
 
 F = figure;
+
+use_custom_limits = true;
 
 for i = 1:size(C, 1)
   fprintf( '\n Processing combination %d of %d', i, size(C, 1) );
@@ -38,10 +42,19 @@ for i = 1:size(C, 1)
   epoch = C{i, 2};
   manip = C{i, 3};
   
-  measure = dsp2.io.get_processed_measure( C(i, :), 'meaned' );
+  if ( i == 1 )
+    require_load = true;
+  else
+    require_load = false;
+  end
+  
+  measure = dsp2.io.get_processed_measure( C(i, :), 'meaned' ...
+    , 'config', conf ...
+    , 'load_required', require_load ...
+  );
   %   mean across days and sites
   measure = measure.collapse( {'days', 'sites'} );
-  measure = measure.for_each( measure.categories(), @nanmean );
+  measure = measure.for_each( measure.categories(), summary_function );
   
   switch ( manip )
     case { 'standard', 'pro_v_anti', 'pro_minus_anti' }
@@ -136,10 +149,14 @@ for i = 1:size(C, 1)
     
     clf( F );
     
-    if ( isa(clims, 'Container') )
-      clims_ = clims.only( c{k, 2} );
+    if ( use_custom_limits )
+      if ( isa(clims, 'Container') )
+        clims_ = clims.only( c{k, 2} );
+      else
+        clims_ = struct( 'data', clims );
+      end
     else
-      clims_ = struct( 'data', clims );
+      clims_ = struct( 'data', [] );
     end
     
     measure_ = measure.only( c(k, :) );

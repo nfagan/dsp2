@@ -46,6 +46,8 @@ SIGNALS.epoch_mapping = epoch_mapping;
 SIGNALS.reference_on_load = false;
 SIGNALS.reference_type = 'non_common_averaged';   % reference subtracted
 SIGNALS.voltage_threshold = .3;
+SIGNALS.input_voltage_limit = 5;
+SIGNALS.first_gain_50_day = 'day__05232017';
 % 'error' or 'skip' -- throw an error if trials are out of .pl2 recording
 % bounds, or skip them.
 SIGNALS.handle_missing_trials = 'error';
@@ -55,7 +57,7 @@ SIGNALS.coherence_func.coherence =  'chronux';
 SIGNALS.coherence_func.coherence_non_multitapered = 'mscohere';
 
 SIGNALS.normalized_power_type =     'normalized_power';
-SIGNALS.normalized_power_within =   { 'sessions', 'blocks' };
+SIGNALS.normalized_power_within =   { 'sessions', 'blocks', 'channels', 'regions' };
 SIGNALS.normalized_power_method =   'divide';
 SIGNALS.baseline_epoch =            'magcue';
 
@@ -73,24 +75,30 @@ SIGNALS.signal_container_params = struct( ...
   , 'removeNormPowerErrors',  true ...
 );
 
-SIGNALS.meaned.mean_within = { 'days', 'sites', 'sessions', 'blocks' ...
+SIGNALS.meaned.mean_within = { 'days', 'regions', 'sites', 'sessions', 'blocks' ...
   , 'outcomes', 'trialtypes' };
 %   operations to perform after loading in complete measure, before taking
 %   a mean within `mean_within`.
 SIGNALS.meaned.pre_mean_operations = {
-    { @keep_within_range, {SIGNALS.voltage_threshold} } ...
+  { @dsp2.process.outliers.keep_non_clipped, {} } ...
 };
+SIGNALS.meaned.summary_function = @nanmedian;
 
 % - LABELS - %
 LABELS.administration.first_two_block_day = 'day__01142017';
 LABELS.administration.last_two_block_day = 'day__02172017';
 LABELS.datefmt = 'mmddyyyy';
 
+% - PLOT - %
+PLOT.summary_function = @nanmedian;
+PLOT.error_function = @ContainerPlotter.mad_1d;
+
 % - SAVE - %
 opts.PATHS =      PATHS;
 opts.DATABASES =  DATABASES;
 opts.SIGNALS =    SIGNALS;
 opts.LABELS =     LABELS;
+opts.PLOT =       PLOT;
 
 dsp2.config.save( opts );
 dsp2.config.save( opts, '-default' );

@@ -40,7 +40,7 @@ if ( load_required )
   %   raw data
   read_measure = dsp2.process.format.fix_block_number( read_measure );
   read_measure = dsp2.process.format.fix_administration( read_measure );
-  read_measure = dsp__remove_bad_days_and_blocks( read_measure );
+%   read_measure = dsp__remove_bad_days_and_blocks( read_measure );
   read_measure = read_measure.rm( 'errors' );
 else
   fprintf( '\n\t Using loaded measure for {''%s''}' ...

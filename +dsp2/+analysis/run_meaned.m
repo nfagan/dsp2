@@ -28,8 +28,18 @@ m_within = conf.SIGNALS.meaned.mean_within;
 
 pre_mean_ops = conf.SIGNALS.meaned.pre_mean_operations;
 
-base_complete_path = dsp2.io.get_signal_measure_path( measure_type, 'complete' );
-base_mean_path = dsp2.io.get_signal_measure_path( measure_type, 'meaned' );
+summary_func = conf.SIGNALS.meaned.summary_function;
+
+func_name = func2str( summary_func );
+
+if ( strcmp(func_name, 'mean') || strcmp(func_name, 'nanmean') )
+  func_name = 'meaned';
+end
+
+base_complete_path = dsp2.io.get_signal_measure_path( measure_type, 'complete' ...
+  , 'config', conf );
+base_mean_path = dsp2.io.get_signal_measure_path( measure_type, func_name ...
+  , 'config', conf );
 
 epochs = io.get_component_group_names( base_complete_path );
 
@@ -76,6 +86,8 @@ for i = 1:numel(epochs)
     continue;
   end
   
+  dsp2.util.assertions.assert__enough_space( 'E:\', 150 );
+  
   for k = 1:numel(new_days)
     fprintf( '\n\t Processing ''%s'' (%d of %d)', new_days{k}, k, numel(new_days) );
     fprintf( '\n\t Loading ... ' );
@@ -90,7 +102,7 @@ for i = 1:numel(epochs)
     end
     fprintf( 'Done' );
     fprintf( '\n\t Averaging ... ' );
-    meaned = complete.do( m_within, @nanmean );
+    meaned = complete.parfor_each( m_within, summary_func );
     fprintf( 'Done' );
     fprintf( '\n\t Saving ... ' );
     io.add( meaned, full_mean_path );

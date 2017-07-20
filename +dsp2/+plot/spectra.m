@@ -4,6 +4,16 @@ function spectra(varargin)
 %     and manipulations.
 
 defaults.config = dsp2.config.load();
+defaults.measure = [];
+defaults.measures = { 'normalized_power' };
+defaults.epochs = { 'targacq' };
+% defaults.manipulations = { ...
+%     'pro_v_anti', 'pro_minus_anti', 'pro_v_anti_drug' ...
+%   , 'pro_minus_anti_drug', 'pro_v_anti_drug_minus_sal' ...
+%   , 'pro_minus_anti_drug_minus_sal' ...
+% };
+defaults.manipulations = { 'pro_v_anti' };
+defaults.resolution = { 'per_monkey', 'across_monkeys' };
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
@@ -11,25 +21,28 @@ conf = params.config;
 
 io = dsp2.io.get_dsp_h5( 'config', conf );
 
-base_save_path = fullfile( conf.PATHS.plots, '061617' );
+base_save_path = fullfile( conf.PATHS.plots, '071917' );
 
-formats = { 'png', 'epsc' };
+formats = { 'png', 'epsc', 'fig' };
 
 %   loop over the combinations of each of these
-measures = { 'normalized_power', 'coherence' };
-epochs = { 'reward', 'targacq' };
-% manipulations = { ...
-%     'pro_v_anti', 'pro_minus_anti', 'pro_v_anti_drug' ...
-%   , 'pro_minus_anti_drug', 'pro_v_anti_drug_minus_sal' ...
-%   , 'pro_minus_anti_drug_minus_sal' ...
-% };
-manipulations = { 'pro_minus_anti_drug_minus_sal' };
+measures = params.measures;
 
-resolution = { 'per_monkey', 'across_monkeys' };
+if ( isempty(params.measure) )
+  epochs = params.epochs;
+else
+  epochs = measures( 'epochs' );
+  epochs = epochs(:)';  % force row-vector
+end
+
+manipulations = params.manipulations;
+resolution = params.resolution;
 
 C = dsp2.util.general.allcomb( {measures, epochs, manipulations, resolution} );
 
-F = figure;
+F = figure(1);
+F.Units = 'normalized';
+F.Position = [0, 0, 1, 1];
 
 for i = 1:size(C, 1)
   fprintf( '\n Processing combination %d of %d', i, size(C, 1) );
@@ -42,11 +55,12 @@ for i = 1:size(C, 1)
   %   check whether we need to load in new data, or if we can reuse the
   %   last loaded data.
   load_required = (i == 1) || ~strcmp( epoch, prev.epoch ) || ...
-    ~strcmp( meas_type, prev.meas_type );
+    ~strcmp( meas_type, prev.meas_type ) && ...
+    isempty( params.measure );
   
   if ( load_required )
     fprintf( '\n\t Loading ... ' );
-    pathstr = dsp2.io.get_path( 'measures', meas_type, 'meaned', epoch );
+    pathstr = dsp2.io.get_path( 'measures', meas_type, 'meaned', epoch, 'config', conf );
 
     read_measure = io.read( pathstr );
     
@@ -60,8 +74,12 @@ for i = 1:size(C, 1)
     read_measure = dsp2.process.format.fix_administration( read_measure );
     read_measure = dsp__remove_bad_days_and_blocks( read_measure );
   else
-    fprintf( '\n\t Using loaded measure for {''%s'', ''%s''}' ...
-      , meas_type, epoch );
+    if ( isempty(params.measure) )
+      fprintf( '\n\t Using loaded measure for {''%s'', ''%s''}' ...
+        , meas_type, epoch );
+    else
+      read_measure = params.measure;
+    end
   end
   
   measure = read_measure;
@@ -78,7 +96,7 @@ for i = 1:size(C, 1)
   switch ( manip )
     case { 'standard', 'pro_v_anti', 'pro_minus_anti' }
       measure = dsp2.process.manipulations.non_drug_effect( measure );
-      m_within = { 'outcomes', 'monkeys', 'trialtypes', 'regions' };
+      m_within = { 'outcomes', 'monkeys', 'trialtypes', 'regions', 'channels', 'regions', 'days' };
       measure = measure.do( m_within, @nanmean );
       switch ( manip )
         case 'standard'
@@ -97,7 +115,10 @@ for i = 1:size(C, 1)
             case 'coherence'
               clims = [-.01, .01];
             case 'normalized_power'
-              clims = Container( [-.1 .06; -.1 .06], 'regions', {'acc'; 'bla'} );
+%               clims = Container( [-.1 .06; -.1 .06], 'regions', {'acc'; 'bla'} );
+              clims = Container( [-3 .5; -.5 1.1; -3 1], 'regions', {'acc'; 'bla'; 'ref'} );
+%               clims = [];
+%               clims = Container( [-3 1; -1 1], 'outcomes', {'selfMinusBoth'; 'otherMinusNone'} );
           end
         case 'pro_minus_anti'
           shape = [1, 2];
@@ -114,7 +135,7 @@ for i = 1:size(C, 1)
     case { 'drug', 'drug_minus_sal', 'pro_v_anti_drug', 'pro_minus_anti_drug', 'pro_v_anti_drug_minus_sal', 'pro_minus_anti_drug_minus_sal' }
       measure = measure.rm( 'unspecified' );
       m_within = { 'outcomes', 'administration', 'drugs', 'monkeys' ...
-        , 'trialtypes', 'regions' };
+        , 'trialtypes', 'regions', 'channels', 'days' };
       measure = measure.do( m_within, @nanmean );
       %   decide which fields to collapse before subtracting post - pre
       %   we can keep uniform fields because those will be consistent
@@ -135,6 +156,8 @@ for i = 1:size(C, 1)
         case {'pro_v_anti_drug', 'pro_v_anti_drug_minus_sal'}
           measure = dsp2.process.manipulations.pro_v_anti( measure );
           if ( isequal(manip, 'pro_v_anti_drug_minus_sal') )
+            measure = measure.for_each( {'outcomes', 'administration', ...
+              'drugs', 'monkeys', 'trialtypes', 'regions'}, @mean );
             measure = dsp2.process.manipulations.oxy_minus_sal( measure );
           end
           shape = [ 1, 2 ];
@@ -202,9 +225,10 @@ for i = 1:size(C, 1)
     end
     
     measure_ = measure.only( c(k, :) );
+    measure_ = measure_
     measure_.spectrogram( {'outcomes', 'monkeys', 'regions', 'drugs'} ...
       , 'frequencies', [0, 100] ...
-      , 'time', [-500, 500] ...
+      , 'time', [-300, 500] ...
       , 'clims', clims_.data ...
       , 'shape', shape ...
     );

@@ -41,19 +41,26 @@ manip = C{3};
 collapse_after_load = C{4};
 
 defaults.config = dsp2.config.load();
+defaults.load_required = true;
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
 %   check whether we need to load in new data, or if we can reuse the
 %   last loaded data.
 
-load_required = isequal( read_measure, [] ) || ...
+load_required = ...
+  params.load_required || ...
+  isequal( read_measure, [] ) || ...
   isequal( prev, [] ) || ...
   ~strcmp( epoch, prev.epoch ) || ...
   ~strcmp( meas_type, prev.meas_type ) || ...
   ~strcmp( kind, prev.kind );
 
 io = dsp2.io.get_dsp_h5( 'config', params.config );
+
+%   what function to use to collapse across trials, etc. e.g., @nanmean.
+% summary_func = params.config.PLOT.summary_function;
+summary_func = @nanmean;
 
 if ( load_required )
   fprintf( '\n\t Loading ... ' );
@@ -68,7 +75,7 @@ if ( load_required )
   read_measure( 'epochs' ) = epoch;
   read_measure = dsp2.process.format.fix_block_number( read_measure );
   read_measure = dsp2.process.format.fix_administration( read_measure );
-  read_measure = dsp__remove_bad_days_and_blocks( read_measure );
+%   read_measure = dsp__remove_bad_days_and_blocks( read_measure );
   read_measure = read_measure.rm( 'errors' );
 else
   fprintf( '\n\t Using loaded measure for {''%s'', ''%s''}' ...
@@ -77,11 +84,13 @@ end
 
 measure = read_measure.collapse( collapse_after_load );
 
+measure = measure.remove_nans_and_infs();
+
 switch ( manip )
   case { 'standard', 'pro_v_anti', 'pro_minus_anti' }
     measure = dsp2.process.manipulations.non_drug_effect( measure );
     m_within = { 'outcomes', 'monkeys', 'trialtypes', 'regions', 'days', 'sites' };
-    measure = measure.do( m_within, @nanmean );
+    measure = measure.parfor_each( m_within, summary_func );
     measure = measure.collapse( 'drugs' );
     switch ( manip )
       case 'standard'
@@ -92,7 +101,7 @@ switch ( manip )
         measure = measure.collapse_except( m_within );
         require_per = setdiff( m_within, 'outcomes' );
         %   for each `require_per`, ensure all 'outcomes' are present.
-        measure = measure.for_each( require_per, @require, measure('outcomes') );
+        measure = measure.parfor_each( require_per, @require, measure('outcomes') );
 %         measure = require_proanti( measure, require_per, 'outcomes' );
         measure = dsp2.process.manipulations.pro_v_anti( measure );
         if ( isequal(manip, 'pro_minus_anti') )
@@ -105,7 +114,7 @@ switch ( manip )
     measure = measure.rm( 'unspecified' );
     m_within = { 'outcomes', 'administration', 'drugs', 'monkeys' ...
       , 'trialtypes', 'regions', 'days', 'sites' };
-    measure = measure.do( m_within, @nanmean );
+    measure = measure.parfor_each( m_within, summary_func );
     %   decide which fields to collapse before subtracting post - pre
     %   we can keep uniform fields because those will be consistent
     %   across post and pre
@@ -115,7 +124,7 @@ switch ( manip )
     %   for each `require_per`, ensure all 'outcomes' are present.
     require_per = setdiff( m_within, {'outcomes', 'administration'} );
     required = measure.combs( {'outcomes', 'administration'} );
-    measure = measure.for_each( require_per, @require, required );
+    measure = measure.parfor_each( require_per, @require, required );
 %     measure = require_proanti( measure, require_per, {'outcomes', 'administration'} );
     measure = dsp2.process.manipulations.post_minus_pre( measure );
     switch ( manip )
@@ -152,7 +161,7 @@ sb = obj.only( {'self', 'both'} );
 on = obj.only( {'other', 'none'} );
 
 objs = { sb, on };
-objs = cellfun( @(x) x.for_each(require_per, @require, x.combs(required_fs)) ...
+objs = cellfun( @(x) x.parfor_each(require_per, @require, x.combs(required_fs)) ...
   , objs, 'un', false );
 obj = extend( objs{:} );
 

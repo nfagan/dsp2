@@ -29,14 +29,14 @@ function run(measure_type, varargin)
 import dsp2.analysis.util.*;
 import dsp2.process.reference.*;
 
-io = dsp2.io.get_dsp_h5();
-
 defaults.config = dsp2.config.load();
 defaults.sessions = 'new';
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
 conf = params.config;
+
+io = dsp2.io.get_dsp_h5( 'config', conf );
 
 signal_container_params = conf.SIGNALS.signal_container_params;
 ref_type = conf.SIGNALS.reference_type;
@@ -48,7 +48,10 @@ else
   is_norm_power = false;
 end
 
-load_path = io.fullfile( conf.PATHS.H5.signals, ref_type, 'complete' );
+addtl = io.fullfile( ref_type, 'complete' );
+
+load_path = io.fullfile( conf.PATHS.H5.signals, addtl );
+
 save_path = io.fullfile( conf.PATHS.H5.measures, 'Signals', ref_type ...
   , measure_type, 'complete' );
 
@@ -97,18 +100,22 @@ for i = 1:numel(epochs)
     
     switch ( ref_type )
       case 'non_common_averaged'
+        signals = update_min( update_max(signals) );
         signals = reference_subtract_within_day( signals );
         signals = signals.filter();
         signals = signals.update_range();
         if ( is_norm_power )
+          baseline = update_min( update_max(signals) );
           baseline = reference_subtract_within_day( baseline );
           baseline = baseline.filter();
           baseline = baseline.update_range();
         end
-      case 'common_averaged'
+      case { 'common_averaged', 'none' }
+        signals = update_min( update_max(signals) );
         signals = signals.filter();
         signals = signals.update_range();
         if ( is_norm_power )
+          baseline = update_min( update_max(baseline) );
           baseline = baseline.filter();
           baseline = baseline.update_range();
         end
@@ -122,7 +129,14 @@ for i = 1:numel(epochs)
     
     switch ( measure_type )
       case 'coherence'
-        measure = signals.run_coherence();
+        if ( strcmp(ref_type, 'none') )
+          A = signals.run_coherence( 'reg1', 'bla', 'reg2', 'acc' );
+          B = signals.run_coherence( 'reg1', 'bla', 'reg2', 'ref' );
+          C = signals.run_coherence( 'reg1', 'acc', 'reg2', 'ref' );
+          measure = A.extend( B, C );
+        else
+          measure = signals.run_coherence();
+        end
       case 'raw_power'
         measure = signals.run_raw_power();
       case 'normalized_power'
@@ -150,6 +164,10 @@ for i = 1:numel(epochs)
     end
     
     fprintf( 'Done' );
+    
+    measure = measure.keep_within_freqs( [0, 250] );
+    
+    dsp2.util.assertions.assert__enough_space( 'E:\', 150 );
     
     %   remove days that exist already, if we manually specified days.
     if ( io.is_container_group(full_savepath) )

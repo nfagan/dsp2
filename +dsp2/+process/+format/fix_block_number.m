@@ -14,7 +14,7 @@ function obj = fix_block_number( obj )
 
 dsp2.util.assertions.assert__isa( obj, 'Container' );
 assert__categories_exist( obj.labels, {'blocks', 'sessions', 'days'} );
-obj = obj.do( 'days', @fix_one_day );
+obj = obj.parfor_each( 'days', @fix_one_day );
 
 end
 
