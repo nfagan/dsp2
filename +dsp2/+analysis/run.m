@@ -39,8 +39,13 @@ conf = params.config;
 io = dsp2.io.get_dsp_h5( 'config', conf );
 
 signal_container_params = conf.SIGNALS.signal_container_params;
+
 ref_type = conf.SIGNALS.reference_type;
+
 baseline_epoch = conf.SIGNALS.baseline_epoch;
+
+mua_cutoffs = conf.SIGNALS.mua_filter_frequencies;
+mua_devs = conf.SIGNALS.mua_std_threshold;
 
 if ( isequal(measure_type, 'normalized_power') )
   is_norm_power = true;
@@ -48,9 +53,22 @@ else
   is_norm_power = false;
 end
 
-addtl = io.fullfile( ref_type, 'complete' );
+if ( strcmp(measure_type, 'sfcoherence') )
+  is_sfcoherence = true;
+else
+  is_sfcoherence = false;
+end
 
-load_path = io.fullfile( conf.PATHS.H5.signals, addtl );
+if ( strcmp(ref_type, 'none') || strcmp(ref_type, 'non_common_averaged') )
+  load_reftype = 'none';
+else
+  load_reftype = ref_type;
+end
+
+h5_path = conf.PATHS.H5.signals;
+
+load_path = io.fullfile( h5_path, load_reftype, 'complete' );
+load_path_wideband = io.fullfile( h5_path, load_reftype, 'wideband' );
 
 save_path = io.fullfile( conf.PATHS.H5.measures, 'Signals', ref_type ...
   , measure_type, 'complete' );
@@ -61,9 +79,10 @@ epochs = cellfun( @(x) conf.SIGNALS.epoch_mapping.(x), epochs, 'un', false );
 for i = 1:numel(epochs)
   fprintf( '\n Processing ''%s'' (%d of %d)', epochs{i}, i, numel(epochs) );
   
-  full_savepath = io.fullfile( save_path, epochs{i} );
-  full_loadpath = io.fullfile( load_path, epochs{i} );
-  full_loadpath_baseline = io.fullfile( load_path, baseline_epoch );
+  full_savepath =           io.fullfile( save_path, epochs{i} );
+  full_loadpath =           io.fullfile( load_path, epochs{i} );
+  full_loadpath_wideband =  io.fullfile( load_path_wideband, epochs{i} );
+  full_loadpath_baseline =  io.fullfile( load_path, baseline_epoch );
 
   if ( isequal(params.sessions, 'new') )
     if ( io.is_group(full_savepath) )
@@ -92,8 +111,12 @@ for i = 1:numel(epochs)
     fprintf( '\n\t Loading ... ' );
     
     signals = io.read( full_loadpath, 'only', new_days{k} );
+    
     if ( is_norm_power )
       baseline = io.read( full_loadpath_baseline, 'only', new_days{k} );
+    end
+    if ( is_sfcoherence )
+      wideband = io.read( full_loadpath_wideband, 'only', new_days{k} );
     end
     
     fprintf( 'Done' );
@@ -105,7 +128,7 @@ for i = 1:numel(epochs)
         signals = signals.filter();
         signals = signals.update_range();
         if ( is_norm_power )
-          baseline = update_min( update_max(signals) );
+          baseline = update_min( update_max(baseline) );
           baseline = reference_subtract_within_day( baseline );
           baseline = baseline.filter();
           baseline = baseline.update_range();
@@ -121,7 +144,7 @@ for i = 1:numel(epochs)
         end
       otherwise
         error( 'Unrecognized reference type ''%s''', reference_type );
-    end    
+    end
     
     signals.params = signal_container_params;
     
@@ -136,6 +159,30 @@ for i = 1:numel(epochs)
           measure = A.extend( B, C );
         else
           measure = signals.run_coherence();
+        end
+      case 'sfcoherence'
+        assert( strcmp(ref_type, 'non_common_averaged') ...
+          , 'Only non_common_averaged has been implemented.' );
+        
+        wideband.params = signal_container_params;
+        
+        wideband = update_min( update_max(wideband) );
+        wideband = wideband.filter( 'cutoffs', mua_cutoffs );
+        wideband = wideband.update_range();
+
+        spikes = dsp2.process.spike.get_mua_psth( wideband, mua_devs );
+
+        measure = Container();
+        regs = { 'bla'; 'acc' };
+        reg_combs = dsp2.util.general.allcomb( {regs, regs} );
+        dups = strcmp( reg_combs(:, 1), reg_combs(:, 2) );
+        reg_combs( dups, : ) = [];
+
+        for j = 1:size(reg_combs, 1)
+          spike = only( spikes, reg_combs{j, 1} );
+          signal = only( signals, reg_combs{j, 2} );
+          sfcoh = spike.run_sfcoherence( signal );
+          measure = measure.append( sfcoh );
         end
       case 'raw_power'
         measure = signals.run_raw_power();

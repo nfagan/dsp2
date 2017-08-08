@@ -8,6 +8,7 @@ function add_processed_signals(varargin)
 %         with 'config', conf
 
 defaults.config = dsp2.config.load();
+defaults.wideband = false;
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
@@ -18,6 +19,12 @@ io.ALLOW_REWRITE = true;
 db = dsp2.database.get_sqlite_db( 'config', conf );
 
 reference_type = conf.SIGNALS.reference_type;
+
+if ( params.wideband )
+  subfolder = 'wideband';
+else
+  subfolder = 'complete';
+end
 
 base_savepath = io.fullfile( conf.PATHS.H5.signals, reference_type );
 
@@ -32,13 +39,16 @@ for i = 1:numel( epochs )
   conf = dsp2.config.set.inactivate_epochs( 'all', conf );
   conf = dsp2.config.set.activate_epochs( epochs{i}, conf );
   
-  full_savepath = io.fullfile( base_savepath, 'complete', epoch_folders{i} );
+  full_savepath = io.fullfile( base_savepath, subfolder, epoch_folders{i} );
   
-  if ( io.is_group(full_savepath) )
+  if ( io.is_group(full_savepath) && io.is_container_group(full_savepath) )
     current_saved_days = io.get_days( full_savepath );
   else
-    io.create_group( full_savepath );
     current_saved_days = {};
+  end
+  
+  if ( ~io.is_group(full_savepath) )
+    io.create_group( full_savepath );
   end
   
   days_to_add = setdiff( reformatted_db_sessions, current_saved_days );
@@ -55,8 +65,20 @@ for i = 1:numel( epochs )
   db_days_to_add = group_by_day( reformat_days_to_add, db_days_to_add );
   
   for k = 1:numel(db_days_to_add)
+    
+    dsp2.util.assertions.assert__enough_space( 'E:\', 150 );
+    
     db_day = db_days_to_add{k};
-    signals = dsp2.io.get_signals( 'config', conf, 'sessions', db_day );
+    try 
+      signals = dsp2.io.get_signals( ...
+          'config', conf ...
+        , 'sessions', db_day ...
+        , 'wideband', params.wideband ...
+      );
+    catch err
+      warning( err.message );
+      continue;
+    end
     signal_container = signals{1};
     signal_container.params = conf.SIGNALS.signal_container_params;
     io.add( signal_container, full_savepath );

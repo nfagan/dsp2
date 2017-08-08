@@ -4,7 +4,14 @@ function spectrogram(varargin)
 %     epochs, and manipulations.
 
 defaults.config = dsp2.config.load();
-defaults.date = '072017';
+defaults.date = '072317';
+defaults.kind = 'meaned';
+defaults.measures = { 'coherence' };
+defaults.epochs = { 'targacq', 'reward' };
+defaults.manipulations = { 'standard', 'pro_v_anti' };
+defaults.to_collapse = { {'trials'}, {'trials', 'monkeys'} };
+defaults.use_custom_limits = true;
+defaults.formats = { 'png', 'epsc', 'fig' };
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
@@ -12,28 +19,27 @@ conf = params.config;
 
 base_save_path = fullfile( conf.PATHS.plots, params.date, 'spectra' );
 
-formats = { 'png', 'epsc', 'fig' };
+formats = params.formats;
+
+kind = params.kind;
 
 summary_function = conf.PLOT.summary_function;
+func_name = func2str( summary_function );
+if ( strcmp(func_name, 'nanmean') || strcmp(func_name, 'mean') )
+  func_name = 'meaned';
+end
 
 %   loop over the combinations of each of these
-measures = { 'coherence' };
-epochs = { 'reward' };
-% manipulations = { ...
-%     'pro_v_anti', 'pro_minus_anti', 'pro_v_anti_drug' ...
-%   , 'pro_minus_anti_drug', 'pro_v_anti_drug_minus_sal' ...
-%   , 'pro_minus_anti_drug_minus_sal' ...
-% };
-% manipulations = { 'pro_minus_anti_drug_minus_sal' };
-manipulations = { 'pro_v_anti' };
-
-to_collapse = { {'trials', 'monkeys'}, {'trials'} };
+measures = params.measures;
+epochs = params.epochs;
+manipulations = params.manipulations;
+to_collapse = params.to_collapse;
 
 C = dsp2.util.general.allcomb( {measures, epochs, manipulations, to_collapse} );
 
 F = figure;
 
-use_custom_limits = true;
+use_custom_limits = params.use_custom_limits;
 
 for i = 1:size(C, 1)
   fprintf( '\n Processing combination %d of %d', i, size(C, 1) );
@@ -48,13 +54,13 @@ for i = 1:size(C, 1)
     require_load = false;
   end
   
-  measure = dsp2.io.get_processed_measure( C(i, :), 'meaned' ...
+  measure = dsp2.io.get_processed_measure( C(i, :), kind ...
     , 'config', conf ...
     , 'load_required', require_load ...
   );
   %   mean across days and sites
   measure = measure.collapse( {'days', 'sites'} );
-  measure = measure.for_each( measure.categories(), summary_function );
+  measure = measure.parfor_each( measure.categories(), summary_function );
   
   switch ( manip )
     case { 'standard', 'pro_v_anti', 'pro_minus_anti' }
@@ -159,10 +165,16 @@ for i = 1:size(C, 1)
       clims_ = struct( 'data', [] );
     end
     
+    if ( strcmp(epoch, 'reward') )
+      tlims = [-500, 500];
+    else
+      tlims = [-350, 300];
+    end
+    
     measure_ = measure.only( c(k, :) );
     measure_.spectrogram( {'outcomes', 'monkeys', 'regions', 'drugs'} ...
       , 'frequencies', [0, 100] ...
-      , 'time', [-500, 500] ...
+      , 'time', tlims ...
       , 'clims', clims_.data ...
       , 'shape', shape ...
     );
@@ -172,7 +184,7 @@ for i = 1:size(C, 1)
     
     for j = 1:numel(formats)
       fmt = formats{j};
-      full_save_path = fullfile( base_save_path, meas_type, epoch, manip, fmt );
+      full_save_path = fullfile( base_save_path, func_name, meas_type, kind, epoch, manip, fmt );
       
       dsp2.util.general.require_dir( full_save_path );
       

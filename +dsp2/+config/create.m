@@ -52,6 +52,9 @@ SIGNALS.first_gain_50_day = 'day__05232017';
 % bounds, or skip them.
 SIGNALS.handle_missing_trials = 'error';
 
+SIGNALS.mua_filter_frequencies = [ 700, 20e3 ];
+SIGNALS.mua_std_threshold = 3;
+
 SIGNALS.coherence_type =            'coherence'; % non multitapered coherence
 SIGNALS.coherence_func.coherence =  'chronux';
 SIGNALS.coherence_func.coherence_non_multitapered = 'mscohere';
@@ -84,6 +87,9 @@ SIGNALS.meaned.pre_mean_operations = {
 };
 SIGNALS.meaned.summary_function = @nanmedian;
 
+% - BEHAVIOR - %
+BEHAVIOR.meaned.summary_function = @nanmedian;
+
 % - LABELS - %
 LABELS.administration.first_two_block_day = 'day__01142017';
 LABELS.administration.last_two_block_day = 'day__02172017';
@@ -97,6 +103,7 @@ PLOT.error_function = @ContainerPlotter.mad_1d;
 opts.PATHS =      PATHS;
 opts.DATABASES =  DATABASES;
 opts.SIGNALS =    SIGNALS;
+opts.BEHAVIOR =   BEHAVIOR;
 opts.LABELS =     LABELS;
 opts.PLOT =       PLOT;
 

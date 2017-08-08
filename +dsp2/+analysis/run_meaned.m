@@ -102,7 +102,12 @@ for i = 1:numel(epochs)
     end
     fprintf( 'Done' );
     fprintf( '\n\t Averaging ... ' );
-    meaned = complete.parfor_each( m_within, summary_func );
+    try
+      meaned = complete.parfor_each( m_within, summary_func );
+    catch err
+      warning( 'The following error ocurred: %s', err.message );
+      meaned = complete.for_each( m_within, summary_func );
+    end
     fprintf( 'Done' );
     fprintf( '\n\t Saving ... ' );
     io.add( meaned, full_mean_path );

@@ -1,4 +1,5 @@
-function [granger, fitted, freq_band_centers, ids, C] = permuted_granger(signals, var_specifiers, n_trials_per_perm, n_perms)
+function [granger, fitted, freq_band_centers, ids, C] = ...
+  permuted_granger(signals, var_specifiers, n_trials_per_perm, n_perms, varargin)
 
 %   PERMUTED_GRANGER -- Calculate spectral Granger causality by repeated
 %     sub-sampling.
@@ -29,17 +30,16 @@ function [granger, fitted, freq_band_centers, ids, C] = permuted_granger(signals
 %       - `ids` (cell array of strings)
 %       - `C` (double)
 
-if ( nargin < 4 )
-  n_perms = 1e3;
-end
-if ( nargin < 3 )
-  n_trials_per_perm = 50;
-end
-
 if ( ~iscell(var_specifiers) ), var_specifiers = { var_specifiers }; end;
 
-regression_method = 'LWR';
-model_order = 32;
+defaults.regression_method = 'LWR';
+defaults.model_order =  32;
+defaults.fit_func =     @normfit;
+defaults.inv_func =     @norminv;
+defaults.n_dist_p =     2;  % n parameters in the distribution
+defaults.max_lags =     1e3;
+
+params = dsp2.util.general.parsestruct( defaults, varargin );
 
 [X, ids] = dsp2.process.format.get_mvgc_data( signals, var_specifiers );
 
@@ -48,13 +48,29 @@ n_vars =      size( X, 1 );
 n_obs =       size( X, 2 );
 n_trials =    size( X, 3 );
 n_freqs =     fs;
-max_lags =    1e3;
-fit_func =    @normfit;
-inv_func =    @norminv;
-n_dist_p =    2;  % n parameters in the distribution
+max_lags =    params.max_lags;
+regression_method = params.regression_method;
+model_order = params.model_order;
+fit_func = params.fit_func;
+inv_func = params.inv_func;
+n_dist_p = params.n_dist_p;
 
+if ( n_trials_per_perm > n_trials )
+  warning( 'Too many trials requested.' );
+  n_trials_per_perm = n_trials;
+end
+
+tmp_perms = n_perms;
+tmp_trials = n_trials_per_perm;
+
+n_perms = 1;
+n_trials_per_perm = n_trials;
 [granger, freq_band_centers] = calc_granger( false );
-permuted_granger = calc_granger( true );
+
+n_perms = tmp_perms;
+n_trials_per_perm = tmp_trials;
+
+permuted_g = calc_granger( true );
 
 n_freqs = numel( freq_band_centers );
 
@@ -66,10 +82,25 @@ for ii = 1:size( C, 1 )
   chan1 = C( ii, 1 );
   chan2 = C( ii, 2 );
   for jj = 1:n_freqs
-    pair = permuted_granger( chan1, chan2, jj, : );
+    pair = permuted_g( chan1, chan2, jj, : );
     pair = squeeze( pair );
-    [p1, p2] = fit_func( pair );
-    fitted( chan1, chan2, jj, 1:n_dist_p ) = [p1, p2];
+    switch ( func2str(fit_func) )
+      case 'wblfit'
+        try
+          p1 = fit_func( pair );
+        catch
+          error( 'Some values were negative.' );
+        end
+        fitted( chan1, chan2, jj, 1:n_dist_p ) = p1;
+      case 'normfit'
+        [p1, p2] = fit_func( pair );
+        fitted( chan1, chan2, jj, 1:n_dist_p ) = [p1, p2];
+      case 'evfit'
+        ps = fit_func( pair );
+        fitted( chan1, chan2, jj, 1:n_dist_p ) = ps;
+      otherwise
+        error( 'Unrecognized fit function ''%s''', func2str(fit_func) );
+    end
   end
 end
 
@@ -88,7 +119,9 @@ function [data, fres] = calc_granger( permute_per_variable )
   %         matrix of M variables, N variables, P frequencies, and Q
   %         permutations.
   
-  for i = 1:n_perms
+  n_permute = n_perms;
+  errs = [];
+  for i = 1:n_permute
     if ( permute_per_variable )
       %   choose a different set of trials for each channel
       subset = zeros( n_vars, n_obs, n_trials_per_perm );
@@ -102,14 +135,29 @@ function [data, fres] = calc_granger( permute_per_variable )
       subset = X( :, :, index );
     end
     [A, SIG] = tsdata_to_var( subset, model_order, regression_method );
-    [G, ~] = var_to_autocov( A, SIG, max_lags );
+    [G, info] = var_to_autocov( A, SIG, max_lags );
     [spect, fres] = autocov_to_spwcgc( G, n_freqs );
+    %   ensure no complex values.
+    var_info( info );
+    if ( any(~isreal(spect(:))) )
+      fprintf( '\n Warning: Some values were complex.' );
+    end
+%     assert( ~any(~isreal(spect(:))), 'Some values were complex.' );
+    %   preallocate once we know the size of data
     if ( i == 1 )
       data = zeros( n_vars, n_vars, size(spect, 3), n_perms );
     end
-    data( :, :, :, i ) = spect;
+    try
+      assert( ~isempty(G), 'Granger was empty.' );
+      data( :, :, :, i ) = spect;
+    catch err
+      fprintf( '\n%s', err.message );
+      n_permute = n_permute + 1;
+      errs = [errs; i];
+    end
   end
   fres = sfreqs( fres, fs );
+  data(:, :, :, errs) = [];
 end
 
 end

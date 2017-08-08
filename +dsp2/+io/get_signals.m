@@ -13,7 +13,7 @@ function [signals, time_info] = get_signals(varargin)
 
 defaults = struct();
 defaults.sessions = 'all';
-defaults.fs = 1e3;
+defaults.wideband = false;
 defaults.config = dsp2.config.load();
 
 DATA_FIELDS.signals = 'file';
@@ -29,6 +29,14 @@ params = dsp2.util.general.parsestruct( defaults, varargin );
 
 conf = params.config;
 
+use_wideband = params.wideband;
+
+if ( use_wideband )
+  SAMPLING_RATE = 4e3;
+else
+  SAMPLING_RATE = 1e3;
+end
+
 %   DATABASE
 
 db = dsp2.database.get_sqlite_db( 'config', conf );
@@ -40,8 +48,6 @@ else
 end
 
 EPOCHS = conf.SIGNALS.EPOCHS;
-
-SAMPLING_RATE = params.fs;
 
 COMMON_AVERAGE_REFERENCE = conf.SIGNALS.reference_on_load && ...
   isequal(conf.SIGNALS.reference_type, 'common_averaged' );
@@ -74,6 +80,10 @@ for i = 1:numel(SESSIONS)
   events =      db.get_fields_where_session( DATA_FIELDS.events, 'events', session );
   meta =        db.get_fields_where_session( DATA_FIELDS.meta, 'meta', session );
   
+  if ( use_wideband )
+    channels = cellfun( @(x) ['WB', x(3:end)], channels, 'un', false );
+  end
+  
   %   reformat
   
   events = cell2mat( events );
@@ -101,6 +111,7 @@ for i = 1:numel(SESSIONS)
   
   plex = cell( numel(channels), 1 );
   for k = 1:numel(channels)
+    fprintf( '\n\t - Loading channel ''%s'' (%d of %d)', channels{k}, k, numel(channels) );
     plex{k} = get_plex_data( pl2_file{1}, channels{k}, SAMPLING_RATE );
   end
   
@@ -108,12 +119,6 @@ for i = 1:numel(SESSIONS)
   
   if ( COMMON_AVERAGE_REFERENCE )
     plex = common_average_reference( plex );
-%     [plex, channels, regions] = common_average_or_reference( plex, channel_map );
-%     [~, common_avg] = common_average_reference( plex );
-%     
-%     channels{end+1} = 'CA01';
-%     regions{end+1} = 'cav';
-%     plex{end+1} = common_avg;
   end
   
   %   get signals
@@ -183,8 +188,6 @@ end
 signals = converted_signals;
 
 end
-
-
 
 function [plex, channels, regions] = common_average_or_reference( plex, channel_map )
 
@@ -499,7 +502,10 @@ function ad = get_plex_data( file, channel, sampling_rate )
 %     OUT:
 %       - `ad` (double) -- Vector of analog channel data.
 
-[fs, ~, ~, ~, ad] = plx_ad_v( file, channel );
+% [fs, ~, ~, ~, ad] = plx_ad_v( file, channel );
+voltage = PL2Ad( file, channel );
+fs = voltage.ADFreq;
+ad = voltage.Values;
 downsample_factor = fs / sampling_rate;
 assert( mod(downsample_factor, 1) == 0, ['Attempted to downsample by a non-integer factor;' ...
   , 'current fs is %f; specified sampling_rate was %f'], fs, sampling_rate );
@@ -507,6 +513,24 @@ assert( mod(downsample_factor, 1) == 0, ['Attempted to downsample by a non-integ
 if ( downsample_factor ~= 1 )
   ad = downsample( ad, downsample_factor );
 end
+
+end
+
+function times = get_spike_times( file, channel, unit )
+
+%   GET_SPIKE_TIMES -- Get spike times in the given file and channel.
+%
+%     IN:
+%       - `file` (char)
+%       - `channel` (char)
+%       - `unit` (double) |OPTIONAL| -- Unit number. Default is 0, get
+%       	unsorted spikes.
+%     OUT:
+%       - `times` (double)
+
+if ( nargin < 3 ), unit = 0; end
+
+times = PL2Ts( file, channel, unit );
 
 end
 

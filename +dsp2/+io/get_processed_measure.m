@@ -42,8 +42,13 @@ collapse_after_load = C{4};
 
 defaults.config = dsp2.config.load();
 defaults.load_required = true;
+defaults.selectors = {};
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
+
+conf = params.config;
+
+selectors = params.selectors;
 
 %   check whether we need to load in new data, or if we can reuse the
 %   last loaded data.
@@ -56,17 +61,21 @@ load_required = ...
   ~strcmp( meas_type, prev.meas_type ) || ...
   ~strcmp( kind, prev.kind );
 
-io = dsp2.io.get_dsp_h5( 'config', params.config );
+io = dsp2.io.get_dsp_h5( 'config', conf );
 
 %   what function to use to collapse across trials, etc. e.g., @nanmean.
-% summary_func = params.config.PLOT.summary_function;
 summary_func = @nanmean;
 
 if ( load_required )
   fprintf( '\n\t Loading ... ' );
-  pathstr = dsp2.io.get_path( 'measures', meas_type, kind, epoch );
+  pathstr = dsp2.io.get_path( 'measures', meas_type, kind, epoch ...
+    , 'config', conf );
 
-  read_measure = io.read( pathstr );
+  if ( isempty(selectors) )
+    read_measure = io.read( pathstr );
+  else
+    read_measure = io.read( pathstr, selectors{:} );
+  end
 
   fprintf( 'Done' );
 
@@ -86,15 +95,32 @@ measure = read_measure.collapse( collapse_after_load );
 
 measure = measure.remove_nans_and_infs();
 
+if ( strcmp(meas_type, 'coherence') )
+  dsp2.util.general.seed_rng();
+  measure = measure.parfor_each( {'days', 'regions'}, 'regions', ...
+    @subsample_sites );
+end
+
+% subset = measure;
+% subset.data = ones( shape(subset, 1), 1 );
+% subset = subset.parfor_each( {'days', 'regions', 'sites'}, 'regions', @keep_one );
+% cs = subset.parfor_each( {'monkeys', 'regions'}, @sum );
+% cs2 = subset.parfor_each( {'days', 'regions'}, 'regions', @keep_one );
+% cs2 = cs2.parfor_each( 'monkeys', @sum );
+% cs2.table( 'monkeys' );
+
 switch ( manip )
   case { 'standard', 'pro_v_anti', 'pro_minus_anti' }
+    
     measure = dsp2.process.manipulations.non_drug_effect( measure );
     m_within = { 'outcomes', 'monkeys', 'trialtypes', 'regions', 'days', 'sites' };
     measure = measure.parfor_each( m_within, summary_func );
     measure = measure.collapse( 'drugs' );
     switch ( manip )
       case 'standard'
-        %
+        un = measure.labels.get_uniform_categories();
+        m_within = unique( [un(:)', m_within] );
+        measure = measure.collapse_except( m_within );
       case {'pro_v_anti', 'pro_minus_anti'}
         un = measure.labels.get_uniform_categories();
         m_within = unique( [un(:)', m_within] );
@@ -102,7 +128,6 @@ switch ( manip )
         require_per = setdiff( m_within, 'outcomes' );
         %   for each `require_per`, ensure all 'outcomes' are present.
         measure = measure.parfor_each( require_per, @require, measure('outcomes') );
-%         measure = require_proanti( measure, require_per, 'outcomes' );
         measure = dsp2.process.manipulations.pro_v_anti( measure );
         if ( isequal(manip, 'pro_minus_anti') )
           measure = dsp2.process.manipulations.pro_minus_anti( measure );
@@ -110,7 +135,10 @@ switch ( manip )
       otherwise
         error( 'Unrecognized manipulation ''%s''', manip );
     end
-  case { 'drug', 'drug_minus_sal', 'pro_v_anti_drug', 'pro_minus_anti_drug', 'pro_v_anti_drug_minus_sal', 'pro_minus_anti_drug_minus_sal'}
+  case { 'drug', 'drug_minus_sal', 'pro_v_anti_drug', ...
+      'pro_minus_anti_drug', 'pro_v_anti_drug_minus_sal', ...
+      'pro_minus_anti_drug_minus_sal' }
+    
     measure = measure.rm( 'unspecified' );
     m_within = { 'outcomes', 'administration', 'drugs', 'monkeys' ...
       , 'trialtypes', 'regions', 'days', 'sites' };
@@ -125,7 +153,6 @@ switch ( manip )
     require_per = setdiff( m_within, {'outcomes', 'administration'} );
     required = measure.combs( {'outcomes', 'administration'} );
     measure = measure.parfor_each( require_per, @require, required );
-%     measure = require_proanti( measure, require_per, {'outcomes', 'administration'} );
     measure = dsp2.process.manipulations.post_minus_pre( measure );
     switch ( manip )
       case 'drug'
@@ -155,14 +182,45 @@ prev.kind = kind;
 
 end
 
-function obj = require_proanti(obj, require_per, required_fs)
+function obj = smart_subsample(obj, field, N)
 
-sb = obj.only( {'self', 'both'} );
-on = obj.only( {'other', 'none'} );
+%   SMART_SUBSAMPLE -- Subsample N combinations from `field`, without
+%     replacement, adjusting N to match the number of present labels in
+%     `field`.
 
-objs = { sb, on };
-objs = cellfun( @(x) x.parfor_each(require_per, @require, x.combs(required_fs)) ...
-  , objs, 'un', false );
-obj = extend( objs{:} );
+n_present = numel( obj(field) );
+N = min( N, n_present );
+obj = obj.subsample( field, N );
+
+end
+
+function obj = subsample_sites(obj)
+
+%   SUBSAMPLE_SITES -- For 256-site days, subsample sites such that each
+%     bla site site is randomly paired with one acc site.
+
+sites = obj( 'sites' );
+n_present = numel( sites );
+
+if ( n_present <= 16 ), return; end
+
+assert( n_present == 256, 'Not yet adapted to work with multiple-regions.' );
+
+nsite = numel( 'site__' );
+nums = cellfun( @(x) str2double(x(nsite+1:end)), sites );
+[~, ind] = sort( nums );
+sites = sites( ind );
+
+new_sites = cell( 1, 16 );
+stp = 1;
+
+for i = 1:16
+  inds = stp:stp+16-1;
+  j = datasample( inds, 1 );
+  new_sites{i} = sites{j};
+  stp = stp + 16;
+end
+
+obj = obj.only( new_sites );
 
 end

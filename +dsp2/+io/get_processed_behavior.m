@@ -14,21 +14,28 @@ manip = C{2};
 collapse_after_load = C{3};
 
 defaults.config = dsp2.config.load();
+defaults.load_required = true;
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
+
+conf = params.config;
+
+summary_func = conf.BEHAVIOR.meaned.summary_function;
 
 %   check whether we need to load in new data, or if we can reuse the
 %   last loaded data.
 
-load_required = isequal( read_measure, [] ) || ...
+load_required = ...
+  params.load_required || ...
+  isequal( read_measure, [] ) || ...
   isequal( prev, [] ) || ...
   ~strcmp( meas_type, prev.meas_type );
 
-io = dsp2.io.get_dsp_h5( 'config', params.config );
+io = dsp2.io.get_dsp_h5( 'config', conf );
 
 if ( load_required )
   fprintf( '\n\t Loading ... ' );
-  pathstr = dsp2.io.get_path( 'behavior' );
+  pathstr = dsp2.io.get_path( 'behavior', 'config', conf );
 
   read_measure = io.read( pathstr );
   read_measure = SignalContainer( read_measure.data, read_measure.labels );
@@ -68,6 +75,11 @@ switch ( meas_type )
     measure = get_preference_index( measure, calc_within );
     measure = measure.replace( 'other_none', 'otherMinusNone' );
     measure = measure.replace( 'both_self', 'selfMinusBoth' );
+  case 'prosocial_preference'
+    %   TODO: Implement this.
+    error( 'Not yet implemented!' );
+  case 'preference_proportion'
+    measure = get_preference_proportion( measure, calc_within );
   case 'error_frequency'
     addtl = { 'outcomes' };
     measure = get_error_frequency( measure, [calc_within, addtl] );
@@ -81,6 +93,10 @@ end
 
 m_within = { 'outcomes', 'monkeys', 'trialtypes', 'days', 'drugs' };
 
+if ( strcmp(meas_type, 'gaze_frequency') )
+  m_within = [ m_within, {'look_period', 'looks_to'} ];
+end
+
 if ( ~is_drug )
   measure = measure.collapse( 'drugs' );
   required = { 'outcomes' };
@@ -92,13 +108,13 @@ else
   require_per = setdiff( m_within, required );
 end
 
-measure = measure.for_each( m_within, @nanmean );
+measure = measure.parfor_each( m_within, summary_func );
 
 un = measure.labels.get_uniform_categories();
 m_within = unique( [un(:)', m_within] );
 measure = measure.collapse_except( m_within );
 %   for each `require_per`, ensure all 'outcomes' are present.
-measure = measure.for_each( require_per, @require, measure.combs(required) );
+measure = measure.parfor_each( require_per, @require, measure.combs(required) );
 
 if ( is_pro_v_anti && ~isequal(meas_type, 'preference_index') )
   measure = dsp2.process.manipulations.pro_v_anti( measure );

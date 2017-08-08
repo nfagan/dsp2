@@ -4,35 +4,43 @@ function lines(varargin)
 %     and manipulations.
 
 defaults.config = dsp2.config.load();
-defaults.date = '072017';
+defaults.date = '072117';
+defaults.kind = 'meaned';
+defaults.measures = { 'normalized_power', 'coherence' };
+defaults.epochs = { 'reward', 'targacq' };
+defaults.manipulations = { 'pro_v_anti' };
+defaults.to_collapse = { {'trials', 'monkeys'} };
+defaults.formats = { 'png', 'epsc', 'fig' };
+defaults.plotby = 'frequency';
+defaults.compare_series = false;
+defaults.p_correct_type = 'fdr';
+defaults.match_limits_across_files = true;
+defaults.rois = Container( {[8, 15]; [15, 30]; [30, 50]; [50, 70]}, 'epochs', 'targacq' );
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
 conf = params.config;
 
-base_save_path = fullfile( conf.PATHS.plots, params.date, 'lines_median2' );
+base_save_path = fullfile( conf.PATHS.plots, params.date, 'lines' );
+formats = params.formats;
+compare_series = params.compare_series;
 
-formats = { 'png', 'epsc' };
-
-% rois = Container( {[0, 300]; [-150, 150]}, 'epochs', {'reward'; 'targacq'} );
-roi1 = Container( {[8, 15]; [15, 30]; [25, 50]; [50, 70]}, 'epochs', 'targacq' );
-roi2 = Container( {[8, 15]; [15, 30]; [25, 50]; [50, 70]}, 'epochs', 'reward' );
-rois = roi1.append( roi2 );
+rois = params.rois;
 
 pl = ContainerPlotter();
+plotby = params.plotby;
+match_lim = params.match_limits_across_files;
 
-plotby = 'time';
+summary_func = conf.PLOT.summary_function;
+sfunc_name = func2str( summary_func );
 
 %   loop over the combinations of each of these
-measures = { 'coherence' };
-epochs = { 'reward' };
-% manipulations = { ...
-%     'pro_v_anti', 'pro_minus_anti', 'pro_v_anti_drug' ...
-%   , 'pro_minus_anti_drug', 'pro_v_anti_drug_minus_sal' ...
-%   , 'pro_minus_anti_drug_minus_sal' ...
-% };
-manipulations = { 'pro_v_anti' };
-to_collapse = { {'trials', 'monkeys'} };
+measures = params.measures;
+epochs = params.epochs;
+manipulations = params.manipulations;
+to_collapse = params.to_collapse;
+
+kind = params.kind;
 
 C = dsp2.util.general.allcomb( {measures, epochs, manipulations, to_collapse} );
 
@@ -50,7 +58,7 @@ for i = 1:size(C, 1)
     require_load = false;
   end
   
-  measure = dsp2.io.get_processed_measure( C(i, :), 'meaned' ...
+  measure = dsp2.io.get_processed_measure( C(i, :), kind ...
     , 'config', conf ...
     , 'load_required', require_load ...
   );
@@ -61,6 +69,8 @@ for i = 1:size(C, 1)
   [~, c] = measure.get_indices( figs_for_each );
   roi = rois.only( epoch );
   
+  fig_filenames = {};
+  
   for k = 1:size(c, 1)
     for kk = 1:shape( roi, 1 )
       clf( F );
@@ -70,20 +80,23 @@ for i = 1:size(C, 1)
       pl.default();
       pl.save_outer_folder = base_save_path;
       pl.add_ribbon = true;
-      pl.summary_function = conf.PLOT.summary_function;
+      pl.summary_function = summary_func;
       pl.error_function = conf.PLOT.error_function;
+      pl.compare_series = compare_series;
+      pl.p_correct_type = params.p_correct_type;
 
       measure_ = measure.only( c(k, :) );
 
       if ( isequal(plotby, 'frequency') )
+        measure_ = measure_.keep_within_freqs( [0, 100] );
         measure_ = measure_.time_mean( roi_{:} );
         pl.x = measure_.frequencies;
         pl.x_label = 'Hz';
         f_str = sprintf( '%0.1f_to_%0.1f_ms', roi_{1}(1), roi_{1}(2) );
       else
         switch ( epoch )
-          case 'targacq'
-            measure_ = measure_.keep_within_times( [-300, 350] );
+          case {'targacq', 'targon'}
+            measure_ = measure_.keep_within_times( [-350, 300] );
           case 'reward'
             measure_ = measure_.keep_within_times( [-500, 500] );
         end
@@ -105,16 +118,39 @@ for i = 1:size(C, 1)
 
       for j = 1:numel(formats)
         fmt = formats{j};
-        full_save_path = fullfile( base_save_path, meas_type, epoch, manip, fmt );
+        full_save_path = fullfile( base_save_path, sfunc_name, meas_type ...
+          , kind, epoch, manip, fmt );
 
         dsp2.util.general.require_dir( full_save_path );
 
         full_fname = fullfile( full_save_path, [fname, '.', formats{j}] );
         saveas( gcf, full_fname, formats{j} );
+        
+        if ( strcmp(formats{j}, 'fig') )
+          fig_filenames{end+1} = full_fname;
+        end
       end
     end
-  end 
+  end
   
+  if ( match_lim && ~isempty(fig_filenames) )
+    editor = FigureEdits( fig_filenames );
+    lims = editor.ylim();
+    mins = Inf;
+    maxs = -Inf;
+    for k = 1:numel(lims)
+      lim = lims{k};
+      if ( iscell(lim) )
+        lim = cell2mat( lims{k} );
+        lim = min( lim, [], 1 );
+      end
+      mins = min( mins, lim(1) );
+      maxs = max( maxs, lim(2) );
+    end
+    editor.ylim( [mins, maxs] );
+    editor.save();
+    editor.reset();
+  end
 end
 
 end
