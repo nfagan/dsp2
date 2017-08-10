@@ -14,11 +14,15 @@ PATHS.analyses = 'E:\nick_data\ANALYSES';
 PATHS.analysis_subfolder = 'E:\nick_data\ANALYSES\020317';
 PATHS.pre_processed_signals = 'H:\SIGNALS\processed';
 PATHS.plots = 'E:\nick_data\PLOTS';
+PATHS.repositories = 'C:\Users\changLab\Repositories';
 
 PATHS.H5.signals = 'Signals';
 PATHS.H5.measures = 'Measures';
 PATHS.H5.signal_measures = 'Measures/Signals';
 PATHS.H5.behavior_measures = 'Measures/Behavior';
+
+% - DEPENDS - %
+DEPENDENCIES = { 'global', 'dsp', 'h5_api' };
 
 % - DATABASES - %
 DATABASES.sqlite_file = 'dictator_signals.sqlite';
@@ -100,12 +104,13 @@ PLOT.summary_function = @nanmedian;
 PLOT.error_function = @ContainerPlotter.mad_1d;
 
 % - SAVE - %
-opts.PATHS =      PATHS;
-opts.DATABASES =  DATABASES;
-opts.SIGNALS =    SIGNALS;
-opts.BEHAVIOR =   BEHAVIOR;
-opts.LABELS =     LABELS;
-opts.PLOT =       PLOT;
+opts.PATHS =        PATHS;
+opts.DEPENDENCIES = DEPENDENCIES;
+opts.DATABASES =    DATABASES;
+opts.SIGNALS =      SIGNALS;
+opts.BEHAVIOR =     BEHAVIOR;
+opts.LABELS =       LABELS;
+opts.PLOT =         PLOT;
 
 dsp2.config.save( opts );
 dsp2.config.save( opts, '-default' );

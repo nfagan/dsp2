@@ -30,9 +30,17 @@ switch ( params.dist )
     error( 'Unrecognized distribution ''%s''', params.dist );
 end
 
-cont = Container();
+if ( size(prod, 1) > 16 )
+  assert( size(prod, 1) == 256, 'Too many pairs.' );
+  %   for consistency
+  dsp2.util.general.seed_rng();
+  prod = random_pairs( reg1_chans, reg2_chans, 16 );
+  rng( 'shuffle' );
+end
 
-for i = 1:size(prod, 1)
+cont = cell( 1, size(prod, 1) );
+
+parfor i = 1:size(prod, 1)
   fprintf( '\n Processing %d of %d', i, size(prod, 1) );
   row = prod(i, :);
   subset = signals.only( row );
@@ -54,7 +62,23 @@ for i = 1:size(prod, 1)
   collapsed.data = data;
   collapsed( 'channels' ) = strjoin( row, '_' );
   collapsed( 'regions' ) = strjoin( {reg1, reg2}, '_' );
-  cont = cont.append( collapsed );
+  cont{i} = collapsed;
+end
+
+cont = extend( cont{:} );
+
+end
+
+function pairs = random_pairs(reg1, reg2, N)
+
+pairs = cell( N, 2 );
+
+for i = 1:N
+  ind1 = randperm( numel(reg1), 1 );
+  ind2 = randperm( numel(reg2), 1 );
+  pairs(i, :) = [reg1(ind1), reg2(ind2)];
+  reg1(ind1) = [];
+  reg2(ind2) = [];
 end
 
 end

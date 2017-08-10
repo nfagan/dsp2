@@ -138,11 +138,13 @@ function [data, fres] = calc_granger( permute_per_variable )
     [G, info] = var_to_autocov( A, SIG, max_lags );
     [spect, fres] = autocov_to_spwcgc( G, n_freqs );
     %   ensure no complex values.
-    var_info( info );
+    if ( info.error > 0 )
+      error( info.errmsg );
+    end
+%     var_info( info );
     if ( any(~isreal(spect(:))) )
       fprintf( '\n Warning: Some values were complex.' );
     end
-%     assert( ~any(~isreal(spect(:))), 'Some values were complex.' );
     %   preallocate once we know the size of data
     if ( i == 1 )
       data = zeros( n_vars, n_vars, size(spect, 3), n_perms );

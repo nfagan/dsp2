@@ -116,7 +116,12 @@ for i = 1:numel(epochs)
       baseline = io.read( full_loadpath_baseline, 'only', new_days{k} );
     end
     if ( is_sfcoherence )
-      wideband = io.read( full_loadpath_wideband, 'only', new_days{k} );
+      try
+        wideband = io.read( full_loadpath_wideband, 'only', new_days{k} );
+      catch err
+        warning( err.message );
+        continue;
+      end
     end
     
     fprintf( 'Done' );
@@ -167,23 +172,34 @@ for i = 1:numel(epochs)
         wideband.params = signal_container_params;
         
         wideband = update_min( update_max(wideband) );
-        wideband = wideband.filter( 'cutoffs', mua_cutoffs );
+        
+        spikes = wideband.filter( 'cutoffs', mua_cutoffs );
+        spikes = spikes.update_range();
+        
+        wideband = wideband.filter();
         wideband = wideband.update_range();
 
-        spikes = dsp2.process.spike.get_mua_psth( wideband, mua_devs );
+        spikes = dsp2.process.spike.get_mua_psth( spikes, mua_devs );
 
-        measure = Container();
         regs = { 'bla'; 'acc' };
         reg_combs = dsp2.util.general.allcomb( {regs, regs} );
         dups = strcmp( reg_combs(:, 1), reg_combs(:, 2) );
         reg_combs( dups, : ) = [];
+        n_combs = size( reg_combs, 1 );
+        
+        measure = cell( 1, n_combs );
 
-        for j = 1:size(reg_combs, 1)
-          spike = only( spikes, reg_combs{j, 1} );
-          signal = only( signals, reg_combs{j, 2} );
+        for j = 1:n_combs
+          row = reg_combs(j, :);
+          fprintf( '\n\t\t Processing ''%s'' (%d of %d)', strjoin(row, ' <-> ') ...
+            , j, n_combs);
+          spike = only( spikes, row{1} );
+          signal = only( wideband, row{2} );
           sfcoh = spike.run_sfcoherence( signal );
-          measure = measure.append( sfcoh );
+          measure{j} = sfcoh;
         end
+        
+        measure = extend( measure{:} );
       case 'raw_power'
         measure = signals.run_raw_power();
       case 'normalized_power'
@@ -212,7 +228,7 @@ for i = 1:numel(epochs)
     
     fprintf( 'Done' );
     
-    measure = measure.keep_within_freqs( [0, 250] );
+    measure = measure.keep_within_freqs( [0, 500] );
     
     dsp2.util.assertions.assert__enough_space( 'E:\', 150 );
     
