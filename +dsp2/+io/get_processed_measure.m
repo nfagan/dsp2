@@ -110,8 +110,7 @@ end
 % cs2.table( 'monkeys' );
 
 switch ( manip )
-  case { 'standard', 'pro_v_anti', 'pro_minus_anti' }
-    
+  case { 'standard', 'pro_v_anti', 'pro_minus_anti' }    
     measure = dsp2.process.manipulations.non_drug_effect( measure );
     m_within = { 'outcomes', 'monkeys', 'trialtypes', 'regions', 'days', 'sites' };
     measure = measure.parfor_each( m_within, summary_func );

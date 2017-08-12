@@ -14,6 +14,9 @@ params = dsp2.util.general.parsestruct( defaults, varargin );
 
 conf = params.config;
 
+data_disk = conf.PATHS.data_disk;
+min_free_space = conf.DATABASES.min_free_space;
+
 io = dsp2.io.get_dsp_h5( 'config', conf );
 io.ALLOW_REWRITE = true;
 db = dsp2.database.get_sqlite_db( 'config', conf );
@@ -64,11 +67,13 @@ for i = 1:numel( epochs )
   reformat_days_to_add = reformatted_db_sessions( inds );
   db_days_to_add = group_by_day( reformat_days_to_add, db_days_to_add );
   
-  for k = 1:numel(db_days_to_add)
-    
-    dsp2.util.assertions.assert__enough_space( 'E:\', 150 );
+  for k = 1:numel(db_days_to_add)    
+    if ( conf.DATABASES.check_free_space )
+      dsp2.util.assertions.assert__enough_space( data_disk, min_free_space );
+    end
     
     db_day = db_days_to_add{k};
+    
     try 
       signals = dsp2.io.get_signals( ...
           'config', conf ...
@@ -79,6 +84,7 @@ for i = 1:numel( epochs )
       warning( err.message );
       continue;
     end
+    
     signal_container = signals{1};
     signal_container.params = conf.SIGNALS.signal_container_params;
     io.add( signal_container, full_savepath );

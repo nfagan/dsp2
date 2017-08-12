@@ -18,9 +18,13 @@ conf = dsp2.config.set.inactivate_epochs( 'all' );
 conf = dsp2.config.set.activate_epochs( {'targAcq', 'rwdOn'}, conf );
 % conf = dsp2.config.set.activate_epochs( 'targOn', conf );
 
-conf.SIGNALS.reference_type = 'non_common_averaged';
+ref_types = { 'none', 'non_common_averaged' };
 
-dsp2.analysis.run( 'sfcoherence', 'config', conf );
+for i = 1:numel(ref_types)
+%   conf.SIGNALS.reference_type = 'non_common_averaged';
+  conf.SIGNALS.reference_type = ref_types{i};
+  dsp2.analysis.run( 'raw_power', 'config', conf );
+end
 % dsp2.analysis.run( 'coherence', 'config', conf );
 % dsp2.analysis.run( 'normalized_power', 'config', conf );
 % dsp2.analysis.run( 'raw_power', 'config', conf );

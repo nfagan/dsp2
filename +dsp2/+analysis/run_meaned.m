@@ -24,6 +24,9 @@ params = dsp2.util.general.parsestruct( defaults, varargin );
 
 conf = params.config;
 
+data_disk = conf.PATHS.data_disk;
+min_free_space = conf.DATABASES.min_free_space;
+
 m_within = conf.SIGNALS.meaned.mean_within;
 
 pre_mean_ops = conf.SIGNALS.meaned.pre_mean_operations;
@@ -86,7 +89,9 @@ for i = 1:numel(epochs)
     continue;
   end
   
-  dsp2.util.assertions.assert__enough_space( 'E:\', 150 );
+  if ( conf.DATABASES.check_free_space )
+    dsp2.util.assertions.assert__enough_space( data_disk, min_free_space );
+  end
   
   for k = 1:numel(new_days)
     fprintf( '\n\t Processing ''%s'' (%d of %d)', new_days{k}, k, numel(new_days) );

@@ -15,6 +15,7 @@ PATHS.analysis_subfolder = 'E:\nick_data\ANALYSES\020317';
 PATHS.pre_processed_signals = 'H:\SIGNALS\processed';
 PATHS.plots = 'E:\nick_data\PLOTS';
 PATHS.repositories = 'C:\Users\changLab\Repositories';
+PATHS.data_disk = 'E:\';
 
 PATHS.H5.signals = 'Signals';
 PATHS.H5.measures = 'Measures';
@@ -28,6 +29,8 @@ DEPENDENCIES = { 'global', 'dsp', 'h5_api' };
 DATABASES.sqlite_file = 'dictator_signals.sqlite';
 DATABASES.h5_file = 'measures.h5';
 DATABASES.allow_overwrite = false;
+DATABASES.check_free_space = true;
+DATABASES.min_free_space = 150;   % gb
 
 % - EPOCHS - %
 EPOCHS.fixOn =    struct( 'time', [0 2000],     'win_size', 150, 'stp_size', 50, 'active', false );

@@ -45,7 +45,7 @@ switch ( path_type )
 end
 
 if ( ~io.is_set(pathstr) && ~io.is_group(pathstr) )
-  warning( 'The path ''%s'' might not be valid.', pathstr );
+  warning( 'The path ''%s'' is not a group or dataset.', pathstr );
 end
 
 end

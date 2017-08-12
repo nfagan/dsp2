@@ -31,7 +31,7 @@ pref = Container();
 
 for i = 1:numel(outcome_pairs)
   pair = outcome_pairs{i};
-  pref_ = obj.do( within, @get_index, pair{:} );
+  pref_ = obj.for_each( within, @get_index, pair{:} );
   pref = pref.append( pref_ );
 end
 

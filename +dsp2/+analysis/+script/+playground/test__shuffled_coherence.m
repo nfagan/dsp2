@@ -1,11 +1,42 @@
+%%  load signals
 io = dsp2.io.get_dsp_h5();
 P = 'Signals/none/complete/targacq';
-days = io.get_days( P );
+signals = io.read( P );
+conf = dsp2.config.load();
+save_path = fullfile( conf.PATHS.analyses, '072617', 'signals', 'shuffled_coherence' );
 
-for i = 1:numel(days)
-  fprintf( '\n Processing %d of %d', i, numel(days) );
-  
-  signals = io.read( P, 'only', days{i} );
-  
-  dsp2.analysis.playground.test__shuffled_coherence( signals, i );
+%%  coh for each day
+
+days = signals( 'days' );
+for i = 38:numel(days)
+  fprintf( '\n Processing ''%s'' (%d of %d)', days{i}, i, numel(days) );
+  signal = only( signals, days{i} );
+  dsp2.analysis.playground.test__shuffled_coherence( signal, i, save_path );
 end
+
+%%  load .mats
+
+coh = dsp2.util.general.load_mats( save_path );
+coh = extend( coh{:} );
+
+%%  avg
+
+m_within = { 'outcomes', 'trialtypes', 'days', 'sites', 'regions' };
+medianed = coh.parfor_each( m_within, @nanmedian );
+medianed = dsp2.process.manipulations.pro_v_anti( medianed );
+
+m_within2 = setdiff( m_within, {'days', 'sites'} );
+
+medianed = medianed.parfor_each( m_within2, @nanmean );
+
+%%
+
+plt = medianed;
+plt = plt.rm( {'cued', 'errors'} );
+
+plt.spectrogram( {'outcomes', 'trialtypes', 'monkeys'} ...
+  , 'frequencies', [0, 100] ...
+  , 'time', [-350, 300] ...
+  , 'clims', [-.01 .01] ...
+  , 'shape', [1, 2] ...
+);

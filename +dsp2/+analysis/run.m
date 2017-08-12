@@ -36,6 +36,9 @@ params = dsp2.util.general.parsestruct( defaults, varargin );
 
 conf = params.config;
 
+data_disk = conf.PATHS.data_disk;
+min_free_space = conf.DATABASES.min_free_space;
+
 io = dsp2.io.get_dsp_h5( 'config', conf );
 
 signal_container_params = conf.SIGNALS.signal_container_params;
@@ -230,7 +233,9 @@ for i = 1:numel(epochs)
     
     measure = measure.keep_within_freqs( [0, 500] );
     
-    dsp2.util.assertions.assert__enough_space( 'E:\', 150 );
+    if ( conf.DATABASES.check_free_space )
+      dsp2.util.assertions.assert__enough_space( data_disk, min_free_space );
+    end
     
     %   remove days that exist already, if we manually specified days.
     if ( io.is_container_group(full_savepath) )
