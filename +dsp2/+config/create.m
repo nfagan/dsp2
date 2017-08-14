@@ -1,9 +1,14 @@
-function opts = create()
+function opts = create(do_save)
 
 %   CREATE -- Create the config file.
 %
+%     IN:
+%       - `do_save` (logical) |OPTIONAL| -- True if the config file should
+%         be saved. Default is true.
 %     OUT:
 %       - `opts` (struct)
+
+if ( nargin == 0 ), do_save = true; end
 
 opts = struct();
 
@@ -21,6 +26,9 @@ PATHS.H5.signals = 'Signals';
 PATHS.H5.measures = 'Measures';
 PATHS.H5.signal_measures = 'Measures/Signals';
 PATHS.H5.behavior_measures = 'Measures/Behavior';
+
+% - CLUSTER - %
+CLUSTER.use_cluster = false;
 
 % - DEPENDS - %
 DEPENDENCIES = { 'global', 'dsp', 'h5_api' };
@@ -108,6 +116,7 @@ PLOT.error_function = @ContainerPlotter.mad_1d;
 
 % - SAVE - %
 opts.PATHS =        PATHS;
+opts.CLUSTER =      CLUSTER;
 opts.DEPENDENCIES = DEPENDENCIES;
 opts.DATABASES =    DATABASES;
 opts.SIGNALS =      SIGNALS;
@@ -115,7 +124,9 @@ opts.BEHAVIOR =     BEHAVIOR;
 opts.LABELS =       LABELS;
 opts.PLOT =         PLOT;
 
-dsp2.config.save( opts );
-dsp2.config.save( opts, '-default' );
+if ( do_save )
+  dsp2.config.save( opts );
+  dsp2.config.save( opts, '-default' );
+end
 
 end

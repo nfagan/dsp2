@@ -8,5 +8,6 @@ function p = require_parpool()
 p = gcp( 'nocreate' );
 if ( ~isempty(p) ), return; end
 p = parpool( feature('NumCores') );
+p.IdleTimeout = Inf;
 
 end

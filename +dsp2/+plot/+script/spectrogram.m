@@ -2,11 +2,13 @@
 
 conf = dsp2.config.load();
 
-date = '072617';
+dsp2.cluster.init();
+
+date = datestr( now, 'mmddyy' );
 kinds = { 'nanmedian' };
 sfuncs = { @nanmean };
-measures = { 'coherence' };
-epochs = { 'targacq' };
+measures = { 'sfcoherence' };
+epochs = { 'targacq', 'reward' };
 manipulations = { 'pro_v_anti' };
 to_collapse = { {'trials', 'monkeys'} };
 
