@@ -14,7 +14,7 @@ to_collapse = { {'trials', 'monkeys'} };
 
 cmbs = dsp2.util.general.allcomb( {sfuncs, kinds} );
 
-use_custom_limits = true;
+use_custom_limits = false;
 
 for i = 1:size(cmbs, 1)
   row = cmbs(i, :);
@@ -30,6 +30,7 @@ for i = 1:size(cmbs, 1)
     , 'epochs', epochs ...
     , 'manipulations', manipulations ...
     , 'to_collapse', to_collapse ...
+    , 'use_custom_limits', use_custom_limits ... 
     , 'config', conf ...
   );
 end
