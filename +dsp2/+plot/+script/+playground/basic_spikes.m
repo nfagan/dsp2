@@ -1,8 +1,9 @@
 %%
 selectors = { 'only', 'day__06092017' };
-spikes = dsp2.io.get_spikes( 'targacq', 'selectors', selectors );
+spikes = dsp2.io.get_spikes( 'reward', 'selectors', selectors );
 baseline = dsp2.io.get_spikes( 'magcue', 'selectors', selectors );
 %%
+
 bin_size = 25;
 binned = dsp2.process.spike.get_sps( spikes, bin_size );
 base_binned = dsp2.process.spike.get_sps( baseline, bin_size );
@@ -37,6 +38,10 @@ pl = ContainerPlotter();
 pl.x = start:bin_size:start+amt-1;
 pl.x_label = sprintf( 'Time (ms) from %s', strjoin(plt('epochs'), ', ') );
 pl.y_label = 'sp/s';
-pl.add_ribbon = true;
+% pl.add_ribbon = true;
+
+plt = plt.require_fields( 'proanti' );
+plt( 'proanti', plt.where({'self','none'}) ) = 'anti';
+plt( 'proanti', plt.where({'both','other'}) ) = 'pro';
 
 plt.plot( pl, 'outcomes', {'regions', 'trialtypes'} );
