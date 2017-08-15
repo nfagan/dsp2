@@ -7,10 +7,11 @@ dsp2.io.add_raw_data_to_database( new_datafolder );
 
 conf = dsp2.config.load();
 conf.SIGNALS.handle_missing_trials = 'skip';
-conf = dsp2.config.set.inactivate_epochs( 'cueOn', conf );
-conf.SIGNALS.EPOCHS.rwdOn.time = [-500, 500];
+% conf = dsp2.config.set.inactivate_epochs( 'cueOn', conf );
+% conf.SIGNALS.EPOCHS.rwdOn.time = [-500, 500];
+conf = dsp2.config.set.activate_epochs( 'cueOn', conf );
 dsp2.io.add_processed_signals( 'config', conf, 'wideband', true );
-dsp2.io.add_processed_behavior();
+% dsp2.io.add_processed_behavior();
 
 %%  calculate + save raw power, coherence, and normalized power
 
