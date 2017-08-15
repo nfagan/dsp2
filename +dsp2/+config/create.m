@@ -39,6 +39,7 @@ DATABASES.h5_file = 'measures.h5';
 DATABASES.allow_overwrite = false;
 DATABASES.check_free_space = true;
 DATABASES.min_free_space = 150;   % gb
+DATABASES.n_days_per_group = 1;
 
 % - EPOCHS - %
 EPOCHS.fixOn =    struct( 'time', [0 2000],     'win_size', 150, 'stp_size', 50, 'active', false );
