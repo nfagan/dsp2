@@ -12,7 +12,7 @@ dsp2.util.general.require_dir( save_path );
 
 days = signals( 'days' );
 N = numel( days );
-parfor i = 1:numel(days)
+for i = 1:numel(days)
   signal = only( signals, days{i} );
   dsp2.analysis.playground.test__shuffled_coherence( signal, i, save_path );
 end

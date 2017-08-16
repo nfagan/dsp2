@@ -1,8 +1,13 @@
 %%  load .mats
 
-save_path = fullfile( conf.PATHS.analyses, date_dir, 'signals', 'shuffled_coherence' );
+date_dir = datestr( now, 'mmddyy' );
 
-coh = dsp2.util.general.load_mats( save_path );
+load_path = fullfile( conf.PATHS.analyses, '072617', 'signals', 'shuffled_coherence' );
+save_path = fullfile( conf.PATHS.plots, date_dir, 'lines', 'shuffled_coherence' );
+
+dsp2.util.general.require_dir( save_path );
+
+coh = dsp2.util.general.load_mats( load_path );
 coh = extend( coh{:} );
 
 %%  avg
@@ -13,11 +18,11 @@ medianed = dsp2.process.manipulations.pro_v_anti( medianed );
 
 m_within2 = setdiff( m_within, {'days', 'sites'} );
 
-medianed = medianed.parfor_each( m_within2, @nanmean );
+meaned = medianed.parfor_each( m_within2, @nanmean );
 
 %%  spectra
 
-plt = medianed;
+plt = meaned;
 plt = plt.rm( {'cued', 'errors'} );
 
 plt.spectrogram( {'outcomes', 'trialtypes', 'monkeys'} ...
@@ -32,10 +37,24 @@ plt.spectrogram( {'outcomes', 'trialtypes', 'monkeys'} ...
 plt = medianed;
 plt = plt.rm( {'cued', 'errors'} );
 
-freq_roi = [ 15, 30 ];
+time_roi = [ -200, 0 ];
 
-plt = plt.freq_mean( freq_roi );
+plt = plt.time_mean( time_roi );
+plt.data = squeeze( plt.data );
+
+figure(1); clf();
 
 pl = ContainerPlotter();
+pl.add_ribbon = true;
+pl.x = plt.frequencies;
+pl.compare_series = true;
 
-plt.plot( pl, 'outcomes', 'trialtypes' )
+plt.plot( pl, 'outcomes', {'trialtypes', 'epochs'} );
+
+fname = fullfile( save_path, 'pro_anti_lines' );
+
+dsp2.util.general.save_fig( gcf, fname, {'fig', 'png', 'epsc'} );
+
+% saveas( gcf, 'pro_anti', 'fig' );
+% saveas( gcf, 'pro_anti', 'eps' );
+
