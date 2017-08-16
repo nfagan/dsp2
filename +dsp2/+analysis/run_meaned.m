@@ -115,6 +115,8 @@ for i = 1:numel(epochs)
     end
     fprintf( 'Done' );
     fprintf( '\n\t Saving ... ' );
+    %   check whether to abort
+    if ( dsp2.cluster.should_abort(conf) ), return; end
     io.add( meaned, full_mean_path );
     fprintf( 'Done' );
   end

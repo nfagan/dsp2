@@ -7,7 +7,7 @@ n_per_group = conf.DATABASES.n_days_per_group;
 days = dsp2.util.general.group_cell( days, n_per_group );
 all_meaned = Container();
 bin_size = 25;
-epoch = 'targon';
+epoch = 'reward';
 baseline_epoch = 'magcue';
 
 for k = 1:numel(days)  

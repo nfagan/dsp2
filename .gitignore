@@ -3,3 +3,4 @@
 .DS_Store
 +dsp2/+config/config.mat
 +dsp2/+config/default.mat
+.analysis_status.txt
