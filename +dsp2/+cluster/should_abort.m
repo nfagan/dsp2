@@ -27,7 +27,12 @@ file_exists = exist( fname, 'file' ) > 0;
 
 if ( ~file_exists ), return; end
 
-contents = fileread( fname );
+try
+  contents = fileread( fname );
+catch err
+  warning( err.message );
+  return;
+end
 
 if ( numel(contents) < numel('abort') ), return; end
 if ( ~isempty(strfind(lower(contents), 'abort')) )
