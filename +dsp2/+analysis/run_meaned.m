@@ -24,6 +24,8 @@ params = dsp2.util.general.parsestruct( defaults, varargin );
 
 conf = params.config;
 
+if ( dsp2.cluster.should_abort(conf) ), return; end
+
 data_disk = conf.PATHS.data_disk;
 min_free_space = conf.DATABASES.min_free_space;
 

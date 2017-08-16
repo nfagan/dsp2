@@ -25,6 +25,7 @@ for i = 1:numel(mats)
   day = signal( 'days' );
   
   if ( any(strcmp(current_days, day)) ), continue; end
+  if ( dsp2.cluster.should_abort(conf) ), continue; end
   
   io.add( signal, pathstr );
 end

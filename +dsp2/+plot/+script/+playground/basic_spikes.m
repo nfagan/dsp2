@@ -39,7 +39,7 @@ save_path = fullfile( conf.PATHS.plots, date_dir, 'mua_psth' );
 dsp2.util.general.require_dir( save_path );
 
 plt = all_meaned;
-plt = plt.rm( {'ref', 'errors'} );
+plt = plt.rm( {'ref', 'errors', 'cued'} );
 
 for i = 1:size(plt.data, 1)
   plt.data(i, :) = smooth( plt.data(i, :) );
@@ -58,6 +58,7 @@ pl = ContainerPlotter();
 pl.x = start:bin_size:start+amt-1;
 pl.x_label = sprintf( 'Time (ms) from %s', strjoin(plt('epochs'), ', ') );
 pl.y_label = 'sp/s';
+pl.y_lim = [.9, 1.5];
 pl.add_ribbon = true;
 
 plt = plt.require_fields( 'proanti' );
