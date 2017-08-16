@@ -27,5 +27,9 @@ for i = 1:numel(mats)
   if ( any(strcmp(current_days, day)) ), continue; end
   if ( dsp2.cluster.should_abort(conf) ), continue; end
   
+  write_str = sprintf( '%s (%d of %d)', mats{i}, i, numel(mats) );
+  
+  dsp2.cluster.tmp_write( sprintf('Saving %s', write_str) );
   io.add( signal, pathstr );
+  dsp2.cluster.tmp_write( sprintf('Done saving %s', write_str) );
 end
