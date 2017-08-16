@@ -17,19 +17,24 @@ if ( io.is_container_group(pathstr) )
   current_days = io.get_days( pathstr );
 end
 
-for i = 1:numel(mats)
+for i = 1:numel(mats)  
+  write_str = sprintf( '%s (%d of %d)\n', mats{i}, i, numel(mats) );
+  dsp2.cluster.tmp_write( sprintf('Loading %s', write_str) );
+  
   signal = load( fullfile(signal_path, mats{i}) );
   fs = char( fieldnames(signal) );
   signal = signal.(fs);
   
   day = signal( 'days' );
   
-  if ( any(strcmp(current_days, day)) ), continue; end
-  if ( dsp2.cluster.should_abort(conf) ), continue; end
+  dsp2.cluster.tmp_write( sprintf('Done loading %s', write_str) );
   
-  write_str = sprintf( '%s (%d of %d)', mats{i}, i, numel(mats) );
+  if ( any(strcmp(current_days, day)) ), continue; end
+  if ( dsp2.cluster.should_abort(conf) ), break; end
   
   dsp2.cluster.tmp_write( sprintf('Saving %s', write_str) );
   io.add( signal, pathstr );
   dsp2.cluster.tmp_write( sprintf('Done saving %s', write_str) );
 end
+
+dsp2.cluster.tmp_write( 'Done.\n' );
