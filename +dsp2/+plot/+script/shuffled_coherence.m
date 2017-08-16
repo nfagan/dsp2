@@ -3,7 +3,7 @@
 conf = dsp2.config.load();
 
 date_dir = datestr( now, 'mmddyy' );
-epoch = 'reward';
+epoch = 'targacq';
 basepl = conf.PATHS.analyses;
 baseps = conf.PATHS.plots;
 
@@ -21,7 +21,7 @@ coh = extend( coh{:} );
 m_within = { 'outcomes', 'trialtypes', 'days', 'sites', 'regions' };
 medianed = coh.parfor_each( m_within, @nanmedian );
 medianed = dsp2.process.manipulations.pro_v_anti( medianed );
-medianed = dsp2.process.manipulations.pro_minus_anti( medianed );
+% medianed = dsp2.process.manipulations.pro_minus_anti( medianed );
 
 m_within2 = setdiff( m_within, {'days', 'sites'} );
 
@@ -29,7 +29,7 @@ meaned = medianed.parfor_each( m_within2, @nanmean );
 
 %%  spectra
 
-kind = 'pro_minus_anti';
+kind = 'pro_v_anti';
 
 figure(1); clf();
 
@@ -65,7 +65,7 @@ fname = 'pro_anti_lines';
 plt = medianed;
 plt = plt.rm( {'errors'} );
 
-time_roi = [ 50, 250 ];
+time_roi = [ -200, 50 ];
 
 plt = plt.time_mean( time_roi );
 plt.data = squeeze( plt.data );
@@ -87,10 +87,10 @@ pl.compare_series = true;
 
 plt_.plot( pl, 'outcomes', {'trialtypes', 'epochs'} );
 
-fname = dsp2.util.general.append_uniques( plt_, fname, figs_for );
-fname = fullfile( save_path_l, fname );
+full_fname = dsp2.util.general.append_uniques( plt_, fname, figs_for );
+full_fname = fullfile( save_path_l, full_fname );
 
-dsp2.util.general.save_fig( gcf, fname, {'fig', 'png', 'epsc'} );
+dsp2.util.general.save_fig( gcf, full_fname, {'fig', 'png', 'epsc'} );
 
 end
 

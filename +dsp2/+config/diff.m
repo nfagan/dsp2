@@ -65,8 +65,8 @@ join_func = @(x) sprintf( '%s.%s', parent, x );
 
 if ( numel(missing) > 0 )
   if ( display )
-    fprintf( '\n%s%s', tabrep(ntabs), parent );
-    cellfun( @(x) fprintf('\n%s%s', tabrep(ntabs+1), x), missing, 'un', false );
+    fprintf( '\n%s - %s', tabrep(ntabs), parent );
+    cellfun( @(x) fprintf('\n%s - %s', tabrep(ntabs+1), x), missing, 'un', false );
   end
   missed{end+1} = cellfun( join_func, missing, 'un', false );
 end

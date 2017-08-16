@@ -246,9 +246,18 @@ for i = 1:numel(epochs)
       end
     end
     fprintf( '\n\t Saving ... ' );
+    base_write_str = sprintf( '%s (%d of %d)', new_days{k}, k, numel(new_days) );
+    if ( conf.CLUSTER.use_cluster )
+      write_str = sprintf( 'Saving %s', base_write_str );
+      dsp2.cluster.tmp_write( write_str );
+    end
     %   add in the data.
     io.add( measure, full_savepath );
     fprintf( 'Done' );
+    if ( conf.CLUSTER.use_cluster )
+      write_str = sprintf( 'Done saving %s', base_write_str );
+      dsp2.cluster.tmp_write( write_str );
+    end
   end
 end
 

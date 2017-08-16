@@ -13,6 +13,7 @@ if ( nargin == 0 ), do_save = true; end
 opts = struct();
 
 % - PATHS - %
+PATHS.home = 'C:\Users\changLab';
 PATHS.signals = 'H:\SIGNALS';
 PATHS.database = 'E:\SIGNALS\dictator\database';
 PATHS.analyses = 'E:\nick_data\ANALYSES';
@@ -21,6 +22,7 @@ PATHS.pre_processed_signals = 'H:\SIGNALS\processed';
 PATHS.plots = 'E:\nick_data\PLOTS';
 PATHS.repositories = 'C:\Users\changLab\Repositories';
 PATHS.data_disk = 'E:\';
+PATHS.job_output = 'C:\Users\changLab\Desktop';
 
 PATHS.H5.signals = 'Signals';
 PATHS.H5.measures = 'Measures';

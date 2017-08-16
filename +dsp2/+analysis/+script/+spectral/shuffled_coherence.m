@@ -1,6 +1,6 @@
 %%  load signals
 io = dsp2.io.get_dsp_h5();
-epoch = 'reward';
+epoch = 'targon';
 P = io.fullfile( 'Signals/none/complete/', epoch );
 signals = io.read( P );
 conf = dsp2.config.load();

@@ -14,11 +14,11 @@ P = dsp2.io.get_path( allinps{:} );
 % day = 'day__05272017';
 day = 'day__01062017';
 
-ref_measure = io.read( P, 'only', day, 'frequencies', [0, 100] );
+ref_measure = io.read( P, 'only', day, 'frequencies', [0, 100], 'time', [-500, 500] );
 conf.SIGNALS.reference_type = 'none';
 allinps = [ inps, {'config', conf} ];
 P = dsp2.io.get_path( allinps{:} );
-noref_measure = io.read( P, 'only', day, 'frequencies', [0, 100] );
+noref_measure = io.read( P, 'only', day, 'frequencies', [0, 100], 'time', [-500, 500] );
 % noref_measure = noref_measure.rm( 'ref' );
 
 noref_measure = noref_measure.require_fields( 'reference_type' );
@@ -86,12 +86,12 @@ measures2 = measures2.for_each( group_within, @(x) group_trials(x(19:28)) );
 % measures2 = measures2.parfor_each( {'regions', 'reference_type', 'outcomes'}, @nanmean );
 
 %%
-
-spath = fullfile( pathfor('PLOTS'), '081417', 'ref_v_no_ref', meas_type, 'all_channels_full' );
+date_dir = datestr( now, 'mmddyy' );
+spath = fullfile( pathfor('PLOTS'), date_dir, 'ref_v_no_ref', meas_type, 'all_channels_full' );
 spath = fullfile( spath, day, 'received_v_forgone' );
 
-% regs = measures2( 'channels' );
-regs = unique( measures2('channels', measures2.where('ref')) );
+regs = measures2( 'channels' );
+% regs = unique( measures2('channels', measures2.where('ref')) );
 
 flimit = 30;
 

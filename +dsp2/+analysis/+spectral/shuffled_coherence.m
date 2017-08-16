@@ -1,4 +1,4 @@
-function test__shuffled_coherence( signals, iter, save_path )
+function shuffled_coherence( signals, iter, save_path )
 
 conf = dsp2.config.load();
 
