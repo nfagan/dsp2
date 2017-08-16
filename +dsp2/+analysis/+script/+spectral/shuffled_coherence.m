@@ -14,5 +14,5 @@ days = signals( 'days' );
 N = numel( days );
 for i = 1:numel(days)
   signal = only( signals, days{i} );
-  dsp2.analysis.playground.test__shuffled_coherence( signal, i, save_path );
+  dsp2.analysis.spectral.shuffled_coherence( signal, i, save_path );
 end
