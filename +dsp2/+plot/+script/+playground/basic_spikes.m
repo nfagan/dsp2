@@ -3,10 +3,11 @@
 conf = dsp2.config.load();
 
 days = dsp2.io.get_days( 'Signals/none/wideband/magcue' );
-days = dsp2.util.general.group_cell( days, conf.DATABASES.n_days_per_group );
+n_per_group = conf.DATABASES.n_days_per_group;
+days = dsp2.util.general.group_cell( days, n_per_group );
 all_meaned = Container();
 bin_size = 25;
-epoch = 'targacq';
+epoch = 'targon';
 baseline_epoch = 'magcue';
 
 for k = 1:numel(days)  
@@ -33,9 +34,12 @@ for k = 1:numel(days)
 end
 
 %%
+date_dir = datestr( now, 'mmddyy' );
+save_path = fullfile( conf.PATHS.plots, date_dir, 'mua_psth' );
+dsp2.util.general.require_dir( save_path );
 
 plt = all_meaned;
-plt = plt.rm( {'ref', 'errors', 'cued'} );
+plt = plt.rm( {'ref', 'errors'} );
 
 for i = 1:size(plt.data, 1)
   plt.data(i, :) = smooth( plt.data(i, :) );
@@ -46,6 +50,8 @@ scale_factor = spikes.fs / 1e3;
 start = spikes.start;
 stop = spikes.stop + spikes.window_size;
 amt = stop - start;
+
+figure(1); clf();
 
 pl = ContainerPlotter();
 
@@ -59,3 +65,10 @@ plt( 'proanti', plt.where({'self', 'none'}) ) = 'anti';
 plt( 'proanti', plt.where({'both', 'other'}) ) = 'pro';
 
 plt.plot( pl, 'outcomes', {'regions', 'trialtypes'} );
+
+fname = dsp2.util.general.append_uniques( plt, 'mua', 'epochs' );
+fname = fullfile( save_path, fname );
+
+dsp2.util.general.save_fig( gcf, fname, {'eps', 'png', 'fig'} );
+
+

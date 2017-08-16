@@ -1,10 +1,15 @@
 %%  load .mats
 
-date_dir = datestr( now, 'mmddyy' );
+conf = dsp2.config.load();
 
-load_path = fullfile( conf.PATHS.analyses, '072617', 'signals', 'shuffled_coherence' );
-save_path_l = fullfile( conf.PATHS.plots, date_dir, 'lines', 'shuffled_coherence' );
-save_path_s = fullfile( conf.PATHS.plots, date_dir, 'spectra', 'shuffled_coherence' );
+date_dir = datestr( now, 'mmddyy' );
+epoch = 'reward';
+basepl = conf.PATHS.analyses;
+baseps = conf.PATHS.plots;
+
+load_path = fullfile( basepl, date_dir, 'signals', 'shuffled_coherence', epoch );
+save_path_l = fullfile( baseps, date_dir, 'lines', 'shuffled_coherence' );
+save_path_s = fullfile( baseps, date_dir, 'spectra', 'shuffled_coherence' );
 
 dsp2.util.general.require_dirs( {save_path_l, save_path_s} );
 
@@ -24,50 +29,68 @@ meaned = medianed.parfor_each( m_within2, @nanmean );
 
 %%  spectra
 
+kind = 'pro_minus_anti';
+
 figure(1); clf();
 
 plt = meaned;
-plt = plt.rm( {'cued', 'errors'} );
+plt = plt.rm( {'errors'} );
 
-plt.spectrogram( {'outcomes', 'trialtypes', 'monkeys'} ...
+figs_for = { 'trialtypes', 'epochs' };
+
+plt = plt.enumerate( figs_for );
+
+for i = 1:numel(plt)
+  
+plt_ = plt{i};
+
+plt_.spectrogram( {'outcomes', 'trialtypes', 'monkeys'} ...
   , 'frequencies', [0, 100] ...
   , 'time', [-350, 300] ...
   , 'clims', [-.01 .01] ...
   , 'shape', [1, 2] ...
 );
 
-kind = 'pro_minus_anti';
-
-fname = dsp2.util.general.append_uniques( plt, kind, {'epochs'} );
+fname = dsp2.util.general.append_uniques( plt_, kind, figs_for );
 fname = fullfile( save_path_s, fname );
 
 dsp2.util.general.save_fig( gcf, fname, {'fig', 'png', 'epsc'} );
 
+end
+
 %%  lines
 
-plt = medianed;
-plt = plt.rm( {'cued', 'errors'} );
+fname = 'pro_anti_lines';
 
-time_roi = [ -200, 0 ];
+plt = medianed;
+plt = plt.rm( {'errors'} );
+
+time_roi = [ 50, 250 ];
 
 plt = plt.time_mean( time_roi );
 plt.data = squeeze( plt.data );
+
+figs_for = { 'trialtypes', 'epochs' };
+
+plt = plt.enumerate( figs_for );
+
+for i = 1:numel(plt)
+
+plt_ = plt{i};
 
 figure(1); clf();
 
 pl = ContainerPlotter();
 pl.add_ribbon = true;
-pl.x = plt.frequencies;
+pl.x = plt_.frequencies;
 pl.compare_series = true;
 
-plt.plot( pl, 'outcomes', {'trialtypes', 'epochs'} );
+plt_.plot( pl, 'outcomes', {'trialtypes', 'epochs'} );
 
-fname = 'pro_anti_lines';
-fname = dsp2.util.general.append_uniques( plt, fname, {'epochs'} );
+fname = dsp2.util.general.append_uniques( plt_, fname, figs_for );
 fname = fullfile( save_path_l, fname );
 
 dsp2.util.general.save_fig( gcf, fname, {'fig', 'png', 'epsc'} );
 
-% saveas( gcf, 'pro_anti', 'fig' );
-% saveas( gcf, 'pro_anti', 'eps' );
+end
 
