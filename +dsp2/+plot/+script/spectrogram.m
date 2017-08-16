@@ -9,7 +9,7 @@ kinds = { 'nanmedian' };
 sfuncs = { @nanmean };
 measures = { 'sfcoherence' };
 epochs = { 'targacq', 'reward' };
-manipulations = { 'standard' };
+manipulations = { 'pro_minus_anti' };
 to_collapse = { {'trials', 'monkeys'} };
 
 cmbs = dsp2.util.general.allcomb( {sfuncs, kinds} );
