@@ -9,7 +9,8 @@ conf = dsp2.config.load();
 conf.SIGNALS.handle_missing_trials = 'skip';
 % conf = dsp2.config.set.inactivate_epochs( 'cueOn', conf );
 % conf.SIGNALS.EPOCHS.rwdOn.time = [-500, 500];
-conf = dsp2.config.set.activate_epochs( 'cueOn', conf );
+conf = dsp2.config.set.inactivate_epochs( 'all', conf );
+conf = dsp2.config.set.activate_epochs( 'targOn', conf );
 dsp2.io.add_processed_signals( 'config', conf, 'wideband', true );
 % dsp2.io.add_processed_behavior();
 

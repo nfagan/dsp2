@@ -1,7 +1,9 @@
 %%
 
+conf = dsp2.config.load();
+
 days = dsp2.io.get_days( 'Signals/none/wideband/magcue' );
-days = dsp2.util.general.group_cell( days, 2 );
+days = dsp2.util.general.group_cell( days, conf.DATABASES.n_days_per_group );
 all_meaned = Container();
 bin_size = 25;
 epoch = 'targacq';

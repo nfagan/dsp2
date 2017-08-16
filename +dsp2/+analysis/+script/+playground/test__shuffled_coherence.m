@@ -1,14 +1,16 @@
 %%  load signals
 io = dsp2.io.get_dsp_h5();
-P = 'Signals/none/complete/targacq';
+epoch = 'reward';
+P = io.fullfile( 'Signals/none/complete/', epoch );
 signals = io.read( P );
 conf = dsp2.config.load();
-save_path = fullfile( conf.PATHS.analyses, '072617', 'signals', 'shuffled_coherence' );
+date_dir = datestr( now, 'mmddyy' );
+save_path = fullfile( conf.PATHS.analyses, datedir, 'signals', 'shuffled_coherence' );
 
 %%  coh for each day
 
 days = signals( 'days' );
-for i = 38:numel(days)
+for i = 1:numel(days)
   fprintf( '\n Processing ''%s'' (%d of %d)', days{i}, i, numel(days) );
   signal = only( signals, days{i} );
   dsp2.analysis.playground.test__shuffled_coherence( signal, i, save_path );

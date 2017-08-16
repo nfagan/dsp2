@@ -16,7 +16,6 @@ cumulative = 0;
 all_ids = nan( shape(obj, 1), 1 );
 
 for i = 1:numel(inds)
-  fprintf( '\n Processing %d of %d', i, numel(inds) );
   extr = obj(inds{i});
   channels = unique( extr('channels') );
   day = char( unique(extr('days')) );
