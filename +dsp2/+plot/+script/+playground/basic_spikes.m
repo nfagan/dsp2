@@ -66,7 +66,7 @@ plt( 'proanti', plt.where({'both', 'other'}) ) = 'pro';
 
 plt.plot( pl, 'outcomes', {'regions', 'trialtypes'} );
 
-fname = dsp2.util.general.append_uniques( plt, 'mua', 'epochs' );
+fname = dsp2.util.general.append_uniques( plt, 'mua', {'epochs', 'trialtypes'} );
 fname = fullfile( save_path, fname );
 
 dsp2.util.general.save_fig( gcf, fname, {'eps', 'png', 'fig'} );

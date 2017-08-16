@@ -3,7 +3,7 @@
 conf = dsp2.config.load();
 
 date_dir = datestr( now, 'mmddyy' );
-epoch = 'targacq';
+epoch = 'reward';
 basepl = conf.PATHS.analyses;
 baseps = conf.PATHS.plots;
 
@@ -21,7 +21,7 @@ coh = extend( coh{:} );
 m_within = { 'outcomes', 'trialtypes', 'days', 'sites', 'regions' };
 medianed = coh.parfor_each( m_within, @nanmedian );
 medianed = dsp2.process.manipulations.pro_v_anti( medianed );
-% medianed = dsp2.process.manipulations.pro_minus_anti( medianed );
+medianed = dsp2.process.manipulations.pro_minus_anti( medianed );
 
 m_within2 = setdiff( m_within, {'days', 'sites'} );
 
@@ -29,7 +29,7 @@ meaned = medianed.parfor_each( m_within2, @nanmean );
 
 %%  spectra
 
-kind = 'pro_v_anti';
+kind = 'pro_minus_anti';
 
 figure(1); clf();
 
@@ -40,13 +40,19 @@ figs_for = { 'trialtypes', 'epochs' };
 
 plt = plt.enumerate( figs_for );
 
+if ( strcmp(epoch, 'reward') )
+  time_roi = [-500, 500];
+else
+  time_roi = [-350, 300];
+end
+
 for i = 1:numel(plt)
   
 plt_ = plt{i};
 
 plt_.spectrogram( {'outcomes', 'trialtypes', 'monkeys'} ...
   , 'frequencies', [0, 100] ...
-  , 'time', [-350, 300] ...
+  , 'time', time_roi ...
   , 'clims', [-.01 .01] ...
   , 'shape', [1, 2] ...
 );

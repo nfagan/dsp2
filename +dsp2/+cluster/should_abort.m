@@ -29,7 +29,8 @@ if ( ~file_exists ), return; end
 
 contents = fileread( fname );
 
-if ( numel(contents) == numel('abort') && strcmpi(contents, 'abort') )
+if ( numel(contents) < numel('abort') ), return; end
+if ( ~isempty(strfind(lower(contents), 'abort')) )
   tf = true;
 end
 
