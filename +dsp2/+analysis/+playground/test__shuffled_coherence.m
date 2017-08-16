@@ -11,12 +11,12 @@ signals = update_min( update_max(signals) );
 
 for i = 1:numel(days)
   iter = iter + i - 1;
-  one_day( signals.only(days{i}), iter, save_path, m_within, sfunc );
+  one_day( signals.only(days{i}), iter, save_path, m_within, sfunc, conf );
 end
 
 end
 
-function one_day(signals, iter, save_path, m_within, sfunc)
+function one_day(signals, iter, save_path, m_within, sfunc, conf)
 
 ref_ind = signals.where( 'ref' );
 ref = signals.keep( ref_ind );
