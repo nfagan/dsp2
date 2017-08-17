@@ -35,7 +35,7 @@ un_processed = setdiff( complete_days, meaned_days );
 un_processed = dsp2.util.general.group_cell( un_processed, ngroup );
 meaned_days = dsp2.util.general.group_cell( meaned_days, ngroup );
 
-for i = 4:numel(un_processed)
+for i = i:numel(un_processed)
   if ( dsp2.cluster.should_abort() ), break; end
   days = un_processed{i};
   day_str = strjoin( days, '_' );
