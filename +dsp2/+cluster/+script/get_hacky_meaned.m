@@ -13,7 +13,7 @@ P = dsp2.io.get_path( 'Measures', 'sfcoherence', 'nanmedian', 'targon' );
 io_days = io.get_days( P );
 
 load_path = fullfile( conf.PATHS.analyses, '081717', 'sfcoherence' );
-save_path = fullfile( conf.PATHS.plots, '081717', 'sfcoherence_meaned' );
+save_path = fullfile( conf.PATHS.analyses, '081717', 'sfcoherence_meaned' );
 
 dsp2.util.general.require_dir( fullfile(save_path, manipulation) );
 

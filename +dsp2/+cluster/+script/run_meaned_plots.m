@@ -53,6 +53,8 @@
 
 dsp2.cluster.init();
 
+epoch = 'targon';
+
 conf = dsp2.config.load();
 
 manipulation = 'pro_minus_anti';
