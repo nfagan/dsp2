@@ -27,7 +27,7 @@ un_processed = setdiff( complete_days, meaned_days );
 un_processed = dsp2.util.general.group_cell( un_processed, ngroup );
 meaned_days = dsp2.util.general.group_cell( meaned_days, ngroup );
 
-for i = 1:numel(un_processed)
+for i = 4:numel(un_processed)
   if ( dsp2.cluster.should_abort() ), break; end
   days = un_processed{i};
   day_str = strjoin( days, '_' );
@@ -39,7 +39,9 @@ for i = 1:numel(un_processed)
   sites = loaded( 'sites' );
   if ( numel(sites) > 16 )
     dsp2.util.general.seed_rng();
-    loaded = loaded.parfor_each( {'regions', 'days'}, @subsample, 'sites', 16 );
+    loaded = loaded.parfor_each( {'regions', 'days'} ...
+      , @dsp2.util.general.conditional_subsample, 'sites', 16 );
+%     loaded = loaded.parfor_each( {'regions', 'days'}, @subsample, 'sites', 16 );
   end
   dsp2.cluster.tmp_write( sprintf('Averaging %s\n', write_str) );
   loaded = dsp2.process.outliers.keep_non_clipped( loaded );
