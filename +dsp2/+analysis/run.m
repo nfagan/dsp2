@@ -252,7 +252,7 @@ for i = 1:numel(epochs)
     base_write_str = sprintf( '%s (%d of %d)', new_days{k}, k, numel(new_days) );
     if ( conf.CLUSTER.use_cluster )
       write_str = sprintf( 'Saving %s', base_write_str );
-      dsp2.cluster.tmp_write( write_str );
+      dsp2.util.cluster.tmp_write( write_str );
     end
     %   check whether to abort
     if ( dsp2.cluster.should_abort(conf) ), return; end
@@ -261,7 +261,7 @@ for i = 1:numel(epochs)
     fprintf( 'Done' );
     if ( conf.CLUSTER.use_cluster )
       write_str = sprintf( 'Done saving %s', base_write_str );
-      dsp2.cluster.tmp_write( write_str );
+      dsp2.util.cluster.tmp_write( write_str );
     end
   end
 end

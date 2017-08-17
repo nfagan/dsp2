@@ -11,7 +11,7 @@ function assert__is_cellstr_or_char( val, var_kind )
 
 if ( nargin < 2 ), var_kind = 'input'; end
 if ( ~ischar(val) )
-  assert( iscellstr(val), ['Expected the ''%s'' to be a cell array of strings' ...
+  assert( iscellstr(val), ['Expected %s to be a cell array of strings' ...
     , ' or a char; was a ''%s'''], var_kind, class(val) );
 end
 
