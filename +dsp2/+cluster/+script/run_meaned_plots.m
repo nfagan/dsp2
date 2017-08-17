@@ -51,9 +51,14 @@
 %   measure = measure.append( coh );
 % end
 
-measure = dsp2.cluster.script.get_hacky_meaned( 'pro_minus_anti' );
+dsp2.cluster.init();
 
-measure = measure.parfor_each( setdiff(m_within, {'days', 'sites'}), @nanmean );
+conf = dsp2.config.load();
+
+manipulation = 'pro_minus_anti';
+save_path = fullfile( conf.PATHS.plots, datestr(now, 'mmddyy'), 'spectra' );
+
+measure = dsp2.cluster.script.get_hacky_meaned( 'pro_minus_anti' );
 
 figs_for_each = { 'monkeys', 'regions', 'drugs', 'trialtypes' };
 [~, c] = measure.get_indices( figs_for_each );

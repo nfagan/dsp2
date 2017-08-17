@@ -4,6 +4,8 @@ if ( nargin < 1 )
   manipulation = 'pro_minus_anti';
 end
 
+dsp2.util.cluster.tmp_write();
+
 conf = dsp2.config.load();
 
 io = dsp2.io.get_dsp_h5();
@@ -18,6 +20,7 @@ dsp2.util.general.require_dir( fullfile(save_path, manipulation) );
 measure_fname = fullfile( save_path, manipulation, 'measure.mat' );
 
 if ( exist(measure_fname, 'file') > 0 )
+  dsp2.util.cluster.tmp_write( {'Returning saved measure for %s', manipulation} );
   load( measure_fname );
   return;
 end
@@ -31,6 +34,7 @@ m_within = { 'outcomes', 'monkeys', 'trialtypes', 'regions', 'days', 'sites' };
 measure = Container();
 
 for i = 1:numel(mats)
+  dsp2.util.cluster.tmp_write( {'Mat load %d of %d\n', i, numel(mats)} );
   load( mats{i} );
   coh = coh.collapse( {'trials', 'monkeys'} );
   coh = coh.parfor_each( m_within, @nanmean );
@@ -44,9 +48,12 @@ for i = 1:numel(mats)
   measure = measure.append( coh );
 end
 
+dsp2.util.cluster.tmp_write( 'Done mat loading\n' );
+
 io_days = setdiff( io_days, measure('days') );
 
 for i = 1:numel(io_days)
+  dsp2.util.cluster.tmp_write( {'Io load %d of %d\n', i, numel(mats)} );
   coh = io.read( P, 'only', io_days{i} );
   coh = coh.collapse( {'trials', 'monkeys'} );
   coh = coh.parfor_each( m_within, @nanmean );
@@ -60,6 +67,12 @@ for i = 1:numel(io_days)
   measure = measure.append( coh );
 end
 
+dsp2.util.cluster.tmp_write( 'Done io loading\nSaving\n' );
+
+measure = measure.parfor_each( setdiff(m_within, {'days', 'sites'}), @nanmean );
+
 save( measure_fname, 'measure' );
+
+dsp2.util.cluster.tmp_write( 'Done.' );
 
 end
