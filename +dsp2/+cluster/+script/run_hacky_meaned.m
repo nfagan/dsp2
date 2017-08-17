@@ -24,7 +24,9 @@ complete_days = strsplit( complete_days, '_' );
 complete_days = complete_days( 2:2:end );
 complete_days = cellfun( @(x) ['day__', x], complete_days, 'un', false );
 
-% complete_days = io.get_days( pcomplete );
+all_complete_days = io.get_days( pcomplete );
+complete_days = setdiff( all_complete_days, complete_days );
+
 meaned_days = {};
 
 if ( io.is_container_group(pmeaned) )
@@ -35,7 +37,7 @@ un_processed = setdiff( complete_days, meaned_days );
 un_processed = dsp2.util.general.group_cell( un_processed, ngroup );
 meaned_days = dsp2.util.general.group_cell( meaned_days, ngroup );
 
-for i = i:numel(un_processed)
+for i = 1:numel(un_processed)
   if ( dsp2.cluster.should_abort() ), break; end
   days = un_processed{i};
   day_str = strjoin( days, '_' );
