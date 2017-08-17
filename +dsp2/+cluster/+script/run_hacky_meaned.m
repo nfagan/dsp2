@@ -34,6 +34,7 @@ for i = 1:numel(un_processed)
   write_str = sprintf( '%s (%d of %d)', day_str, i, numel(un_processed) );
   dsp2.cluster.tmp_write( sprintf('Loading %s\n', write_str) );
   loaded = io.read( pcomplete, 'only', days );
+  loaded = loaded.rm( 'choice' );
   dsp2.cluster.tmp_write( sprintf('Done loading %s\n', write_str) );
   sites = loaded( 'sites' );
   if ( numel(sites) > 16 )
@@ -55,6 +56,7 @@ dsp2.cluster.tmp_write( 'Done averaging new days\nWriting old days\n' );
 for i = 1:numel(meaned_days)
   if ( dsp2.cluster.should_abort() ), break; end
   coh = io.read( pmeaned, 'only', meaned_days{i} );
+  coh = coh.rm( 'choice' );
   day_str = srjoin( meaned_days{i}, '_' );
   write_str = sprintf( '%s (%d of %d)', day_str, i, numel(meaned_days) );
   fname = fullfile( save_path, [day_str, '.mat'] );
