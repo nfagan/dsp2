@@ -1,10 +1,11 @@
 conf = dsp2.config.load();
 
-epoch = 'targon';
+epoch = 'targacq';
 date_dir = datestr( now, 'mmddyy' );
-kind = 'standard';
+kind = 'pro_minus_anti';
 save_path = fullfile( conf.PATHS.plots, date_dir, 'mua_psth_raw', kind );
 do_normalize = false;
+bin_size = 25;
 % ylims = [-12.5, 12.5];
 ylims = [45, 90];
 
@@ -70,6 +71,6 @@ for k = 1:numel(plts)
   fname = dsp2.util.general.append_uniques( plt, 'mua', {'epochs', 'trialtypes'} );
   fname = fullfile( save_path, fname );
 
-  dsp2.util.general.save_fig( gcf, fname, {'eps', 'png', 'fig'} );
+%   dsp2.util.general.save_fig( gcf, fname, {'eps', 'png', 'fig'} );
 
 end

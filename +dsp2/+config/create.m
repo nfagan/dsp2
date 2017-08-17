@@ -32,6 +32,8 @@ PATHS.H5.behavior_measures = 'Measures/Behavior';
 % - CLUSTER - %
 CLUSTER.use_cluster = false;
 CLUSTER.analysis_status_filename = '.analysis_status.txt';
+CLUSTER.user_name = 'naf3';
+CLUSTER.host_name = 'chang1.milgram.hpc.yale.internal';
 
 % - DEPENDS - %
 DEPENDENCIES = { 'global', 'dsp', 'h5_api' };
