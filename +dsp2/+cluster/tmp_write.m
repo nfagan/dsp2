@@ -2,6 +2,11 @@ function tmp_write(str, fname, conf)
 
 %   TMP_WRITE -- Write text to a temporary text file.
 %
+%     ... tmp_write( 'value' ) appends 'value' to the text file 'tmp.txt',
+%     stored in `conf.PATHS.job_output`.
+%
+%     ... tmp_write( '-clear' ) clears the contents of the file.
+%
 %     IN:
 %       - `str` (char) -- String to write.
 %       - `fname` (char) |OPTIONAL| -- Filename. Defaults to 'tmp.txt'.
@@ -14,7 +19,13 @@ dsp2.util.assertions.assert__isa( str, 'char', 'the file contents' );
 dsp2.util.assertions.assert__isa( conf, 'struct', 'the config file' );
 
 fname = fullfile( conf.PATHS.job_output, fname );
-fid = fopen( fname, 'w+' );
+
+if ( strcmpi(str, '-clear') )
+  fid = fopen( fname, 'wt' );
+  str = '';
+else
+  fid = fopen( fname, 'at' );
+end
 
 try
   fprintf( fid, str );

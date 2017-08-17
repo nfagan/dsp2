@@ -16,4 +16,4 @@ dsp2.analysis.run_meaned( 'sfcoherence', 'config', conf );
 
 dsp2.cluster.tmp_write( 'Done calculating meaned.' );
 
-exit();
+% exit();
