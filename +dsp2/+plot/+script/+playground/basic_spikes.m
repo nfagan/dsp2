@@ -11,12 +11,10 @@ ylims = [45, 90];
 load_path = fullfile( conf.PATHS.analyses, '081617', 'spikes' );
 
 %   load
-spikes = load( fullfile(load_path, [epoch, '.mat']) );
-spikes = spikes.(char(fieldnames(spikes)));
+spikes = dsp2.util.general.fload( fullfile(load_path, [epoch, '.mat']) );
 
 if ( do_normalize )
-  baseline = load( fullfile(load_path, 'magcue.mat') );
-  baseline = baseline.(char(fieldnames(baseline)));
+  baseline = dsp2.util.general.fload( fullfile(load_path, 'magcue.mat') );
   baseline = baseline.mean(2);
   for i = 1:size(spikes.data, 2)
     spikes.data(:, i) = spikes.data(:, i) ./ baseline.data;

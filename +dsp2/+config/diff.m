@@ -68,7 +68,7 @@ if ( numel(missing) > 0 )
     fprintf( '\n%s - %s', tabrep(ntabs), parent );
     cellfun( @(x) fprintf('\n%s - %s', tabrep(ntabs+1), x), missing, 'un', false );
   end
-  missed{end+1} = cellfun( join_func, missing, 'un', false );
+  missed(end+1:end+numel(missing)) = cellfun( join_func, missing, 'un', false );
 end
 
 for i = 1:numel(shared)
