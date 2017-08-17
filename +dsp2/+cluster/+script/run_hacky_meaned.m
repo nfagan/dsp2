@@ -16,7 +16,14 @@ dsp2.util.general.require_dir( save_path );
 
 dsp2.cluster.tmp_write( '-clear' );
 
-complete_days = io.get_days( pcomplete );
+complete_days = dsp2.util.general.dirstruct( save_path, '.mat' );
+complete_days = cellfun( @(x) x(1:end-4), complete_days, 'un', false );
+complete_days = strjoin( complete_days, '_' );
+complete_days = strsplit( complete_days, '_' );
+complete_days = complete_days( 2:2:end );
+complete_days = cellfun( @(x) ['day__', x], complete_days, 'un', false );
+
+% complete_days = io.get_days( pcomplete );
 meaned_days = {};
 
 if ( io.is_container_group(pmeaned) )
@@ -41,7 +48,6 @@ for i = 4:numel(un_processed)
     dsp2.util.general.seed_rng();
     loaded = loaded.parfor_each( {'regions', 'days'} ...
       , @dsp2.util.general.conditional_subsample, 'sites', 16 );
-%     loaded = loaded.parfor_each( {'regions', 'days'}, @subsample, 'sites', 16 );
   end
   dsp2.cluster.tmp_write( sprintf('Averaging %s\n', write_str) );
   loaded = dsp2.process.outliers.keep_non_clipped( loaded );
