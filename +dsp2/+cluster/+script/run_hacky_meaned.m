@@ -17,6 +17,7 @@ dsp2.util.general.require_dir( save_path );
 dsp2.cluster.tmp_write( '-clear' );
 
 complete_days = dsp2.util.general.dirstruct( save_path, '.mat' );
+complete_days = { complete_days(:).name };
 complete_days = cellfun( @(x) x(1:end-4), complete_days, 'un', false );
 complete_days = strjoin( complete_days, '_' );
 complete_days = strsplit( complete_days, '_' );
