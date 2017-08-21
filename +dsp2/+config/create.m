@@ -24,6 +24,8 @@ PATHS.repositories = 'C:\Users\changLab\Repositories';
 PATHS.data_disk = 'E:\';
 PATHS.job_output = 'C:\Users\changLab\Desktop';
 
+PATHS.gaze_data = fullfile( PATHS.analyses, 'gaze' );
+
 PATHS.dynamic = struct();
 
 PATHS.H5.signals = 'Signals';

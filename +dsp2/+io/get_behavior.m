@@ -74,6 +74,13 @@ end
 behavioral_data = behavioral_data.each( @(x) dsp__post_process(x) );
 behavioral_data = behavioral_data.each( @(x) x.remove_empty_indices() );
 
+if ( INCLUDE_GAZE )
+  gd = behavioral_data.gaze_data.data;
+  gd = cellfun( @(x) dsp__post_process(x), gd, 'un', false );
+  gd = cellfun( @(x) x.remove_empty_indices(), gd, 'un', false );
+  behavioral_data.gaze_data.data = gd;
+end
+
 end
 
 function [gaze_data, all_rt] = get_gaze_data( gaze, gaze_fields, event_time )
@@ -87,11 +94,22 @@ assert( all(arrayfun(@(x) ~isempty(x), [x_ind, y_ind, t_ind])) ...
 x = cell( size(gaze, 1), 1 );
 y = cell( size(x) );
 t = cell( size(x) );
+px = cell( size(x) );
+py = cell( size(x) );
+pt = cell( size(x) );
 
-for i = 1:size( gaze, 1 )  
+for i = 1:size( gaze, 1 )
   x{i} = dlmread( gaze{i, x_ind} );
   y{i} = dlmread( gaze{i, y_ind} );
-  t{i} = dlmread( gaze{i, t_ind} );  
+  t{i} = dlmread( gaze{i, t_ind} );
+  fname = strsplit( gaze{i, 1}, '.' );
+  fname = fname{1};
+  others = cellfun( @(x) strjoin({fname, x, 'txt'}, '.'), {'px', 'py', 'pt'} ...
+    , 'un', false );
+  others = cellfun( @dlmread, others, 'un', false );
+  px{i} = others{1};
+  py{i} = others{2};
+  pt{i} = others{3};
 end
 
 n_trials = cellfun( @(a) size(a, 1), x );
@@ -112,6 +130,9 @@ end
 gaze_data.x = x;
 gaze_data.y = y;
 gaze_data.t = t;
+gaze_data.px = px;
+gaze_data.py = py;
+gaze_data.pt = pt;
 
 end
 
@@ -217,15 +238,15 @@ end
 
 function conts = build_gaze_data_containers( gd, labels )
 
-fs = { 'x', 'y', 't' };
+fs = { 'x', 'y', 't', 'px', 'py', 'pt' };
 dsp2.util.assertions.assert__isa( gd, 'struct', 'the gaze data' );
 dsp2.util.assertions.assert__are_fields( gd, fs );
 
 szs = structfun( @(x) numel(x), gd );
 assert( numel(unique(szs)) == 1, 'x, y, and t arrays must be the same size.' );
-sz1 = cell2mat( cellfun( @(x) size(x), gd.x, 'un', false ) );
-for i = 2:3
-  szc = cell2mat( cellfun(@(x) size(x), gd.(fs{i}), 'un', false) );
+sz1 = cellfun( @(x) size(x, 1), gd.(fs{1}) );
+for i = 2:numel(fs)
+  szc = cellfun(@(x) size(x, 1), gd.(fs{i}) );
   assert( isequaln(sz1, szc), 'x, y, and t arrays must be the same size.' );
 end
 

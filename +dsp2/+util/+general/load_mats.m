@@ -1,4 +1,4 @@
-function loaded = load_mats( pathstr )
+function loaded = load_mats( pathstr, verbose )
 
 %   LOAD_MATS -- Load contents of multiple .mat files.
 %
@@ -8,8 +8,11 @@ function loaded = load_mats( pathstr )
 %
 %     IN:
 %       - `pathstr` (char)
+%       - `verbose` (logical) |OPTIONAL| -- Print load progress.
 %     OUT:
 %       - `loaded` (cell array)
+
+if ( nargin < 2 ), verbose = false; end
 
 dsp2.util.assertions.assert__valid_path( pathstr );
 
@@ -22,6 +25,9 @@ mats = cellfun( @(x) fullfile(pathstr, x), mats, 'un', false );
 loaded = cell( 1, numel(mats) );
 
 for i = 1:numel(mats)
+  if ( verbose )
+    fprintf( '\n Processing ''%s'' (%d of %d)', mats{i}, i, numel(mats) );
+  end
   file = mats{i};
   var = load( file );
   fs = fieldnames( var );
