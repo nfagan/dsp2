@@ -1,15 +1,27 @@
+%%  initialize, setup paths, etc.
+
+import dsp2.util.cluster.tmp_write;
+
 dsp2.cluster.init();
 conf = dsp2.config.load();
+%   setup mvgc toolbox
+run( fullfile(conf.PATHS.repositories, 'mvgc_v1.0', 'startup.m') );
+%   get signals
 io = dsp2.io.get_dsp_h5();
-P = 'Signals/none/complete/targacq';
+epoch = 'targacq';
+P = io.fullfile( 'Signals/none/complete', epoch );
 signals = io.read( P );
+%   set up save paths
 date_dir = dsp2.process.format.get_date_dir();
 save_path = fullfile( conf.PATHS.analyses, 'granger', date_dir );
 dsp2.util.general.require_dir( save_path );
 conf.PATHS.dynamic.granger = save_path;
 dsp2.config.save( conf );
 
-%%
+%%  preprocess signals
+
+tmp_write( 'Preprocessing signals ... ' );
+
 signals_ = signals.rm( 'cued' );
 
 signals_ = update_min( update_max(signals_) );
@@ -19,13 +31,15 @@ signals_ = signals_.rm( 'errors' );
 signals_.data = signals_.data(:, 301:500 );
 signals_ = signals_.parfor_each( {'channels', 'days'}, @dsp2.process.reference.detrend );
 
-%%
+tmp_write( 'Done\n' );
+
+%%  run analysis
 
 days = signals_( 'days' );
 
 for i = 1:numel(days)
 
-fprintf( '\n Processing ''%s'' (%d of %d)', days{i}, i, numel(days) );
+tmp_write( {'Processing %s (%d of %d)\n', days{i}, i, numel(days)} );
 
 signals2 = signals_.only( days{i} );
 G = signals2.for_each( {'outcomes', 'days'} ...
