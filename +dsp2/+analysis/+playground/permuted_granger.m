@@ -121,7 +121,10 @@ function [data, fres] = calc_granger( permute_per_variable )
   
   n_permute = n_perms;
   errs = [];
-  for i = 1:n_permute
+  fres = cell( 1, n_permute );
+  tmp_n = n_vars;
+  data = zeros( tmp_n, tmp_n, n_freqs+1, n_permute );
+  parfor i = 1:n_permute
     if ( permute_per_variable )
       %   choose a different set of trials for each channel
       subset = zeros( n_vars, n_obs, n_trials_per_perm );
@@ -136,19 +139,15 @@ function [data, fres] = calc_granger( permute_per_variable )
     end
     [A, SIG] = tsdata_to_var( subset, model_order, regression_method );
     [G, info] = var_to_autocov( A, SIG, max_lags );
-    [spect, fres] = autocov_to_spwcgc( G, n_freqs );
-    %   ensure no complex values.
+    [spect, fres{i}] = autocov_to_spwcgc( G, n_freqs );
     if ( info.error > 0 )
       error( info.errmsg );
     end
-%     var_info( info );
+    %   ensure no complex values.
     if ( any(~isreal(spect(:))) )
       fprintf( '\n Warning: Some values were complex.' );
     end
-    %   preallocate once we know the size of data
-    if ( i == 1 )
-      data = zeros( n_vars, n_vars, size(spect, 3), n_perms );
-    end
+    assert( size(spect, 3) == n_freqs+1, 'Frequency dimension mismatch.' );
     try
       assert( ~isempty(G), 'Granger was empty.' );
       data( :, :, :, i ) = spect;
@@ -158,7 +157,7 @@ function [data, fres] = calc_granger( permute_per_variable )
       errs = [errs; i];
     end
   end
-  fres = sfreqs( fres, fs );
+  fres = sfreqs( fres{1}, fs );
   data(:, :, :, errs) = [];
 end
 

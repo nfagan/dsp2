@@ -37,7 +37,7 @@ else
   SESSIONS = dsp2.util.general.ensure_cell( params.sessions );
 end
 
-behavioral_data = Structure.create( {'trial_info'}, Container() );
+behavioral_data = Structure.create( {'trial_info', 'gaze_data', 'events'}, Container() );
 
 for i = 1:numel(SESSIONS)
   session = sprintf( '"%s"', SESSIONS{i} );
@@ -54,9 +54,13 @@ for i = 1:numel(SESSIONS)
   if ( INCLUDE_GAZE )
     events = cell2mat( events );
     targ_on_time = diff( events, 1, 2 );
-    [~, rt] = get_gaze_data( gaze, DATA_FIELDS.gaze, targ_on_time );
+    [gd, rt] = get_gaze_data( gaze, DATA_FIELDS.gaze, targ_on_time );
     trial_data(:, end+1) = rt;
     fields{end+1} = 'reaction_time';
+    behavioral_data.gaze_data = behavioral_data.gaze_data.append( ...
+      build_gaze_data_containers(gd, labels) ...
+    );
+    behavioral_data.events = behavioral_data.events.append( Container(events, labels) );
   end
   
   cont = Container( trial_data, labels );
@@ -68,6 +72,7 @@ for i = 1:numel(SESSIONS)
 end
 
 behavioral_data = behavioral_data.each( @(x) dsp__post_process(x) );
+behavioral_data = behavioral_data.each( @(x) x.remove_empty_indices() );
 
 end
 
@@ -207,5 +212,46 @@ for i = 1:numel(categories)
 end
 
 labels = SparseLabels( sparse_labels_inputs );
+
+end
+
+function conts = build_gaze_data_containers( gd, labels )
+
+fs = { 'x', 'y', 't' };
+dsp2.util.assertions.assert__isa( gd, 'struct', 'the gaze data' );
+dsp2.util.assertions.assert__are_fields( gd, fs );
+
+szs = structfun( @(x) numel(x), gd );
+assert( numel(unique(szs)) == 1, 'x, y, and t arrays must be the same size.' );
+sz1 = cell2mat( cellfun( @(x) size(x), gd.x, 'un', false ) );
+for i = 2:3
+  szc = cell2mat( cellfun(@(x) size(x), gd.(fs{i}), 'un', false) );
+  assert( isequaln(sz1, szc), 'x, y, and t arrays must be the same size.' );
+end
+
+assert( sum(szc(:,1)) == shape(labels, 1), ['Mismatch between number of' ...
+  , 'trials in gaze data and labels.'] );
+
+ind = false( shape(labels, 1), 1 );
+
+conts = Container();
+
+for i = 1:numel(fs)
+  current = gd.(fs{i});
+  stp = 1;
+  for k = 1:numel(current)
+    rows = size( current{k}, 1 );
+    ind_copy = ind;
+    ind_copy( stp:stp+rows-1 ) = true;
+    sliced = labels.keep( ind_copy );
+    cont = Container( current{k}, sliced );
+    uniform = cont.one();
+    uniform.data = { cont };
+    uniform = uniform.require_fields( 'gaze_data_type' );
+    uniform( 'gaze_data_type' ) = fs{i};
+    conts = conts.append( uniform );
+    stp = stp + rows;
+  end
+end
 
 end

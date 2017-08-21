@@ -40,7 +40,7 @@ end
 
 cont = cell( 1, size(prod, 1) );
 
-parfor i = 1:size(prod, 1)
+for i = 1:size(prod, 1)
   fprintf( '\n Processing %d of %d', i, size(prod, 1) );
   row = prod(i, :);
   subset = signals.only( row );

@@ -24,6 +24,8 @@ PATHS.repositories = 'C:\Users\changLab\Repositories';
 PATHS.data_disk = 'E:\';
 PATHS.job_output = 'C:\Users\changLab\Desktop';
 
+PATHS.dynamic = struct();
+
 PATHS.H5.signals = 'Signals';
 PATHS.H5.measures = 'Measures';
 PATHS.H5.signal_measures = 'Measures/Signals';
