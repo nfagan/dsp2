@@ -34,19 +34,16 @@ errs = errs | event.data(:, 1) < 0;
 event.data( errs, : ) = 0;
 
 psth = get_gaze_psth( event, gaze, 'pt' );
-errs = isnan( psth.data(:, 1) );
 %%  get n minus 1
 
 nmn = psth;
 nmn = nmn.add_field( 'channels', '~c' );
 nmn = nmn.add_field( 'regions', '~r' );
 nmn = SignalContainer( nmn.data, nmn.labels );
-nmn = nmn.for_each( 'gaze_data_type', @add_trial_ids );
-nmn = nmn.keep( ~errs );
 
 nprev = 1;
-nlabel = sprintf( 'n_minus_%d', nprev );
 
+nmn = nmn.for_each( 'gaze_data_type', @add_trial_ids );
 nmn = nmn.for_each( 'gaze_data_type', @get_n_minus_n_distribution, nprev );
 
 %%  save

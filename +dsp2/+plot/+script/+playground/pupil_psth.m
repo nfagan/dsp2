@@ -19,13 +19,13 @@ look_back = tseries.look_back;
 base_x = baselinet.x;
 base_look_back = baselinet.look_back;
 
-errs1 = isnan(psth.data(:, 1)) | isnan(baseline.data(:, 1));
-errs2 = isnan(nmn.data(:, 1)) | isnan(baseline_nmn.data(:, 1));
-
-psth = psth( ~errs1 );
-baseline = baseline( ~errs1 );
-nmn = nmn( ~errs2 );
-baseline_nmn = baseline_nmn( ~errs2 );
+% errs1 = isnan(psth.data(:, 1)) | isnan(baseline.data(:, 1));
+% errs2 = isnan(nmn.data(:, 1)) | isnan(baseline_nmn.data(:, 1));
+% 
+% psth = psth( ~errs1 );
+% baseline = baseline( ~errs1 );
+% nmn = nmn( ~errs2 );
+% baseline_nmn = baseline_nmn( ~errs2 );
 
 %%  normalize
 
@@ -40,6 +40,7 @@ for i = 1:size(dat, 2)
 end
 
 normed.data = dat;
+normed = normed.keep( ~isnan(normed.data(:, 1)) );
 
 %%  
 prev = normed.only( 'n_minus_1' );
