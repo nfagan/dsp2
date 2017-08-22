@@ -6,9 +6,11 @@ conf = dsp2.config.load();
 save_path = fullfile( conf.PATHS.analyses, 'pupil' );
 dsp2.util.general.require_dir( save_path );
 
-pfname = 'psth.mat';
-nfname = 'n_minus_one_size.mat';
-tfname = 'time_series.mat';
+epoch = 'targacq';
+
+pfname = sprintf( 'psth_%s.mat', epoch );
+nfname = sprintf( 'n_minus_one_size_%s.mat', epoch );
+tfname = sprintf( 'time_series_%s.mat', epoch );
 
 [events, key] = dsp2.io.get_events();
 gaze = dsp2.io.get_gaze_data();
@@ -16,14 +18,14 @@ gaze = gaze.only( {'px', 'py', 'pt'} );
 
 %%  get psth
 
-look_back = -.15;
-look_amt = .6;
+look_back = -.2;
+look_amt = .8;
 stp = .004;
 x = look_back:stp:look_amt-abs(look_back);
 
 event = events;
 start = event.data( :, strcmp(key, 'fixOn') );
-event.data = event.data( :, strcmp(key, 'cueOn') );
+event.data = event.data( :, strcmp(key, epoch) );
 errs = event.data == 0 | start == 0;
 event.data = event.data - look_back;
 event.data = event.data - start;
@@ -39,12 +41,12 @@ nmn = psth;
 nmn = nmn.add_field( 'channels', '~c' );
 nmn = nmn.add_field( 'regions', '~r' );
 nmn = SignalContainer( nmn.data, nmn.labels );
+nmn = nmn.for_each( 'gaze_data_type', @add_trial_ids );
 nmn = nmn.keep( ~errs );
 
 nprev = 1;
 nlabel = sprintf( 'n_minus_%d', nprev );
 
-nmn = nmn.for_each( 'gaze_data_type', @add_trial_ids );
 nmn = nmn.for_each( 'gaze_data_type', @get_n_minus_n_distribution, nprev );
 
 %%  save

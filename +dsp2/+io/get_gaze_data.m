@@ -10,8 +10,8 @@ function gaze_data = get_gaze_data(conf)
 if ( nargin < 1 ), conf = dsp2.config.load(); end
 
 loadp = conf.PATHS.gaze_data;
-verbose = true;
-gaze_data = dsp2.util.general.load_mats( loadp, verbose );
+bverbose = true;
+gaze_data = dsp2.util.general.load_mats( loadp, bverbose );
 
 gaze_data = extend( gaze_data{:} );
 

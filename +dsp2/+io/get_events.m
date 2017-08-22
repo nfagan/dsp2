@@ -48,7 +48,7 @@ days = cellfun( @(x) ['day__', x(3:10)], sessions, 'un', false );
 sessions = cellfun( @(x) ['session__', x(1)], sessions, 'un', false );
 
 events = cell2mat( events );
-events = sparse( Container(events, 'days', days, 'sessions', sessions) );
+events = Container( events, 'days', days, 'sessions', sessions );
 
 db.close();
 

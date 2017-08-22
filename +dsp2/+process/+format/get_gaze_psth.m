@@ -5,7 +5,11 @@ function psth = get_gaze_psth( evts, pupil, tlabel )
 %     IN:
 %       - `evts` (Container) -- Event times.
 %       - `pupil` (Container) -- Pupil data.
-%       - `tlabel` (char) -- Label that identifies the time data.
+%       - `tlabel` (char) -- Label that identifies the time samples in
+%         `pupil`.
+%     OUT:
+%       - `psth` (Container) -- Object whose data are an MxN matrix of M
+%         trials by N samples, aligned to `evts`.
 
 import dsp2.util.assertions.*;
 

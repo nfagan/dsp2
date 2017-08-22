@@ -12,9 +12,9 @@ epoch = 'reward';
 tmp_fname = [ epoch, '.txt' ];
 tmp_write( '-clear', tmp_fname );
 P = io.fullfile( 'Signals/none/complete', epoch );
-tmp_write( {'Loading ... %s', epoch}, tmp_fname );
+tmp_write( {'Loading %s ... ', epoch}, tmp_fname );
 signals = io.read( P );
-tmp_write( 'Done loading\n', tmp_fname );
+tmp_write( 'Done\n', tmp_fname );
 %   set up save paths
 save_path = fullfile( conf.PATHS.analyses, 'granger', epoch );
 dsp2.util.general.require_dir( save_path );
