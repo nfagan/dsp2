@@ -2,7 +2,7 @@
 import dsp2.util.general.fload;
 import dsp2.process.format.*;
 
-epoch = 'cueOn';
+epoch = 'targAcq';
 
 conf = dsp2.config.load();
 pathstr = fullfile( conf.PATHS.analyses, 'pupil' );
@@ -35,6 +35,9 @@ normed.data = dat;
 
 %%  n minus n, remove errors
 
+normed = normed.replace( {'self', 'none'}, 'antisocial' );
+normed = normed.replace( {'both', 'other'}, 'prosocial' );
+
 prev = normed.only( 'n_minus_1' );
 curr = normed.only( 'n_minus_0' );
 
@@ -48,37 +51,53 @@ normed = normed.keep( ~isnan(normed.data(:, 1)) );
 %   look at pupil size on the previous trial with respect to the next
 %   trial's outcome
 % prev( 'outcomes' ) = curr( 'outcomes', : );
-curr( 'outcomes' ) = prev( 'outcomes', : );
+% curr( 'outcomes' ) = prev( 'outcomes', : );
+
+ind = prev.where( 'errors' ) | curr.where( 'errors' );
+prev = prev.keep( ~ind );
+curr = curr.keep( ~ind );
+curr = curr.add_field( 'previous_outcome' );
+curr = curr.add_field( 'current_outcome' );
+outs = prev( 'outcomes', : );
+outs = cellfun( @(x) ['previous__', x], outs, 'un', false );
+curr( 'previous_outcome' ) = outs;
+outs = curr( 'outcomes', : );
+outs = cellfun( @(x) ['current__', x], outs, 'un', false );
+curr( 'current_outcome' ) = outs;
 
 %%  plot
 
-% plt = prev.only( 'px' );
-% plt = normed.only( 'px' );
 plt = curr.only( 'px' );
 
-plt = plt.rm( 'errors' );
-plt.data = abs( plt.data );
+% plt = prev.only( 'px' );
+% plt = normed.only( 'px' );
+% plt = curr.only( 'px' );
+% 
+% plt = plt.rm( 'errors' );
+% plt.data = abs( plt.data );
+% 
+% plt1 = plt;
+% plt1 = plt1.replace( {'self', 'none'}, 'antisocial' );
+% plt1 = plt1.replace( {'both', 'other'}, 'prosocial' );
+% plt1 = plt1.add_field( 'group_type', 'pro_v_anti' );
+% 
+% plt2 = plt;
+% plt2 = plt2.add_field( 'group_type', 'per_outcome' );
+% 
+% plt = plt1.append( plt2 );
 
-plt1 = plt;
-plt1 = plt1.replace( {'self', 'none'}, 'antisocial' );
-plt1 = plt1.replace( {'both', 'other'}, 'prosocial' );
-plt1 = plt1.add_field( 'group_type', 'pro_v_anti' );
+% plt = plt.parfor_each( {'outcomes', 'days'}, @mean );
+plt = plt.parfor_each( {'previous_outcome', 'current_outcome', 'sessions', 'blocks', 'days'}, @mean );
 
-plt2 = plt;
-plt2 = plt2.add_field( 'group_type', 'per_outcome' );
-
-plt = plt1.append( plt2 );
-
-plt = plt.parfor_each( {'outcomes', 'days', 'magnitudes'}, @mean );
-
-figure(2); clf();
+figure(1); clf();
 
 pl = ContainerPlotter();
 pl.add_ribbon = true;
 pl.x = x;
 pl.y_lim = [.9, 1.2];
-pl.vertical_lines_at = 0;
+pl.vertical_lines_at = [0, .15]
 pl.y_label = 'Pupil size';
-pl.x_label = 'Time (ms) from mag cue onset';
+pl.x_label = sprintf( 'Time (ms) from %s', epoch );
 
-plt.plot( pl, {'outcomes'}, {'group_type', 'magnitudes'} );
+% plt.plot( pl, {'outcomes'}, {'group_type', 'magnitudes'} );
+plt.plot( pl, 'current_outcome', 'previous_outcome' );
