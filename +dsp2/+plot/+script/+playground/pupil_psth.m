@@ -3,7 +3,9 @@
 conf = dsp2.config.load();
 pathstr = fullfile( conf.PATHS.analyses, 'pupil' );
 nmn = dsp2.util.general.fload( fullfile(pathstr, 'n_minus_one_size.mat') );
-x = dsp2.util.general.fload( fullfile(pathstr, 'time_series.mat') );
+tseries = dsp2.util.general.fload( fullfile(pathstr, 'time_series.mat') );
+x = tseries.x;
+look_back = tseries.look_back;
 
 %%  normalize
 
@@ -37,7 +39,7 @@ plt2 = plt2.add_field( 'group_type', 'per_outcome' );
 
 plt = plt1.append( plt2 );
 
-plt = plt.parfor_each( {'outcomes', 'days'}, @mean );
+plt = plt.parfor_each( {'outcomes', 'days', 'magnitudes'}, @mean );
 
 figure(1); clf();
 
@@ -48,4 +50,4 @@ pl.vertical_lines_at = 0;
 pl.y_label = 'Pupil size';
 pl.x_label = 'Time (ms) from mag cue onset';
 
-plt.plot( pl, {'outcomes'}, 'group_type' );
+plt.plot( pl, {'outcomes'}, {'group_type', 'magnitudes'} );

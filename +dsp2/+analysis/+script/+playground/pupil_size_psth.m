@@ -5,7 +5,9 @@ dsp2.cluster.init();
 conf = dsp2.config.load();
 save_path = fullfile( conf.PATHS.analyses, 'pupil' );
 dsp2.util.general.require_dir( save_path );
-fname = 'n_minus_one_size.mat';
+
+pfname = 'psth.mat';
+nfname = 'n_minus_one_size.mat';
 tfname = 'time_series.mat';
 
 [events, key] = dsp2.io.get_events();
@@ -29,9 +31,7 @@ event.data = [ event.data, event.data + look_amt ];
 errs = errs | event.data(:, 1) < 0;
 event.data( errs, : ) = 0;
 
-gz = gaze.only( {'pt', 'px', 'py'} );
-
-psth = get_gaze_psth( event, gz, 'pt' );
+psth = get_gaze_psth( event, gaze, 'pt' );
 errs = isnan( psth.data(:, 1) );
 %%  get n minus 1
 
@@ -49,6 +49,12 @@ nmn = nmn.for_each( 'gaze_data_type', @get_n_minus_n_distribution, nprev );
 
 %%  save
 
-save( fullfile(save_path, fname), 'nmn' );
-save( fullfile(save_path, tfname), 'x' );
+tseries.look_back = look_back;
+tseries.look_amt = look_amt;
+tseries.x = x;
+tseries.stp = stp;
+
+save( fullfile(save_path, pfname), 'psth' );
+save( fullfile(save_path, nfname), 'nmn' );
+save( fullfile(save_path, tfname), 'tseries' );
 
