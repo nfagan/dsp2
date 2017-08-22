@@ -12,14 +12,13 @@ epoch = 'targacq';
 P = io.fullfile( 'Signals/none/complete', epoch );
 signals = io.read( P );
 %   set up save paths
-date_dir = dsp2.process.format.get_date_dir();
-save_path = fullfile( conf.PATHS.analyses, 'granger', date_dir );
+save_path = fullfile( conf.PATHS.analyses, 'granger', epoch );
 dsp2.util.general.require_dir( save_path );
 conf.PATHS.dynamic.granger = save_path;
 dsp2.config.save( conf );
 
 %%  preprocess signals
-
+tmp_write( '-clear' );
 tmp_write( 'Preprocessing signals ... ' );
 
 signals_ = signals.rm( 'cued' );
@@ -37,7 +36,7 @@ tmp_write( 'Done\n' );
 
 days = signals_( 'days' );
 
-for i = 1:numel(days)
+for i = 55:numel(days)
 
 tmp_write( {'Processing %s (%d of %d)\n', days{i}, i, numel(days)} );
 
