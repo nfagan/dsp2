@@ -96,7 +96,11 @@ for ii = 1:size( C, 1 )
         [p1, p2] = fit_func( pair );
         fitted( chan1, chan2, jj, 1:n_dist_p ) = [p1, p2];
       case 'evfit'
-        ps = fit_func( pair );
+        try
+          ps = fit_func( pair );
+        catch errs_
+          ps = fit_func( real(pair) );
+        end
         fitted( chan1, chan2, jj, 1:n_dist_p ) = ps;
       otherwise
         error( 'Unrecognized fit function ''%s''', func2str(fit_func) );
