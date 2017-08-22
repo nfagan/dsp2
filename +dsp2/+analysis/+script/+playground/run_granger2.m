@@ -52,7 +52,9 @@ tmp_write( 'Done\n', tmp_fname );
 
 days = signals_( 'days' );
 
-for i = 1:numel(days)
+n_current = numel( dsp2.util.general.dirnames(save_path, '.mat') );
+
+for i = n_current+1:numel(days)
 
 tmp_write( {'Processing %s (%d of %d)\n', days{i}, i, numel(days)}, tmp_fname );
 
@@ -62,7 +64,7 @@ G = signals2.for_each( {'outcomes', 'days', 'trialtypes'} ...
   , 'bla', 'acc' ...
   , 100 ...
   , 'dist', 'ev' ...
-  , 'max_lags', [] ...
+  , 'max_lags', 1e3 ...
 );
 
 fname = sprintf( 'granger_segment_%d', i );

@@ -2,7 +2,7 @@
 import dsp2.util.general.fload;
 import dsp2.process.format.*;
 
-epoch = 'targAcq';
+epoch = 'rwdOn';
 
 conf = dsp2.config.load();
 pathstr = fullfile( conf.PATHS.analyses, 'pupil' );
@@ -21,8 +21,14 @@ base_look_back = baselinet.look_back;
 
 %%  normalize
 
-normed = nmn;
-normalizer = baseline_nmn;
+errs = isnan(psth.data(:, 1)) | isnan(baseline.data(:, 1));
+
+normed = psth.keep( ~errs );
+normalizer = baseline.keep( ~errs );
+
+% normed = nmn;
+% normalizer = baseline_nmn;
+
 norm_ind = ( x >= base_look_back & x <= 0 );
 meaned = mean( normalizer.data(:, norm_ind), 2 );
 dat = normed.data;
@@ -35,8 +41,8 @@ normed.data = dat;
 
 %%  n minus n, remove errors
 
-normed = normed.replace( {'self', 'none'}, 'antisocial' );
-normed = normed.replace( {'both', 'other'}, 'prosocial' );
+% normed = normed.replace( {'self', 'none'}, 'antisocial' );
+% normed = normed.replace( {'both', 'other'}, 'prosocial' );
 
 prev = normed.only( 'n_minus_1' );
 curr = normed.only( 'n_minus_0' );
@@ -67,7 +73,8 @@ curr( 'current_outcome' ) = outs;
 
 %%  plot
 
-plt = curr.only( 'px' );
+% plt = curr.only( 'px' );
+plt = normed;
 
 % plt = prev.only( 'px' );
 % plt = normed.only( 'px' );
@@ -86,8 +93,8 @@ plt = curr.only( 'px' );
 % 
 % plt = plt1.append( plt2 );
 
-% plt = plt.parfor_each( {'outcomes', 'days'}, @mean );
-plt = plt.parfor_each( {'previous_outcome', 'current_outcome', 'sessions', 'blocks', 'days'}, @mean );
+% plt = plt.parfor_each( {'outcomes', 'trialtypes', 'days', 'sessions', 'blocks'}, @mean );
+% plt = plt.parfor_each( {'previous_outcome', 'current_outcome', 'sessions', 'blocks', 'days'}, @mean );
 
 figure(1); clf();
 
@@ -95,9 +102,9 @@ pl = ContainerPlotter();
 pl.add_ribbon = true;
 pl.x = x;
 pl.y_lim = [.9, 1.2];
-pl.vertical_lines_at = [0, .15]
+pl.vertical_lines_at = 0;
 pl.y_label = 'Pupil size';
 pl.x_label = sprintf( 'Time (ms) from %s', epoch );
 
-% plt.plot( pl, {'outcomes'}, {'group_type', 'magnitudes'} );
-plt.plot( pl, 'current_outcome', 'previous_outcome' );
+plt.plot( pl, {'outcomes'}, {'trialtypes'} );
+% plt.plot( pl, 'current_outcome', 'previous_outcome' );

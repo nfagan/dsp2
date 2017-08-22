@@ -125,6 +125,7 @@ function [data, fres] = calc_granger( permute_per_variable )
   tmp_n = n_vars;
   data = zeros( tmp_n, tmp_n, n_freqs+1, n_permute );
   parfor i = 1:n_permute
+    fprintf( '\n Processing %d of %d', i, n_perms );
     if ( permute_per_variable )
       %   choose a different set of trials for each channel
       subset = zeros( n_vars, n_obs, n_trials_per_perm );
