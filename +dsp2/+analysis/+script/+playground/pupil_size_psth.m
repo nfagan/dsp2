@@ -16,6 +16,8 @@ tfname = sprintf( 'time_series_%s.mat', epoch );
 gaze = dsp2.io.get_gaze_data();
 gaze = gaze.only( {'px', 'py', 'pt'} );
 
+assert( any(strcmp(key, epoch)), 'Non-existent epoch ''%s''.', epoch );
+
 %%  get psth
 
 look_back = -.15;
