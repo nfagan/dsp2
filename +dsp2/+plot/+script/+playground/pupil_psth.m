@@ -1,4 +1,4 @@
-%%  plot
+%%  load
 
 conf = dsp2.config.load();
 pathstr = fullfile( conf.PATHS.analyses, 'pupil' );

@@ -31,7 +31,7 @@ event.data( errs, : ) = 0;
 
 gz = gaze.only( {'pt', 'px', 'py'} );
 
-psth = get_gaze_psth( evt, gz, 'pt' );
+psth = get_gaze_psth( event, gz, 'pt' );
 errs = isnan( psth.data(:, 1) );
 %%  get n minus 1
 

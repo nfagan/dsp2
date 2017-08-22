@@ -1,4 +1,4 @@
-function loaded = load_mats( pathstr, verbose )
+function [loaded, mats] = load_mats( pathstr, verbose )
 
 %   LOAD_MATS -- Load contents of multiple .mat files.
 %
@@ -11,6 +11,7 @@ function loaded = load_mats( pathstr, verbose )
 %       - `verbose` (logical) |OPTIONAL| -- Print load progress.
 %     OUT:
 %       - `loaded` (cell array)
+%       - `mats` (cell array) -- Filenames.
 
 if ( nargin < 2 ), verbose = false; end
 
