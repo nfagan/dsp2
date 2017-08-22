@@ -40,11 +40,19 @@ for i = 1:size(dat, 2)
 end
 
 normed.data = dat;
-normed = normed.keep( ~isnan(normed.data(:, 1)) );
 
-%%  
+%%  n minus n, remove errors
+
 prev = normed.only( 'n_minus_1' );
 curr = normed.only( 'n_minus_0' );
+
+errs = isnan( prev.data(:, 1) ) | isnan( curr.data(:, 1) );
+
+prev = prev.keep( ~errs );
+curr = curr.keep( ~errs );
+
+normed = normed.keep( ~isnan(normed.data(:, 1)) );
+
 %   look at pupil size on the previous trial with respect to the next
 %   trial's outcome
 % prev( 'outcomes' ) = curr( 'outcomes', : );

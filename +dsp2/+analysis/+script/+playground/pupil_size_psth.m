@@ -6,7 +6,7 @@ conf = dsp2.config.load();
 save_path = fullfile( conf.PATHS.analyses, 'pupil' );
 dsp2.util.general.require_dir( save_path );
 
-epoch = 'targacq';
+epoch = 'cueOn';
 
 pfname = sprintf( 'psth_%s.mat', epoch );
 nfname = sprintf( 'n_minus_one_size_%s.mat', epoch );
@@ -18,8 +18,8 @@ gaze = gaze.only( {'px', 'py', 'pt'} );
 
 %%  get psth
 
-look_back = -.2;
-look_amt = .8;
+look_back = -.15;
+look_amt = .6;
 stp = .004;
 x = look_back:stp:look_amt-abs(look_back);
 
