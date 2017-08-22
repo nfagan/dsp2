@@ -1,4 +1,5 @@
 %%  load
+
 import dsp2.process.format.*;
 
 dsp2.cluster.init();
@@ -6,7 +7,7 @@ conf = dsp2.config.load();
 save_path = fullfile( conf.PATHS.analyses, 'pupil' );
 dsp2.util.general.require_dir( save_path );
 
-epoch = 'cueOn';
+epoch = 'targAcq';
 
 pfname = sprintf( 'psth_%s.mat', epoch );
 nfname = sprintf( 'n_minus_one_size_%s.mat', epoch );
@@ -36,6 +37,7 @@ errs = errs | event.data(:, 1) < 0;
 event.data( errs, : ) = 0;
 
 psth = get_gaze_psth( event, gaze, 'pt' );
+
 %%  get n minus 1
 
 nmn = psth;
