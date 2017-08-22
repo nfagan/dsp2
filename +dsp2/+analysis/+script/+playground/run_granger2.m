@@ -10,18 +10,22 @@ run( fullfile(conf.PATHS.repositories, 'mvgc_v1.0', 'startup.m') );
 io = dsp2.io.get_dsp_h5();
 epoch = 'reward';
 tmp_fname = [ epoch, '.txt' ];
+tmp_write( '-clear', tmp_fname );
 P = io.fullfile( 'Signals/none/complete', epoch );
+tmp_write( {'Loading ... %s', epoch}, tmp_fname );
 signals = io.read( P );
+tmp_write( 'Done loading\n', tmp_fname );
 %   set up save paths
 save_path = fullfile( conf.PATHS.analyses, 'granger', epoch );
 dsp2.util.general.require_dir( save_path );
 
 %%  preprocess signals
-tmp_write( '-clear', tmp_fname );
 tmp_write( 'Preprocessing signals ... ', tmp_fname );
 
 if ( strcmp(epoch, 'targacq') )
   signals_ = signals.rm( 'cued' );
+else
+  signals_ = signals;
 end
 
 signals_ = update_min( update_max(signals_) );
@@ -53,7 +57,7 @@ for i = 1:numel(days)
 tmp_write( {'Processing %s (%d of %d)\n', days{i}, i, numel(days)}, tmp_fname );
 
 signals2 = signals_.only( days{i} );
-G = signals2.for_each( {'outcomes', 'days'} ...
+G = signals2.for_each( {'outcomes', 'days', 'trialtypes'} ...
   , @dsp2.analysis.playground.run_granger ...
   , 'bla', 'acc' ...
   , 100 ...
