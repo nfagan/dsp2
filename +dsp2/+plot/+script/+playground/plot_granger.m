@@ -1,8 +1,7 @@
 %%
 
-dsp2.cluster.init();
 conf = dsp2.config.load();
-epoch = 'reward';
+epoch = 'targacq';
 load_path = fullfile( conf.PATHS.analyses, 'granger', epoch, 'converted' );
 G2 = dsp2.util.general.fload( fullfile(load_path, 'converted.mat') );
 
@@ -13,6 +12,19 @@ G2 = dsp2.util.general.fload( fullfile(load_path, 'converted.mat') );
 
 % G3 = G2.parfor_each( {'outcomes', 'days', 'kind', 'regions'}, @mean );
 G3 = G2;
+G3.data = real( G3.data );
+
+null_ind = G3.where( 'null_distribution' );
+real_ind = G3.where( 'real_granger' );
+
+errs = any( isnan(G3.data(null_ind, :)), 2 ) | any( isnan(G3.data(real_ind, :)), 2 );
+
+null_ind( null_ind ) = ~errs;
+real_ind( real_ind ) = ~errs;
+
+to_keep = null_ind | real_ind;
+
+G3 = G3.keep( to_keep );
 
 % G3 = G3.rm( 'null_distribution' );
 
@@ -23,7 +35,7 @@ G3 = G2;
 % G3 = G3.rm( many_days );
 % G3 = G3.append( others );
 
-G3.plot( 'kind', {'outcomes', 'regions'} ...
+G3.plot( {'kind', 'trialtypes'}, {'outcomes', 'regions'} ...
   , 'shape', [4, 2] ...
   , 'add_ribbon', true ...
   , 'main_line_width', 1.5 ...

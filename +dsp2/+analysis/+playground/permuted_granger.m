@@ -60,15 +60,15 @@ if ( n_trials_per_perm > n_trials )
   n_trials_per_perm = n_trials;
 end
 
-tmp_perms = n_perms;
-tmp_trials = n_trials_per_perm;
-
-n_perms = 1;
-n_trials_per_perm = n_trials;
+% tmp_perms = n_perms;
+% tmp_trials = n_trials_per_perm;
+% 
+% n_perms = 1;
+% n_trials_per_perm = n_trials;
 [granger, freq_band_centers] = calc_granger( false );
 
-n_perms = tmp_perms;
-n_trials_per_perm = tmp_trials;
+% n_perms = tmp_perms;
+% n_trials_per_perm = tmp_trials;
 
 permuted_g = calc_granger( true );
 
