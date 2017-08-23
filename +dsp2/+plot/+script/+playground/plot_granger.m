@@ -3,12 +3,8 @@
 dsp2.cluster.init();
 conf = dsp2.config.load();
 epoch = 'reward';
-load_path = fullfile( conf.PATHS.analyses, 'granger', epoch );
-G = dsp2.util.general.load_mats( load_path, true );
-G = extend( G{:} );
-
-G2 = G.parfor_each( {'outcomes', 'trialtypes', 'days', 'channels'} ...
-  , @dsp2.analysis.playground.convert_granger );
+load_path = fullfile( conf.PATHS.analyses, 'granger', epoch, 'converted' );
+G2 = dsp2.util.general.fload( fullfile(load_path, 'converted.mat') );
 
 %%
 % G3 = dsp2.process.manipulations.pro_v_anti( G2 );

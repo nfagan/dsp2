@@ -12,7 +12,7 @@ for i = 1:numel(epochs)
   
   dsp2.util.general.require_dir( fsave_path );
 
-  G = dsp2.util.general.load_mats( load_path );
+  G = dsp2.util.general.load_mats( fload_path );
   G = extend( G{:} );
 
   G2 = G.parfor_each( {'outcomes', 'trialtypes', 'days', 'channels'} ...
@@ -20,5 +20,3 @@ for i = 1:numel(epochs)
   
   save( fullfile(fsave_path, 'converted.mat'), 'G2' );
 end
-
-exit();
