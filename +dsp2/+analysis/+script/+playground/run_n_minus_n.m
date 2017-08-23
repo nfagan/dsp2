@@ -2,7 +2,7 @@ dsp2.cluster.init();
 
 conf = dsp2.config.load();
 io = dsp2.io.get_dsp_h5();
-epoch = 'reward';
+epoch = 'targacq';
 P = dsp2.io.get_path( 'Measures', 'coherence', 'complete', epoch );
 ngroup = conf.DATABASES.n_days_per_group;
 days = dsp2.util.general.group_cell( io.get_days(P), ngroup );
@@ -30,8 +30,14 @@ for j = 1:numel(days)
   day = days{j};
 
   coh = io.read( P, 'only', day );
+  
+  dsp2.util.general.seed_rng();
+  
+  coh = dsp2.process.format.subsample_sites( coh );
   coh = dsp2.process.format.add_trial_ids( coh );
   
+  rng( 'shuffle' );
+    
   sites = coh( 'sites' );
   
   cmbs = dsp2.util.general.allcomb( {prev_is, bands, sites} );

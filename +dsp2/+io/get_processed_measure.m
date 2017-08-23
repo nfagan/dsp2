@@ -98,7 +98,7 @@ measure = measure.remove_nans_and_infs();
 if ( strcmp(meas_type, 'coherence') )
   dsp2.util.general.seed_rng();
   measure = measure.parfor_each( {'days', 'regions'}, 'regions', ...
-    @subsample_sites );
+    @dsp2.process.format.subsample_sites );
 end
 
 % subset = measure;
@@ -190,36 +190,5 @@ function obj = smart_subsample(obj, field, N)
 n_present = numel( obj(field) );
 N = min( N, n_present );
 obj = obj.subsample( field, N );
-
-end
-
-function obj = subsample_sites(obj)
-
-%   SUBSAMPLE_SITES -- For 256-site days, subsample sites such that each
-%     bla site site is randomly paired with one acc site.
-
-sites = obj( 'sites' );
-n_present = numel( sites );
-
-if ( n_present <= 16 ), return; end
-
-assert( n_present == 256, 'Not yet adapted to work with multiple-regions.' );
-
-nsite = numel( 'site__' );
-nums = cellfun( @(x) str2double(x(nsite+1:end)), sites );
-[~, ind] = sort( nums );
-sites = sites( ind );
-
-new_sites = cell( 1, 16 );
-stp = 1;
-
-for i = 1:16
-  inds = stp:stp+16-1;
-  j = datasample( inds, 1 );
-  new_sites{i} = sites{j};
-  stp = stp + 16;
-end
-
-obj = obj.only( new_sites );
 
 end
