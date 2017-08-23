@@ -8,11 +8,13 @@ ngroup = conf.DATABASES.n_days_per_group;
 days = dsp2.util.general.group_cell( io.get_days(P), ngroup );
 save_path = fullfile( conf.PATHS.analyses, 'n_minus_n' );
 fname = sprintf( 'n_minus_n_%s.mat', epoch );
+tmp_fname = 'n_minus_n.txt';
 dsp2.util.general.require_dir( save_path );
+dsp2.util.cluster.tmp_write( '-clear', tmp_fname );
 
 n_prev = 1;
 
-time = [ 50, 250 ];
+time = [ -200 0 ];
 bandrois = Container( [35, 50; 15, 30], 'bands', {'gamma', 'beta'} );
 
 prev_is = { 'antisocial', 'prosocial' };
@@ -22,6 +24,8 @@ all_mdls = Container();
 
 for j = 1:numel(days)
   fprintf( '\n Processing %d of %d', j, numel(days) );
+  dsp2.util.cluster.tmp_write( {'Processing %s (%d of %d)\n' ...
+    , strjoin(days{j}, ', '), j, numel(days)}, tmp_fname );
   
   day = days{j};
 
@@ -53,6 +57,8 @@ for j = 1:numel(days)
 
     N = nminus.only( 'n_minus_0' );
     N_minus_one = nminus.only( sprintf('n_minus_%d', n_prev) );
+    % if using current trial's measure
+    N_minus_one.data = N.data;
     N.data = dsp2.process.format.get_factor_matrix( N, 'outcomes' );
 
     shuffle_ind = randperm( shape(N, 1) );
@@ -85,8 +91,20 @@ save( fullfile(save_path, fname), 'all_mdls' );
 
 %%
 
-% ps = arrayfun( @(x) x.betas(2,2), all_mdls.data );
-% bs = arrayfun( @(x) x.betas(2,1), all_mdls.data );
+ps = arrayfun( @(x) x.betas(2,2), all_mdls.data );
+bs = arrayfun( @(x) x.betas(2,1), all_mdls.data );
+
+%%
+
+gamma_ind = all_mdls.where( 'gamma' );
+beta_ind = all_mdls.where( 'beta' );
+nonshuff_ind = all_mdls.where( 'shuffled__false' );
+sig_ind = ps <= .05;
+
+gamm_percent = sum( gamma_ind & non_shuffledind & sig_ind ) / sum(non_shuffledind & gamma_ind);
+beta_percent = sum( beta_ind & non_shuffledind & sig_ind ) / sum(non_shuffledind & beta_ind);
+
+
 % 
 % sig_ind = ps <= .05;
 % sig_ind = true( size(bs, 1), 1 );
