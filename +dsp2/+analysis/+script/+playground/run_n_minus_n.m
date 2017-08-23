@@ -2,13 +2,17 @@ dsp2.cluster.init();
 
 conf = dsp2.config.load();
 io = dsp2.io.get_dsp_h5();
-P = dsp2.io.get_path( 'Measures', 'coherence', 'complete', 'targacq' );
+epoch = 'reward';
+P = dsp2.io.get_path( 'Measures', 'coherence', 'complete', epoch );
 ngroup = conf.DATABASES.n_days_per_group;
 days = dsp2.util.general.group_cell( io.get_days(P), ngroup );
+save_path = fullfile( conf.PATHS.analyses, 'n_minus_n' );
+fname = 'n_minus_n.mat';
+dsp2.util.general.require_dir( save_path );
 
 n_prev = 1;
 
-time = [ -200, 0 ];
+time = [ 50, 250 ];
 bandrois = Container( [35, 50; 15, 30], 'bands', {'gamma', 'beta'} );
 
 prev_is = { 'antisocial', 'prosocial' };
@@ -77,21 +81,24 @@ for j = 1:numel(days)
   all_mdls = all_mdls.append( extend(current_mdls{:}) );  
 end
 
+save( fullfile(save_path, fname), 'all_mdls' );
+
 %%
 
-ps = arrayfun( @(x) x.betas(2,2), all_mdls.data );
-bs = arrayfun( @(x) x.betas(2,1), all_mdls.data );
-
-sig_ind = ps <= .05;
-
-significant = all_mdls( sig_ind );
-significant.data = bs( sig_ind );
-
-nonshuffed = significant.only( 'shuffled__false' );
-
-nonshuffed.bar( 'band', 'previous_was' );
-
-% nonshuffed = all_mdls.only( 'shuffled__false' );
+% ps = arrayfun( @(x) x.betas(2,2), all_mdls.data );
+% bs = arrayfun( @(x) x.betas(2,1), all_mdls.data );
+% 
+% sig_ind = ps <= .05;
+% sig_ind = true( size(bs, 1), 1 );
+% 
+% significant = all_mdls( sig_ind );
+% significant.data = bs( sig_ind );
+% 
+% nonshuffed = significant.only( 'shuffled__false' );
+% 
+% nonshuffed.bar( 'band', 'previous_was' );
+% 
+% % nonshuffed = all_mdls.only( 'shuffled__false' );
 
 
 
