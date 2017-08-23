@@ -7,7 +7,7 @@ P = dsp2.io.get_path( 'Measures', 'coherence', 'complete', epoch );
 ngroup = conf.DATABASES.n_days_per_group;
 days = dsp2.util.general.group_cell( io.get_days(P), ngroup );
 save_path = fullfile( conf.PATHS.analyses, 'n_minus_n' );
-fname = 'n_minus_n.mat';
+fname = sprintf( 'n_minus_n_%s.mat', epoch );
 dsp2.util.general.require_dir( save_path );
 
 n_prev = 1;
