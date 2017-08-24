@@ -43,7 +43,7 @@ freqs = data.freqs;
 ids = data.ids;
 C = data.C;
 
-G_mean = mean( G, 4 );
+G_mean = nanmean( G, 4 );
 
 inv_func = fitted.inverse_function;
 func_name = func2str( inv_func );
