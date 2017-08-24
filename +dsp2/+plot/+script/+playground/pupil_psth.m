@@ -2,7 +2,7 @@
 import dsp2.util.general.fload;
 import dsp2.process.format.*;
 
-epoch = 'targAcq';
+epoch = 'rwdOn';
 
 conf = dsp2.config.load();
 pathstr = fullfile( conf.PATHS.analyses, 'pupil' );
@@ -83,7 +83,7 @@ curr = normed.only( 'n_minus_0' );
 errs = isnan( prev.data(:, 1) ) | isnan( curr.data(:, 1) );
 
 prev = prev.keep( ~errs );
-curr = curr.keep( ~errs );
+curr = curr.keep( ~errs ); 
 
 normed = normed.keep( ~isnan(normed.data(:, 1)) );
 
@@ -149,7 +149,9 @@ pl.x_label = sprintf( 'Time (ms) from %s', epoch );
 
 % plt.plot( pl, {'outcomes'}, {'trialtypes'} );
 
-trace_level = plt.collapse('drugs');
+% trace_level = plt.collapse('drugs');
+trace_level = plt.rm( 'oxytocin' );
+trace_level = trace_level.collapse( 'drugs' );
 trace_level = trace_level.collapse_except( {'outcomes', 'trialtypes', 'days', 'drugs', 'administration'} );
 % trace_level = trace_level.only('post') - trace_level.only('pre');
 

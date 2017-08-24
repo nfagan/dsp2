@@ -34,9 +34,7 @@ last_two_block_day = datenum( last_two_block_day, datefmt );
 one_block_days = days( dates < first_two_block_day | dates > last_two_block_day );
 two_block_days = days( dates >= first_two_block_day & dates <= last_two_block_day );
 
-if ( ~obj.labels.contains_categories('administration') )
-  obj = obj.add_field( 'administration' );
-end
+obj = obj.require_fields( 'administration' );
 
 %   define one-block-as-pre days
 for i = 1:numel(one_block_days)

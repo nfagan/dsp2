@@ -52,6 +52,8 @@ end
 
 function pairs = random_pairs(reg1, reg2, N)
 
+%   RANDOM_PAIRS -- Generate `N` random unique pairs of `reg1` and `reg2`.
+
 pairs = cell( N, 2 );
 
 for i = 1:N
