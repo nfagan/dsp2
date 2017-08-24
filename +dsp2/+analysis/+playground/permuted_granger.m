@@ -99,7 +99,11 @@ for ii = 1:size( C, 1 )
         try
           ps = fit_func( pair );
         catch errs_
-          ps = fit_func( real(pair) );
+          try
+            ps = fit_func( real(pair) );
+          catch errs2
+            ps = NaN;
+          end
         end
         fitted( chan1, chan2, jj, 1:n_dist_p ) = ps;
       otherwise
