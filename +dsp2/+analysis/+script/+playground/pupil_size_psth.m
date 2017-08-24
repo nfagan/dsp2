@@ -7,7 +7,7 @@ conf = dsp2.config.load();
 save_path = fullfile( conf.PATHS.analyses, 'pupil' );
 dsp2.util.general.require_dir( save_path );
 
-epoch = 'rwdOn';
+epoch = 'targOn';
 
 pfname = sprintf( 'psth_%s.mat', epoch );
 nfname = sprintf( 'n_minus_one_size_%s.mat', epoch );

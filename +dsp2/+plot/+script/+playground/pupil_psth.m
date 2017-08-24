@@ -2,7 +2,7 @@
 import dsp2.util.general.fload;
 import dsp2.process.format.*;
 
-epoch = 'rwdOn';
+epoch = 'targAcq';
 
 conf = dsp2.config.load();
 pathstr = fullfile( conf.PATHS.analyses, 'pupil' );
@@ -19,6 +19,39 @@ look_back = tseries.look_back;
 base_x = baselinet.x;
 base_look_back = baselinet.look_back;
 
+%% std threshold
+
+ndevs = 3;
+
+target_time_mean = nanmean( psth.data, 2 );
+baseline_time_mean = nanmean( baseline.data, 2 );
+
+global_target_mean = nanmean( target_time_mean );
+global_target_dev = nanstd( target_time_mean );
+global_baseline_mean = nanmean( baseline_time_mean );
+global_baseline_dev = nanstd( baseline_time_mean );
+
+% in_bounds_target = target_time_mean > (global_target_mean-global_target_dev*ndevs) & ...
+%   target_time_mean < (global_target_mean+global_target_dev*ndevs);
+% in_bounds_baseline = baseline_time_mean > (global_baseline_mean-global_baseline_dev*ndevs) & ...
+%   baseline_time_mean < (global_baseline_mean+global_baseline_dev*ndevs);
+
+in_bounds_target = false( size(psth.data) );
+in_bounds_baseline = false( size(baseline.data) );
+for i = 1:size(in_bounds_target, 2)
+  in_bounds_target(:, i) = psth.data(:, i) > -12e3 & psth.data(:, i) < -1e3;
+  in_bounds_baseline(:, i) = baseline.data(:, i) > -12e3 & baseline.data(:, i) < -1e3; 
+%   in_bounds_target(:, i) = psth.data(:, i) > global_target_mean-global_target_dev*ndevs & ...
+%     psth.data(:, i) < global_target_mean+global_target_dev*ndevs;
+%   in_bounds_baseline(:, i) = baseline.data(:, i) > (global_baseline_mean-global_baseline_dev*ndevs) & ...
+%   	baseline.data(:, i) < (global_baseline_mean+global_baseline_dev*ndevs);
+end
+
+in_bounds = all( in_bounds_target & in_bounds_baseline, 2 );
+
+psth = psth.keep( in_bounds );
+baseline = baseline.keep( in_bounds );
+
 %%  normalize
 
 errs = isnan(psth.data(:, 1)) | isnan(baseline.data(:, 1));
@@ -34,7 +67,7 @@ meaned = mean( normalizer.data(:, norm_ind), 2 );
 dat = normed.data;
 
 for i = 1:size(dat, 2)
-  dat(:, i) = dat(:, i) ./ meaned;
+  dat(:, i) = dat(:, i) - meaned;
 end
 
 normed.data = dat;
@@ -74,7 +107,9 @@ curr( 'current_outcome' ) = outs;
 %%  plot
 
 % plt = curr.only( 'px' );
-plt = normed;
+plt = normed.only( 'px' );
+plt = dsp2.process.format.fix_block_number( plt );
+plt = dsp2.process.format.fix_administration( plt );
 
 % plt = prev.only( 'px' );
 % plt = normed.only( 'px' );
@@ -92,19 +127,54 @@ plt = normed;
 % plt2 = plt2.add_field( 'group_type', 'per_outcome' );
 % 
 % plt = plt1.append( plt2 );
+% plt = plt.collapse( 'administration' );
+plt = plt.rm( {'unspecified', 'errors'} );
+plt = plt.parfor_each( {'outcomes', 'trialtypes', 'days', 'administration'}, @mean );
 
 % plt = plt.parfor_each( {'outcomes', 'trialtypes', 'days', 'sessions', 'blocks'}, @mean );
 % plt = plt.parfor_each( {'previous_outcome', 'current_outcome', 'sessions', 'blocks', 'days'}, @mean );
-
+%%
 figure(1); clf();
 
 pl = ContainerPlotter();
 pl.add_ribbon = true;
 pl.x = x;
-pl.y_lim = [.9, 1.2];
-pl.vertical_lines_at = 0;
+% pl.y_lim = [.9, 1.2];
+pl.order_by = { 'pre', 'post' };
+pl.y_lim = [];
+pl.vertical_lines_at = [0, .15];
+pl.shape = [1, 2];
 pl.y_label = 'Pupil size';
 pl.x_label = sprintf( 'Time (ms) from %s', epoch );
 
-plt.plot( pl, {'outcomes'}, {'trialtypes'} );
+% plt.plot( pl, {'outcomes'}, {'trialtypes'} );
+
+trace_level = plt.collapse('drugs');
+trace_level = trace_level.collapse_except( {'outcomes', 'trialtypes', 'days', 'drugs', 'administration'} );
+% trace_level = trace_level.only('post') - trace_level.only('pre');
+
+trace_level.plot( pl, {'outcomes'}, {'drugs', 'administration', 'trialtypes'} );
+
 % plt.plot( pl, 'current_outcome', 'previous_outcome' );
+
+%%
+
+bar_plt = plt;
+bar_plt = bar_plt.collapse_except( {'outcomes', 'trialtypes', 'days', 'drugs', 'administration'} );
+% bar_plt = bar_plt.only( 'post' ) - bar_plt.only( 'pre' );
+time_ind = x >= 0 & x <= .15;
+bar_plt.data = bar_plt.data(:, time_ind);
+bar_plt.data = mean( bar_plt.data, 2 );
+
+pl = ContainerPlotter();
+pl.order_by = { 'self', 'both', 'other', 'none' };
+
+figure(2); clf();
+bar_plt.bar( pl, 'outcomes', 'administration', {'drugs', 'trialtypes'} );
+
+
+
+
+
+
+
