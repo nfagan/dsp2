@@ -1,6 +1,5 @@
 %%  RUN n_minus_n
 
-import dsp2.process.format.get_n_minus_n_distribution;
 import dsp2.util.general.group_cell;
 
 dsp2.cluster.init();
@@ -73,7 +72,7 @@ for j = 1:numel(days)
 %     meaned = meaned.replace( {'self', 'none'}, 'antisocial' );
 %     meaned = meaned.replace( {'both', 'other'}, 'prosocial' );
     
-    nminus = meaned.for_each( 'sites', @get_n_minus_n_distribution, n_prev, prev_was );
+    nminus = meaned.for_each( 'sites', @dsp2.process.format.get_n_minus_n_distribution, n_prev, prev_was );
 %     nminus = get_n_minus_n_distribution( meaned, n_prev, prev_was );
 
     N = nminus.only( 'n_minus_0' );

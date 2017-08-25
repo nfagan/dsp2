@@ -1,7 +1,7 @@
 %%
 
 conf = dsp2.config.load();
-epoch = 'reward';
+epoch = 'targacq';
 load_path = fullfile( conf.PATHS.analyses, 'granger', epoch, 'converted' );
 G2 = dsp2.util.general.load_mats( load_path, true );
 G2 = extend( G2{:} );
@@ -27,11 +27,11 @@ to_keep = null_ind | real_ind;
 
 G3 = G3.keep( to_keep );
 
-% G3 = G3.parfor_each( {'days', 'channels', 'regions', 'kind', 'trialtypes'}, @require, G3('outcomes') );
+G3 = G3.parfor_each( {'days', 'channels', 'regions', 'kind', 'trialtypes'}, @require, G3('outcomes') );
 
-% G3 = dsp2.process.manipulations.pro_v_anti( G3 );
+G3 = dsp2.process.manipulations.pro_v_anti( G3 );
 
-% G3 = G3.rm( 'null_distribution' );
+G3 = G3.rm( 'null_distribution' );
 
 % cts = G2.counts('days');
 % many_days = unique( cts('days', cts.data == 4096) );
@@ -42,7 +42,7 @@ G3 = G3.keep( to_keep );
 %%
 figure(1); clf();
 G3_ = G3.rm( { 'cued'} );
-G3_.plot( {'kind', 'trialtypes'}, {'outcomes', 'regions'} ...
+G3_.plot( {'kind', 'trialtypes', 'outcomes'}, {'regions'} ...
   , 'shape', [] ...
   , 'add_ribbon', true ...
   , 'main_line_width', 1.5 ...
