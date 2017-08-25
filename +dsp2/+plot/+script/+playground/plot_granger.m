@@ -27,6 +27,10 @@ to_keep = null_ind | real_ind;
 
 G3 = G3.keep( to_keep );
 
+% G3 = G3.parfor_each( {'days', 'channels', 'regions', 'kind', 'trialtypes'}, @require, G3('outcomes') );
+
+% G3 = dsp2.process.manipulations.pro_v_anti( G3 );
+
 % G3 = G3.rm( 'null_distribution' );
 
 % cts = G2.counts('days');
@@ -35,11 +39,11 @@ G3 = G3.keep( to_keep );
 % others = others.for_each( {'outcomes', 'days', 'regions'}, @subsample, 'channels', 16 );
 % G3 = G3.rm( many_days );
 % G3 = G3.append( others );
-
+%%
 figure(1); clf();
-
-G3.plot( {'kind', 'trialtypes'}, {'outcomes', 'regions'} ...
-  , 'shape', [4, 2] ...
+G3_ = G3.rm( { 'cued'} );
+G3_.plot( {'kind', 'trialtypes'}, {'outcomes', 'regions'} ...
+  , 'shape', [] ...
   , 'add_ribbon', true ...
   , 'main_line_width', 1.5 ...
   , 'x', G2.frequencies ...

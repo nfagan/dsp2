@@ -8,6 +8,9 @@ function obj = fix_channels(obj, map, conf)
 %       - `obj` (Container, SparseLabels)
 %       - `map` (struct) |OPTIONAL| -- Map which relates channels to sites.
 %       - `conf` (struct) |OPTIONAL| -- Config file.
+%     OUT:
+%       - `obj` (Container, SparseLabels) -- Of the same class as the
+%         inputted object.
 
 import dsp2.util.assertions.*;
 

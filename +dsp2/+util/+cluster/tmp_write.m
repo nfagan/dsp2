@@ -36,6 +36,8 @@ end
 
 assert__isa( conf, 'struct', 'the config file' );
 
+if ( ~conf.CLUSTER.use_cluster ), return; end
+
 fname = fullfile( conf.PATHS.job_output, fname );
 
 if ( strcmpi(str, '-clear') )

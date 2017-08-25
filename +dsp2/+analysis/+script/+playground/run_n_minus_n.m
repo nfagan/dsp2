@@ -1,4 +1,7 @@
+%%  RUN n_minus_n
+
 import dsp2.process.format.get_n_minus_n_distribution;
+import dsp2.util.general.group_cell;
 
 dsp2.cluster.init();
 
@@ -10,7 +13,7 @@ conf = dsp2.config.load();
 io = dsp2.io.get_dsp_h5();
 P = dsp2.io.get_path( 'Measures', meas_type, 'complete', epoch );
 ngroup = conf.DATABASES.n_days_per_group;
-days = dsp2.util.general.group_cell( io.get_days(P), ngroup );
+days = group_cell( io.get_days(P), ngroup );
 save_path = fullfile( conf.PATHS.analyses, 'n_minus_n' );
 fname = sprintf( 'n_minus_n_%s_%s_%s.mat', resolution, epoch, datestr(now) );
 tmp_fname = 'n_minus_n.txt';

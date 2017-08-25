@@ -25,6 +25,8 @@ function measure = get_processed_measure(C, kind, varargin)
 %     IN:
 %       - `C` (cell array of strings)
 %       - `kind` (char) |OPTIONAL| -- 'meaned' (default) or 'complete'
+%     OUT:
+%       - `measure` (SignalContainer) -- Loaded (or cached) measure.
 
 if ( nargin < 2 ), kind = 'meaned'; end
 
@@ -95,19 +97,15 @@ measure = read_measure.collapse( collapse_after_load );
 
 measure = measure.remove_nans_and_infs();
 
-if ( strcmp(meas_type, 'coherence') )
-  dsp2.util.general.seed_rng();
-  measure = measure.parfor_each( {'days', 'regions'}, 'regions', ...
-    @dsp2.process.format.subsample_sites );
+if ( ~isempty(strfind(meas_type, 'coherence')) )
+%   dsp2.util.general.seed_rng();
+%   measure = measure.parfor_each( {'days', 'regions'}, 'regions', ...
+%     @dsp2.process.format.subsample_sites );
+  if ( strcmp(meas_type, 'coherence') )
+    measure.labels = dsp2.process.format.fix_channels( measure.labels );
+  end
+  measure = dsp2.process.format.only_pairs( measure );
 end
-
-% subset = measure;
-% subset.data = ones( shape(subset, 1), 1 );
-% subset = subset.parfor_each( {'days', 'regions', 'sites'}, 'regions', @keep_one );
-% cs = subset.parfor_each( {'monkeys', 'regions'}, @sum );
-% cs2 = subset.parfor_each( {'days', 'regions'}, 'regions', @keep_one );
-% cs2 = cs2.parfor_each( 'monkeys', @sum );
-% cs2.table( 'monkeys' );
 
 switch ( manip )
   case { 'standard', 'pro_v_anti', 'pro_minus_anti' }    
@@ -178,17 +176,5 @@ prev = struct();
 prev.epoch = epoch;
 prev.meas_type = meas_type;
 prev.kind = kind;
-
-end
-
-function obj = smart_subsample(obj, field, N)
-
-%   SMART_SUBSAMPLE -- Subsample N combinations from `field`, without
-%     replacement, adjusting N to match the number of present labels in
-%     `field`.
-
-n_present = numel( obj(field) );
-N = min( N, n_present );
-obj = obj.subsample( field, N );
 
 end

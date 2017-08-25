@@ -7,11 +7,25 @@ defaults.max_lags = 1e3;
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
-chans = signals( 'channels', : );
-reg1_chans = unique( chans(signals.where(reg1)) );
-reg2_chans = unique( chans(signals.where(reg2)) );
+assert( numel(signals('days')) == 1, 'There can only be one day present.' );
 
-prod = dsp2.util.general.allcomb( {reg1_chans, reg2_chans} );
+pairs = dsp2.io.get_site_pairs();
+day_ind = strcmp( pairs.days, signals('days') );
+assert( any(day_ind), 'Unrecognized day %s', char(signals('days')) );
+col1_ind = strcmp( pairs.channel_key, reg1 );
+col2_ind = strcmp( pairs.channel_key, reg2 );
+chans = pairs.channels{ day_ind };
+
+assert( any(col1_ind) && any(col2_ind), ['Expected regions to be one' ...
+  , ' of these kinds: ''%s''.'], strjoin(pairs.channel_key, ', ') );
+
+prod = [ chans(:, col1_ind), chans(:, col2_ind) ];
+assert( size(prod, 1) <= 16, 'Expected fewer than 16 pairs; got %d', size(prod, 1) );
+% chans = signals( 'channels', : );
+% reg1_chans = unique( chans(signals.where(reg1)) );
+% reg2_chans = unique( chans(signals.where(reg2)) );
+% 
+% prod = dsp2.util.general.allcomb( {reg1_chans, reg2_chans} );
 
 switch ( params.dist )
   case 'wbl'
@@ -30,13 +44,13 @@ switch ( params.dist )
     error( 'Unrecognized distribution ''%s''', params.dist );
 end
 
-if ( size(prod, 1) > 16 )
-  assert( size(prod, 1) == 256, 'Too many pairs.' );
-  %   for consistency
-  dsp2.util.general.seed_rng();
-  prod = random_pairs( reg1_chans, reg2_chans, 16 );
-  rng( 'shuffle' );
-end
+% if ( size(prod, 1) > 16 )
+%   assert( size(prod, 1) == 256, 'Too many pairs.' );
+%   %   for consistency
+%   dsp2.util.general.seed_rng();
+%   prod = random_pairs( reg1_chans, reg2_chans, 16 );
+%   rng( 'shuffle' );
+% end
 
 cont = cell( 1, size(prod, 1) );
 
