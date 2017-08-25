@@ -17,7 +17,7 @@ n_prev = 1;
 time = [ 50, 250 ];
 bandrois = Container( [35, 50; 15, 30], 'bands', {'gamma', 'beta'} );
 
-prev_is = { 'antisocial', 'prosocial' };
+prev_is = { 'self', 'both', 'other', 'none' };
 bands = { 'gamma', 'beta' };
 
 all_mdls = Container();
@@ -46,7 +46,7 @@ for j = 1:numel(days)
   
   parfor i = 1:size(cmbs, 1)
     row = cmbs(i, :);
-    previs = row{1};
+    prev_was = row{1};
     band = row{2};
     site = row{3};
     
@@ -56,24 +56,28 @@ for j = 1:numel(days)
     meaned = coh.time_freq_mean( time, bandroi );
     meaned = meaned.only( site );
     meaned = meaned.rm( {'cued', 'errors'} );
-    meaned = meaned.replace( {'self', 'none'}, 'antisocial' );
-    meaned = meaned.replace( {'both', 'other'}, 'prosocial' );
+%     meaned = meaned.replace( {'self', 'none'}, 'antisocial' );
+%     meaned = meaned.replace( {'both', 'other'}, 'prosocial' );
 
-    nminus = dsp2.process.format.get_n_minus_n_distribution( meaned, n_prev, previs );
+    nminus = dsp2.process.format.get_n_minus_n_distribution( meaned, n_prev, prev_was );
 
     N = nminus.only( 'n_minus_0' );
     N_minus_one = nminus.only( sprintf('n_minus_%d', n_prev) );
     % if using current trial's measure
 %     N_minus_one.data = N.data;
+    
+    N = N.replace( {'self', 'none'}, 'antisocial' );
+    N = N.replace( {'both', 'other'}, 'prosocial' );
     N.data = dsp2.process.format.get_factor_matrix( N, 'outcomes' );
 
     shuffle_ind = randperm( shape(N, 1) );
     shuffled = N_minus_one;
     shuffled.data = shuffled.data( shuffle_ind, : );
-
-    ind = N.data == 2;
-    N.data(ind) = 1;
-    N.data(~ind) = 0;
+    
+    assert( numel(unique(N.data)) == 2, 'Expected 2 unique outcomes; got %d' ...
+      , numel(unique(N.data)) );
+    
+    N.data = N.data == 2;
 
     mdl = dsp2.analysis.n_minus_n.logistic( N, N_minus_one, {} );
     mdl2 = dsp2.analysis.n_minus_n.logistic( N, shuffled, {} );
@@ -84,7 +88,7 @@ for j = 1:numel(days)
     mdl = mdl.append( mdl2 );
 
     mdl = mdl.require_fields( {'previous_was', 'band'} );
-    mdl( 'previous_was' ) = previs;
+    mdl( 'previous_was' ) = [ 'previous_was__', prev_was ];
     mdl( 'band' ) = band;
 
     current_mdls{i} = mdl;
@@ -94,35 +98,6 @@ for j = 1:numel(days)
 end
 
 save( fullfile(save_path, fname), 'all_mdls' );
-
-% %%
-% 
-% ps = arrayfun( @(x) x.betas(2,2), all_mdls.data );
-% bs = arrayfun( @(x) x.betas(2,1), all_mdls.data );
-% 
-% %%
-% 
-% gamma_ind = all_mdls.where( 'gamma' );
-% beta_ind = all_mdls.where( 'beta' );
-% nonshuff_ind = all_mdls.where( 'shuffled__false' );
-% sig_ind = ps <= .05;
-% 
-% gamm_percent = sum( gamma_ind & non_shuffledind & sig_ind ) / sum(non_shuffledind & gamma_ind);
-% beta_percent = sum( beta_ind & non_shuffledind & sig_ind ) / sum(non_shuffledind & beta_ind);
-
-
-% 
-% sig_ind = ps <= .05;
-% sig_ind = true( size(bs, 1), 1 );
-% 
-% significant = all_mdls( sig_ind );
-% significant.data = bs( sig_ind );
-% 
-% nonshuffed = significant.only( 'shuffled__false' );
-% 
-% nonshuffed.bar( 'band', 'previous_was' );
-% 
-% % nonshuffed = all_mdls.only( 'shuffled__false' );
 
 
 

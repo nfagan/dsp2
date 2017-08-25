@@ -1,9 +1,10 @@
 %%
 
 conf = dsp2.config.load();
-epoch = 'targacq';
+epoch = 'reward';
 load_path = fullfile( conf.PATHS.analyses, 'granger', epoch, 'converted' );
-G2 = dsp2.util.general.fload( fullfile(load_path, 'converted.mat') );
+G2 = dsp2.util.general.load_mats( load_path, true );
+G2 = extend( G2{:} );
 
 %%
 % G3 = dsp2.process.manipulations.pro_v_anti( G2 );
@@ -34,6 +35,8 @@ G3 = G3.keep( to_keep );
 % others = others.for_each( {'outcomes', 'days', 'regions'}, @subsample, 'channels', 16 );
 % G3 = G3.rm( many_days );
 % G3 = G3.append( others );
+
+figure(1); clf();
 
 G3.plot( {'kind', 'trialtypes'}, {'outcomes', 'regions'} ...
   , 'shape', [4, 2] ...
