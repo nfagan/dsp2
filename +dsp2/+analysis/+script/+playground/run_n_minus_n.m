@@ -1,13 +1,18 @@
+import dsp2.process.format.get_n_minus_n_distribution;
+
 dsp2.cluster.init();
+
+epoch = 'reward';
+meas_type = 'coherence';
+resolution = 'days';
 
 conf = dsp2.config.load();
 io = dsp2.io.get_dsp_h5();
-epoch = 'reward';
-P = dsp2.io.get_path( 'Measures', 'coherence', 'complete', epoch );
+P = dsp2.io.get_path( 'Measures', meas_type, 'complete', epoch );
 ngroup = conf.DATABASES.n_days_per_group;
 days = dsp2.util.general.group_cell( io.get_days(P), ngroup );
 save_path = fullfile( conf.PATHS.analyses, 'n_minus_n' );
-fname = sprintf( 'n_minus_n_%s.mat', epoch );
+fname = sprintf( 'n_minus_n_%s_%s_%s.mat', resolution, epoch, datestr(now) );
 tmp_fname = 'n_minus_n.txt';
 dsp2.util.general.require_dir( save_path );
 dsp2.util.cluster.tmp_write( '-clear', tmp_fname );
@@ -31,14 +36,20 @@ for j = 1:numel(days)
 
   coh = io.read( P, 'only', day );
   
-  dsp2.util.general.seed_rng();
-  
-  coh = dsp2.process.format.subsample_sites( coh );
+  if ( strcmp(meas_type, 'coherence') )
+    coh.labels = dsp2.process.format.fix_channels( coh.labels );
+  end
+  if ( ~isempty(strfind(meas_type, 'coherence')) )
+    coh = dsp2.process.format.only_pairs( coh );
+  end
   coh = dsp2.process.format.add_trial_ids( coh );
-  
-  rng( 'shuffle' );
     
-  sites = coh( 'sites' );
+  if ( strcmp(resolution, 'days') )
+    sites = { coh('sites') };
+  else
+    assert( strcmp(resolution, 'sites'), 'Unrecognized resolution %s.', resolution );
+    sites = coh( 'sites' );
+  end
   
   cmbs = dsp2.util.general.allcomb( {prev_is, bands, sites} );
   
@@ -58,8 +69,9 @@ for j = 1:numel(days)
     meaned = meaned.rm( {'cued', 'errors'} );
 %     meaned = meaned.replace( {'self', 'none'}, 'antisocial' );
 %     meaned = meaned.replace( {'both', 'other'}, 'prosocial' );
-
-    nminus = dsp2.process.format.get_n_minus_n_distribution( meaned, n_prev, prev_was );
+    
+    nminus = meaned.for_each( 'sites', @get_n_minus_n_distribution, n_prev, prev_was );
+%     nminus = get_n_minus_n_distribution( meaned, n_prev, prev_was );
 
     N = nminus.only( 'n_minus_0' );
     N_minus_one = nminus.only( sprintf('n_minus_%d', n_prev) );

@@ -34,9 +34,9 @@ obj_days = obj( 'days' );
 pair_days = pairs.days;
 pair_channels = pairs.channels;
 
-assert( isempty(setdiff(pair_days, obj_days)), ['The following days' ...
+assert( isempty(setdiff(obj_days, pair_days)), ['The following days' ...
   , ' were present in the object, but not in the pairs.mat file: %s.'] ...
-  , strjoin(setdiff(pair_days, obj_days), ', ') );
+  , strjoin(setdiff(obj_days, pair_days), ', ') );
 
 to_rm_ind = obj.logic( false );
 

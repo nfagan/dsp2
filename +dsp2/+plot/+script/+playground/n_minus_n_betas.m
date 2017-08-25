@@ -1,8 +1,8 @@
 %%  LOAD
 
 conf = dsp2.config.load();
-
-basep = fullfile( conf.PATHS.analyses, 'n_minus_n' );
+subdir = '082517';
+basep = fullfile( conf.PATHS.analyses, 'n_minus_n', subdir );
 
 all_mdls = dsp2.util.general.load_mats( basep );
 all_mdls = extend( all_mdls{:} );
