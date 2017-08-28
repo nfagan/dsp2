@@ -30,7 +30,7 @@ function [granger, fitted, freq_band_centers, ids, C] = ...
 %       - `ids` (cell array of strings)
 %       - `C` (double)
 
-if ( ~iscell(var_specifiers) ), var_specifiers = { var_specifiers }; end;
+if ( ~iscell(var_specifiers) ), var_specifiers = { var_specifiers }; end
 
 defaults.regression_method = 'LWR';
 defaults.model_order =  32;
@@ -38,6 +38,7 @@ defaults.fit_func =     @normfit;
 defaults.inv_func =     @norminv;
 defaults.n_dist_p =     2;  % n parameters in the distribution
 defaults.max_lags =     1e3;
+defaults.do_permute =   true;
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
@@ -60,17 +61,11 @@ if ( n_trials_per_perm > n_trials )
   n_trials_per_perm = n_trials;
 end
 
-% tmp_perms = n_perms;
-% tmp_trials = n_trials_per_perm;
-% 
-% n_perms = 1;
-% n_trials_per_perm = n_trials;
 [granger, freq_band_centers] = calc_granger( false );
 
-% n_perms = tmp_perms;
-% n_trials_per_perm = tmp_trials;
-
-permuted_g = calc_granger( true );
+if ( params.do_permute )
+  permuted_g = calc_granger( true );
+end
 
 n_freqs = numel( freq_band_centers );
 
@@ -78,36 +73,38 @@ C = get_combinations( n_vars );
 
 fitted = zeros( n_vars, n_vars, n_freqs, n_dist_p );
 
-for ii = 1:size( C, 1 )
-  chan1 = C( ii, 1 );
-  chan2 = C( ii, 2 );
-  for jj = 1:n_freqs
-    pair = permuted_g( chan1, chan2, jj, : );
-    pair = squeeze( pair );
-    switch ( func2str(fit_func) )
-      case 'wblfit'
-        try
-          p1 = fit_func( pair );
-        catch
-          error( 'Some values were negative.' );
-        end
-        fitted( chan1, chan2, jj, 1:n_dist_p ) = p1;
-      case 'normfit'
-        [p1, p2] = fit_func( pair );
-        fitted( chan1, chan2, jj, 1:n_dist_p ) = [p1, p2];
-      case 'evfit'
-        try
-          ps = fit_func( pair );
-        catch errs_
+if ( params.do_permute )
+  for ii = 1:size( C, 1 )
+    chan1 = C( ii, 1 );
+    chan2 = C( ii, 2 );
+    for jj = 1:n_freqs
+      pair = permuted_g( chan1, chan2, jj, : );
+      pair = squeeze( pair );
+      switch ( func2str(fit_func) )
+        case 'wblfit'
           try
-            ps = fit_func( real(pair) );
-          catch errs2
-            ps = NaN;
+            p1 = fit_func( pair );
+          catch
+            error( 'Some values were negative.' );
           end
-        end
-        fitted( chan1, chan2, jj, 1:n_dist_p ) = ps;
-      otherwise
-        error( 'Unrecognized fit function ''%s''', func2str(fit_func) );
+          fitted( chan1, chan2, jj, 1:n_dist_p ) = p1;
+        case 'normfit'
+          [p1, p2] = fit_func( pair );
+          fitted( chan1, chan2, jj, 1:n_dist_p ) = [p1, p2];
+        case 'evfit'
+          try
+            ps = fit_func( pair );
+          catch errs_
+            try
+              ps = fit_func( real(pair) );
+            catch errs2
+              ps = NaN;
+            end
+          end
+          fitted( chan1, chan2, jj, 1:n_dist_p ) = ps;
+        otherwise
+          error( 'Unrecognized fit function ''%s''', func2str(fit_func) );
+      end
     end
   end
 end

@@ -1,4 +1,4 @@
-%%  initialize, setup paths, etc.
+%%  RUN_NULL_GRANGER -- initialize, setup paths, etc.
 
 import dsp2.util.cluster.tmp_write;
 
@@ -9,7 +9,7 @@ run( fullfile(conf.PATHS.repositories, 'mvgc_v1.0', 'startup.m') );
 %   get signals
 io = dsp2.io.get_dsp_h5();
 epoch = 'reward';
-tmp_fname = [ epoch, '.txt' ];
+tmp_fname = sprinttf( 'null_granger_%s.txt', epoch );
 tmp_write( '-clear', tmp_fname );
 P = io.fullfile( 'Signals/none/complete', epoch );
 tmp_write( {'Loading %s ... ', epoch}, tmp_fname );
@@ -20,6 +20,7 @@ save_path = fullfile( conf.PATHS.analyses, 'granger', epoch );
 dsp2.util.general.require_dir( save_path );
 
 %%  preprocess signals
+
 tmp_write( 'Preprocessing signals ... ', tmp_fname );
 
 if ( strcmp(epoch, 'targacq') )
@@ -43,30 +44,37 @@ else
   error( 'Script not defined for ''%s''.', epoch );
 end
 
-signals_ = signals_.parfor_each( {'channels', 'days'} ...
-  , @dsp2.process.reference.detrend );
+detrend_func = @dsp2.process.reference.detrend;
+
+signals_ = signals_.parfor_each( {'channels', 'days'}, detrend_func );
 
 tmp_write( 'Done\n', tmp_fname );
 
-%%  run analysis
+%%  run null granger
+
+import dsp2.analysis.playground.run_granger;
 
 days = signals_( 'days' );
+n_perms = 100;
+n_perms_in_granger = 1; % only calculate granger once
+n_trials = Inf; % use all trials for that distribution
+max_lags = 1e3;
+dist_type = 'ev';
 
-n_current = numel( dsp2.util.general.dirnames(save_path, '.mat') );
-
-for i = n_current+1:numel(days)
+for i = 1:numel(days)
 
 tmp_write( {'Processing %s (%d of %d)\n', days{i}, i, numel(days)}, tmp_fname );
 
-signals2 = signals_.only( days{i} );
-G = signals2.for_each( {'outcomes', 'days', 'trialtypes'} ...
-  , @dsp2.analysis.playground.run_granger ...
-  , 'bla', 'acc' ...
-  , 100 ...
-  , 100 ...
-  , 'dist', 'ev' ...
-  , 'max_lags', 1e3 ...
-);
+one_day = signals_.only( days{i} );
+
+parfor k = 1:n_perms
+  
+  G = run_granger( one_day, 'bla', 'acc', n_trials, n_perms_in_granger ...
+    , 'dist', dist_type ...
+    , 'max_lags', max_lags ...
+    , 'do_permute', false ...
+  );
+end
 
 fname = sprintf( 'granger_segment_%d', i );
 
