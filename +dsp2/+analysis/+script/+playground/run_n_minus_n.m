@@ -111,6 +111,11 @@ for j = 1:numel(days)
   all_mdls = all_mdls.append( extend(current_mdls{:}) );  
 end
 
+all_mdls = all_mdls.require_fields( {'resolution', 'run_time', 'measure_type'} );
+all_mdls( 'resolution' ) = ['resolution__', resolution];
+all_mdls( 'run_time' ) = ['run_time__', datestr( now )];
+all_mdls( 'measure_type' ) = meas_type;
+
 save( fullfile(save_path, fname), 'all_mdls' );
 
 
