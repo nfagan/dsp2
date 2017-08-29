@@ -5,7 +5,7 @@ import dsp2.util.general.group_cell;
 dsp2.cluster.init();
 
 epoch = 'reward';
-meas_type = 'coherence';
+meas_type = 'sfcoherence';
 resolution = 'days';
 
 conf = dsp2.config.load();
@@ -38,12 +38,14 @@ for j = 1:numel(days)
 
   coh = io.read( P, 'only', day );
   
-  if ( strcmp(meas_type, 'coherence') )
-    coh.labels = dsp2.process.format.fix_channels( coh.labels );
+  if ( strcmp(meas_type, 'sfcoherence') )
+    coh.labels = dsp2.process.format.make_channels_fp( coh.labels );
   end
   if ( ~isempty(strfind(meas_type, 'coherence')) )
+    coh.labels = dsp2.process.format.fix_channels( coh.labels );
     coh = dsp2.process.format.only_pairs( coh );
   end
+  
   coh = dsp2.process.format.add_trial_ids( coh );
     
   if ( strcmp(resolution, 'days') )
@@ -53,7 +55,9 @@ for j = 1:numel(days)
     sites = coh( 'sites' );
   end
   
-  cmbs = dsp2.util.general.allcomb( {prev_is, bands, sites} );
+  regions = coh( 'regions' );
+  
+  cmbs = dsp2.util.general.allcomb( {prev_is, bands, sites, regions} );
   
   current_mdls = cell( 1, size(cmbs, 1) );
   
@@ -62,12 +66,13 @@ for j = 1:numel(days)
     prev_was = row{1};
     band = row{2};
     site = row{3};
+    region = row{4};
     
     bandroi = bandrois.only( band );
     bandroi = bandroi.data;
     
     meaned = coh.time_freq_mean( time, bandroi );
-    meaned = meaned.only( site );
+    meaned = meaned.only( {site, region} );
     meaned = meaned.rm( {'cued', 'errors'} );
 %     meaned = meaned.replace( {'self', 'none'}, 'antisocial' );
 %     meaned = meaned.replace( {'both', 'other'}, 'prosocial' );
@@ -117,6 +122,3 @@ all_mdls( 'run_time' ) = ['run_time__', datestr( now )];
 all_mdls( 'measure_type' ) = meas_type;
 
 save( fullfile(save_path, fname), 'all_mdls' );
-
-
-
