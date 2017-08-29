@@ -16,7 +16,7 @@ tmp_write( {'Loading %s ... ', epoch}, tmp_fname );
 signals = io.read( P );
 tmp_write( 'Done\n', tmp_fname );
 %   set up save paths
-save_path = fullfile( conf.PATHS.analyses, 'granger', epoch );
+save_path = fullfile( conf.PATHS.analyses, 'granger', 'null', epoch );
 dsp2.util.general.require_dir( save_path );
 
 %%  preprocess signals
@@ -58,6 +58,11 @@ signals_ = signals_.require_fields( {'context', 'iteration'} );
 signals_( 'context', signals_.where({'self', 'both'}) ) = 'context__selfboth';
 signals_( 'context', signals_.where({'other', 'none'}) ) = 'context__othernone';
 
+granger_fname = 'granger_segment_';
+
+current_files = dsp2.util.general.dirnames( save_path, '.mat' );
+current_days = cellfun( @(x) x(numel(granger_fname)+1:end-4), current_files, 'un', false );
+
 days = signals_( 'days' );
 n_perms = 100;
 n_perms_in_granger = 1; % only calculate granger once
@@ -66,6 +71,8 @@ max_lags = 1e3;
 dist_type = 'ev';
 
 shuffle_within = { 'context' };
+
+days = setdiff( days, current_days );
 
 for i = 1:numel(days)
 
@@ -117,7 +124,7 @@ for i = 1:numel(days)
   conts = extend( conts{:} );
   conts = dsp2.analysis.granger.convert_null_granger( conts );
 
-  fname = sprintf( 'granger_segment_%s', days{i} );
+  fname = sprintf( granger_fname, days{i} );
 
   save( fullfile(save_path, fname), 'conts' );
 end
