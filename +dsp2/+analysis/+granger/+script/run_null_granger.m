@@ -78,15 +78,19 @@ for i = 1:numel(days)
 
   tmp_write( {'Processing %s (%d of %d)\n', days{i}, i, numel(days)}, tmp_fname );
 
+  tic;
+  
   one_day = signals_.only( days{i} );
-
   cmbs = one_day.pcombs( shuffle_within );
   conts = cell( size(cmbs, 1), 1 );
+  
+  one_day = parallel.pool.Constant( one_day );
 
   for j = 1:size(cmbs, 1)
     iters = cell( 1, n_perms );
     parfor k = 1:n_perms+1
-      ctx = one_day.only( cmbs(j, :) );
+      ctx = one_day.Value;
+      ctx = ctx.only( cmbs(j, :) );
       chans = ctx.labels.flat_uniques( 'channels' );
       n_trials_this_context = sum( ctx.where(chans{1}) );
       if ( k < n_perms+1 )
@@ -120,6 +124,8 @@ for i = 1:numel(days)
     end
     conts{j} = extend( iters{:} );
   end
+  
+  toc;
   
   conts = extend( conts{:} );
   conts = dsp2.analysis.granger.convert_null_granger( conts );

@@ -22,11 +22,6 @@ assert( any(col1_ind) && any(col2_ind), ['Expected regions to be one' ...
 
 prod = [ chans(:, col1_ind), chans(:, col2_ind) ];
 assert( size(prod, 1) <= 16, 'Expected fewer than 16 pairs; got %d', size(prod, 1) );
-% chans = signals( 'channels', : );
-% reg1_chans = unique( chans(signals.where(reg1)) );
-% reg2_chans = unique( chans(signals.where(reg2)) );
-% 
-% prod = dsp2.util.general.allcomb( {reg1_chans, reg2_chans} );
 
 switch ( params.dist )
   case 'wbl'
@@ -44,14 +39,6 @@ switch ( params.dist )
   otherwise
     error( 'Unrecognized distribution ''%s''', params.dist );
 end
-
-% if ( size(prod, 1) > 16 )
-%   assert( size(prod, 1) == 256, 'Too many pairs.' );
-%   %   for consistency
-%   dsp2.util.general.seed_rng();
-%   prod = random_pairs( reg1_chans, reg2_chans, 16 );
-%   rng( 'shuffle' );
-% end
 
 cont = cell( 1, size(prod, 1) );
 
@@ -82,19 +69,5 @@ for i = 1:size(prod, 1)
 end
 
 cont = extend( cont{:} );
-
-end
-
-function pairs = random_pairs(reg1, reg2, N)
-
-pairs = cell( N, 2 );
-
-for i = 1:N
-  ind1 = randperm( numel(reg1), 1 );
-  ind2 = randperm( numel(reg2), 1 );
-  pairs(i, :) = [reg1(ind1), reg2(ind2)];
-  reg1(ind1) = [];
-  reg2(ind2) = [];
-end
 
 end
