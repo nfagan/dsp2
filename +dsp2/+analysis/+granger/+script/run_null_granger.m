@@ -54,6 +54,10 @@ tmp_write( 'Done\n', tmp_fname );
 
 import dsp2.analysis.playground.run_granger;
 
+signals_ = signals_.require_fields( 'context' );
+signals_( 'context', signals_.where({'self', 'both'}) ) = 'context__selfboth';
+signals_( 'context', signals_.where({'other', 'none'}) ) = 'context__othernone';
+
 days = signals_( 'days' );
 n_perms = 100;
 n_perms_in_granger = 1; % only calculate granger once
@@ -61,23 +65,40 @@ n_trials = Inf; % use all trials for that distribution
 max_lags = 1e3;
 dist_type = 'ev';
 
+shuffle_within = { 'context' };
+
 for i = 1:numel(days)
 
-tmp_write( {'Processing %s (%d of %d)\n', days{i}, i, numel(days)}, tmp_fname );
+  tmp_write( {'Processing %s (%d of %d)\n', days{i}, i, numel(days)}, tmp_fname );
 
-one_day = signals_.only( days{i} );
+  tic;
+  one_day = signals_.only( days{i} );
 
-parfor k = 1:n_perms
-  
-  G = run_granger( one_day, 'bla', 'acc', n_trials, n_perms_in_granger ...
-    , 'dist', dist_type ...
-    , 'max_lags', max_lags ...
-    , 'do_permute', false ...
-  );
-end
+  cmbs = one_day.pcombs( shuffle_within );
+  conts = cell( size(cmbs, 1), 1 );
 
-fname = sprintf( 'granger_segment_%d', i );
+  for j = 1:size(cmbs, 1)
+    iters = cell( 1, n_perms );
+    parfor k = 1:n_perms
+      ctx = one_day.only( cmbs(j, :) );
+      chans = ctx.labels.flat_uniques( 'channels' );
+      n_trials_this_context = sum( ctx.where(chans{1}) );
+      ind = randperm( n_trials_this_context );
+      %   shuffle
+      ctx = ctx.for_each( {'days', 'channels', 'regions'}, @numeric_index, ind );
+      G = dsp2.analysis.playground.run_granger( ...
+        ctx, 'bla', 'acc', n_trials, n_perms_in_granger ...
+        , 'dist', dist_type ...
+        , 'max_lags', max_lags ...
+        , 'do_permute', false ...
+      );
+      iters{k} = G;
+    end
+    conts{j} = extend( iters{:} );
+  end
+  toc;
 
-save( fullfile(save_path, fname), 'G' );
+  fname = sprintf( 'granger_segment_%d', i );
 
+  save( fullfile(save_path, fname), 'G' );
 end
