@@ -67,7 +67,7 @@ days = signals_( 'days' );
 n_perms = 100;
 n_perms_in_granger = 1; % only calculate granger once
 n_trials = Inf; % use all trials for that distribution
-max_lags = 1e3;
+max_lags = 5e3;
 dist_type = 'ev';
 
 shuffle_within = { 'context' };
