@@ -4,7 +4,7 @@ import dsp2.util.general.group_cell;
 
 dsp2.cluster.init();
 
-epoch = 'reward';
+epoch = 'targacq';
 meas_type = 'sfcoherence';
 resolution = 'days';
 
@@ -21,7 +21,7 @@ dsp2.util.cluster.tmp_write( '-clear', tmp_fname );
 
 n_prev = 1;
 
-time = [ 50, 250 ];
+time = [ 0, 200 ];
 bandrois = Container( [35, 50; 15, 30], 'bands', {'gamma', 'beta'} );
 
 prev_is = { 'self', 'both', 'other', 'none' };

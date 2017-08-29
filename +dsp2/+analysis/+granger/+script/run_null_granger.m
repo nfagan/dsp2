@@ -54,7 +54,7 @@ tmp_write( 'Done\n', tmp_fname );
 
 import dsp2.analysis.playground.run_granger;
 
-signals_ = signals_.require_fields( 'context' );
+signals_ = signals_.require_fields( {'context', 'iteration'} );
 signals_( 'context', signals_.where({'self', 'both'}) ) = 'context__selfboth';
 signals_( 'context', signals_.where({'other', 'none'}) ) = 'context__othernone';
 
@@ -71,7 +71,6 @@ for i = 1:numel(days)
 
   tmp_write( {'Processing %s (%d of %d)\n', days{i}, i, numel(days)}, tmp_fname );
 
-  tic;
   one_day = signals_.only( days{i} );
 
   cmbs = one_day.pcombs( shuffle_within );
@@ -79,26 +78,46 @@ for i = 1:numel(days)
 
   for j = 1:size(cmbs, 1)
     iters = cell( 1, n_perms );
-    parfor k = 1:n_perms
+    parfor k = 1:n_perms+1
       ctx = one_day.only( cmbs(j, :) );
       chans = ctx.labels.flat_uniques( 'channels' );
       n_trials_this_context = sum( ctx.where(chans{1}) );
-      ind = randperm( n_trials_this_context );
+      if ( k < n_perms+1 )
+        ind = randperm( n_trials_this_context );
+      else
+        %   don't permute the last subset
+        ind = 1:n_trials_this_context;
+      end
       %   shuffle
-      ctx = ctx.for_each( {'days', 'channels', 'regions'}, @numeric_index, ind );
-      G = dsp2.analysis.playground.run_granger( ...
-        ctx, 'bla', 'acc', n_trials, n_perms_in_granger ...
-        , 'dist', dist_type ...
-        , 'max_lags', max_lags ...
-        , 'do_permute', false ...
-      );
-      iters{k} = G;
+      shuff_func = @(x) n_dimension_op(x, @(y) y(ind, :));
+      ctx = ctx.for_each( {'days', 'channels', 'regions'}, shuff_func );
+      outs = ctx.labels.flat_uniques( 'outcomes' );
+      out_cont = Container();
+      for h = 1:numel(outs)
+        G = dsp2.analysis.playground.run_granger( ...
+          ctx.only(outs{h}), 'bla', 'acc', n_trials, n_perms_in_granger ...
+          , 'dist', dist_type ...
+          , 'max_lags', max_lags ...
+          , 'do_permute', false ...
+        );
+        G.labels = G.labels.set_field( 'iteration', sprintf('iteration__%d', k) );
+        out_cont = out_cont.append( G );
+      end
+      out_cont = out_cont.require_fields( 'permuted' );
+      if ( k < n_perms+1 )
+        out_cont( 'permuted' ) = 'permuted__true';
+      else
+        out_cont( 'permuted' ) = 'permuted__false';
+      end
+      iters{k} = out_cont;
     end
     conts{j} = extend( iters{:} );
   end
-  toc;
+  
+  conts = extend( conts{:} );
+  conts = dsp2.analysis.granger.convert_null_granger( conts );
 
-  fname = sprintf( 'granger_segment_%d', i );
+  fname = sprintf( 'granger_segment_%s', days{i} );
 
-  save( fullfile(save_path, fname), 'G' );
+  save( fullfile(save_path, fname), 'conts' );
 end

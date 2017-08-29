@@ -53,8 +53,6 @@ end
 %   rng( 'shuffle' );
 % end
 
-prod = prod(1:2, :);
-
 cont = cell( 1, size(prod, 1) );
 
 for i = 1:size(prod, 1)
