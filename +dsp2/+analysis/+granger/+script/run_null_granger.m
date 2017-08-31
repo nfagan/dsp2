@@ -8,7 +8,7 @@ conf = dsp2.config.load();
 run( fullfile(conf.PATHS.repositories, 'mvgc_v1.0', 'startup.m') );
 %   get signals
 io = dsp2.io.get_dsp_h5();
-epoch = 'reward';
+epoch = 'targon';
 tmp_fname = sprintf( 'null_granger_%s.txt', epoch );
 tmp_write( '-clear', tmp_fname );
 P = io.fullfile( 'Signals/none/complete', epoch );
@@ -40,6 +40,9 @@ if ( strcmp(epoch, 'targacq') )
 elseif ( strcmp(epoch, 'reward') )
   % [ 50, 250 ]
   signals_.data = signals_.data(:, 1051:(1050+200));
+elseif ( strcmp(epoch, 'targon') )
+  % [ 50, 250 ]
+  signals_.data = signals_.data(:, 351:550);
 else
   error( 'Script not defined for ''%s''.', epoch );
 end

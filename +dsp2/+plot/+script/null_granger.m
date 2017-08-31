@@ -38,7 +38,7 @@ proanti.data = real( proanti.data );
 %%  PLOT
 
 meaned = proanti.keep_within_freqs( [0, 100] );
-meaned = meaned.only( 'targAcq' );
+meaned = meaned.only( {'rwdOn', 'choice'} );
 
 pl = ContainerPlotter();
 pl.add_ribbon = true;
@@ -52,4 +52,4 @@ pl.order_by = { 'real', 'permuted' };
 
 figure(1); clf();
 
-meaned.plot( pl, 'permuted', {'regions', 'outcomes', 'epochs', 'trialtypes'} );
+meaned.plot( pl, {'permuted', 'trialtypes'}, {'regions', 'outcomes', 'epochs'} );
