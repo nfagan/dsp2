@@ -74,11 +74,9 @@ for j = 1:numel(days)
     meaned = coh.time_freq_mean( time, bandroi );
     meaned = meaned.only( {site, region} );
     meaned = meaned.rm( {'cued', 'errors'} );
-%     meaned = meaned.replace( {'self', 'none'}, 'antisocial' );
-%     meaned = meaned.replace( {'both', 'other'}, 'prosocial' );
     
-    nminus = meaned.for_each( 'sites', @dsp2.process.format.get_n_minus_n_distribution, n_prev, prev_was );
-%     nminus = get_n_minus_n_distribution( meaned, n_prev, prev_was );
+    nminus = meaned.for_each( 'sites' ...
+      , @dsp2.process.format.get_n_minus_n_distribution, n_prev, prev_was );
 
     N = nminus.only( 'n_minus_0' );
     N_minus_one = nminus.only( sprintf('n_minus_%d', n_prev) );
@@ -97,6 +95,8 @@ for j = 1:numel(days)
       , numel(unique(N.data)) );
     
     N.data = N.data == 2;
+    
+    assert( all(N.data == N.where('prosocial')), '1 was not prosocial.' );
 
     mdl = dsp2.analysis.n_minus_n.logistic( N, N_minus_one, {} );
     mdl2 = dsp2.analysis.n_minus_n.logistic( N, shuffled, {} );

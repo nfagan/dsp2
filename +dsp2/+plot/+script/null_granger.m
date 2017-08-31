@@ -38,16 +38,18 @@ proanti.data = real( proanti.data );
 %%  PLOT
 
 meaned = proanti.keep_within_freqs( [0, 100] );
-meaned = meaned.only( {'choice'} );
+meaned = meaned.only( 'targAcq' );
 
 pl = ContainerPlotter();
 pl.add_ribbon = true;
 pl.main_line_width = 1;
 pl.x = meaned.frequencies;
-pl.shape = [4, 2];
+pl.shape = [];
 pl.y_lim = [-.06, .06];
+pl.y_label = 'Granger difference';
+pl.x_label = 'hz';
 pl.order_by = { 'real', 'permuted' };
 
 figure(1); clf();
 
-meaned.plot( pl, 'permuted', {'outcomes', 'regions', 'epochs'} );
+meaned.plot( pl, 'permuted', {'regions', 'outcomes', 'epochs', 'trialtypes'} );
