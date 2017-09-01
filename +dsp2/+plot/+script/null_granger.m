@@ -1,7 +1,7 @@
 %%  LOAD
 
 import dsp2.util.general.percell;
-import dsp2.util.general.concat;
+import dsp2.util.general.flatten;
 import dsp2.util.general.load_mats;
 
 m_within = { 'outcomes', 'trialtypes', 'regions', 'permuted', 'channels', 'epochs', 'days' };
@@ -9,7 +9,6 @@ m_within = { 'outcomes', 'trialtypes', 'regions', 'permuted', 'channels', 'epoch
 conf = dsp2.config.load();
 load_p = fullfile( conf.PATHS.analyses, 'granger', 'null' );
 epochs = dsp2.util.general.dirnames( load_p, 'folders' );
-% epochs = { 'reward' };
 per_epoch = cell( 1, numel(epochs) );
 names = cell( 1, numel(epochs) );
 for i = 1:numel( epochs )
@@ -18,15 +17,16 @@ for i = 1:numel( epochs )
   mats = dsp2.util.general.dirnames( fullp, '.mat' );
   loaded = cell( 1, numel(mats) );
   parfor k = 1:numel(mats)
+    warning( 'off', 'all' );
     fprintf( '\n\t - Processing %s (%d of %d)', mats{k}, k, numel(mats) );
     current = dsp2.util.general.fload( fullfile(fullp, mats{k}) );
     current = current.parfor_each( m_within, @nanmean );
     loaded{k} = current;
   end
-  per_epoch{i} = concat( loaded );
+  per_epoch{i} = loaded;
 end
 
-per_epoch = concat( per_epoch );
+per_epoch = flatten( per_epoch );
 
 %%  MAKE PRO V ANTI
 
@@ -38,7 +38,7 @@ proanti.data = real( proanti.data );
 %%  PLOT
 
 meaned = proanti.keep_within_freqs( [0, 100] );
-meaned = meaned.only( {'rwdOn', 'choice'} );
+meaned = meaned.only( {'targOn', 'cued'} );
 
 pl = ContainerPlotter();
 pl.add_ribbon = true;

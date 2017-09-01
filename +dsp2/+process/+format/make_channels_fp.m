@@ -13,23 +13,23 @@ was_container = false;
 
 if ( ~isa(obj, 'SparseLabels') )
   assert__isa( obj, 'Container', 'the object to fix' );
-  labs = obj.labels;
+  labels = obj.labels;
   was_container = true;
 else
-  labs = obj;
+  labels = obj;
 end
 
-chan_ind = strcmp( labs.categories, 'channels' );
+chan_ind = strcmp( labels.categories, 'channels' );
 assert( any(chan_ind), 'Required category ''channels'' is missing.' );
-labs = labs.labels( chan_ind );
+labs = labels.labels( chan_ind );
 fix_fun = @(x) strrep( x, 'WB', 'FP' );
 labs = cellfun( fix_fun, labs, 'un', false );
-labs.labels( chan_ind ) = labs;
+labels.labels( chan_ind ) = labs;
 
 if ( was_container )
-  obj.labels = labs;
+  obj.labels = labels;
 else
-  obj = labs;
+  obj = labels;
 end
 
 end

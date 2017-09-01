@@ -13,12 +13,6 @@ function obj = extendc( arr )
 %     OUT:
 %       - `obj` (Container, SignalContainer, {})
 
-import dsp2.util.assertions.*;
-assert__isa( arr, 'cell', 'the array' );
-if ( isempty(arr) ), obj = {}; return; end
-classes = cellfun( @class, arr, 'un', false );
-assert( numel(unique(classes)) == 1 && isa(arr{1}, 'Container'), ...
-  'Each element in the array must be a Container of the same subclass.' );
-obj = extend( arr{:} );
+obj = dsp2.util.general.concat( arr );
 
 end
