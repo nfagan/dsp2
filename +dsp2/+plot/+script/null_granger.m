@@ -8,7 +8,8 @@ m_within = { 'outcomes', 'trialtypes', 'regions', 'permuted', 'channels', 'epoch
 
 conf = dsp2.config.load();
 load_p = fullfile( conf.PATHS.analyses, 'granger', 'null' );
-epochs = dsp2.util.general.dirnames( load_p, 'folders' );
+% epochs = dsp2.util.general.dirnames( load_p, 'folders' );
+epochs = { 'targon', 'targacq' };
 per_epoch = cell( 1, numel(epochs) );
 names = cell( 1, numel(epochs) );
 for i = 1:numel( epochs )
@@ -38,9 +39,14 @@ proanti.data = real( proanti.data );
 %%  PLOT
 
 meaned = proanti.keep_within_freqs( [0, 100] );
-meaned = meaned.only( {'targOn', 'cued'} );
+% meaned = meaned.only( {'targOn', 'cued'} );
+meaned = meaned.except( {'targOn', 'choice'} );
+meaned = meaned.replace( {'targOn', 'targAcq'}, 'choice+cue' );
+meaned = meaned.rm( 'permuted__true' );
 
 pl = ContainerPlotter();
+pl.compare_series = false;
+pl.marker_size = 2;
 pl.add_ribbon = true;
 pl.main_line_width = 1;
 pl.x = meaned.frequencies;

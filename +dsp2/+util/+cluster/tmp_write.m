@@ -36,7 +36,10 @@ end
 
 assert__isa( conf, 'struct', 'the config file' );
 
-if ( ~conf.CLUSTER.use_cluster ), return; end
+if ( ~conf.CLUSTER.use_cluster )
+  fprintf( str );
+  return;
+end
 
 fname = fullfile( conf.PATHS.job_output, fname );
 

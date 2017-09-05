@@ -66,7 +66,7 @@ load_required = ...
 io = dsp2.io.get_dsp_h5( 'config', conf );
 
 %   what function to use to collapse across trials, etc. e.g., @nanmean.
-summary_func = @nanmean;
+summary_func = @Container.nanmean_1d;
 
 if ( load_required )
   fprintf( '\n\t Loading ... ' );
@@ -86,7 +86,6 @@ if ( load_required )
   read_measure( 'epochs' ) = epoch;
   read_measure = dsp2.process.format.fix_block_number( read_measure );
   read_measure = dsp2.process.format.fix_administration( read_measure );
-%   read_measure = dsp__remove_bad_days_and_blocks( read_measure );
   read_measure = read_measure.rm( 'errors' );
 else
   fprintf( '\n\t Using loaded measure for {''%s'', ''%s''}' ...
@@ -111,7 +110,7 @@ switch ( manip )
   case { 'standard', 'pro_v_anti', 'pro_minus_anti' }    
     measure = dsp2.process.manipulations.non_drug_effect( measure );
     m_within = { 'outcomes', 'monkeys', 'trialtypes', 'regions', 'days', 'sites' };
-    measure = measure.parfor_each( m_within, summary_func );
+    measure = measure.for_each_1d( m_within, summary_func );
     measure = measure.collapse( 'drugs' );
     switch ( manip )
       case 'standard'
@@ -124,7 +123,9 @@ switch ( manip )
         measure = measure.collapse_except( m_within );
         require_per = setdiff( m_within, 'outcomes' );
         %   for each `require_per`, ensure all 'outcomes' are present.
-        measure = measure.parfor_each( require_per, @require, measure('outcomes') );
+        measure = dsp2.util.general.require_labels( measure ...
+          , require_per, measure('outcomes') );
+%         measure = measure.parfor_each( require_per, @require, measure('outcomes') );
         measure = dsp2.process.manipulations.pro_v_anti( measure );
         if ( isequal(manip, 'pro_minus_anti') )
           measure = dsp2.process.manipulations.pro_minus_anti( measure );
@@ -139,7 +140,7 @@ switch ( manip )
     measure = measure.rm( 'unspecified' );
     m_within = { 'outcomes', 'administration', 'drugs', 'monkeys' ...
       , 'trialtypes', 'regions', 'days', 'sites' };
-    measure = measure.parfor_each( m_within, summary_func );
+    measure = measure.for_each_1d( m_within, summary_func );
     %   decide which fields to collapse before subtracting post - pre
     %   we can keep uniform fields because those will be consistent
     %   across post and pre
@@ -149,7 +150,8 @@ switch ( manip )
     %   for each `require_per`, ensure all 'outcomes' are present.
     require_per = setdiff( m_within, {'outcomes', 'administration'} );
     required = measure.combs( {'outcomes', 'administration'} );
-    measure = measure.parfor_each( require_per, @require, required );
+%     measure = measure.parfor_each( require_per, @require, required );
+    measure = dsp2.util.general.require_labels( measure, require_per, required );
     measure = dsp2.process.manipulations.post_minus_pre( measure );
     switch ( manip )
       case 'drug'

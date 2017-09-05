@@ -109,12 +109,13 @@ for i = 1:numel(epochs)
     end
     fprintf( 'Done' );
     fprintf( '\n\t Averaging ... ' );
-    try
-      meaned = complete.parfor_each( m_within, summary_func );
-    catch err
-      warning( 'The following error ocurred: %s', err.message );
-      meaned = complete.for_each( m_within, summary_func );
-    end
+    meaned = complete.for_each_1d( m_within, summary_func );
+%     try
+%       meaned = complete.parfor_each( m_within, summary_func );
+%     catch err
+%       warning( 'The following error ocurred: %s', err.message );
+%       meaned = complete.for_each( m_within, summary_func );
+%     end
     fprintf( 'Done' );
     fprintf( '\n\t Saving ... ' );
     %   check whether to abort
