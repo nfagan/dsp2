@@ -21,7 +21,6 @@ current_files = dsp2.util.general.dirnames( save_path, '.mat' );
 current_days = cellfun( @(x) x(numel(granger_fname)+1:end-4), current_files, 'un', false );
 all_days = io.get_days( P );
 all_days = setdiff( all_days, current_days );
-all_days = dsp2.util.general.days_in_range( all_days, 'day__05302017', {} );
 %   load all at once for cluster, vs. load one at a time on local
 if ( conf.CLUSTER.use_cluster )
   all_days = { all_days };
