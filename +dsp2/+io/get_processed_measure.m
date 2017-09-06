@@ -100,9 +100,10 @@ if ( ~isempty(strfind(meas_type, 'coherence')) )
 %   dsp2.util.general.seed_rng();
 %   measure = measure.parfor_each( {'days', 'regions'}, 'regions', ...
 %     @dsp2.process.format.subsample_sites );
-  if ( strcmp(meas_type, 'coherence') )
-    measure.labels = dsp2.process.format.fix_channels( measure.labels );
+  if ( strcmp(meas_type, 'sfcoherence') )
+    measure.labels = dsp2.process.format.make_channels_fp( measure.labels );
   end
+  measure.labels = dsp2.process.format.fix_channels( measure.labels );
   measure = dsp2.process.format.only_pairs( measure );
 end
 
