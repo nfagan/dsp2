@@ -6,10 +6,10 @@ dsp2.cluster.init();
 
 date = datestr( now, 'mmddyy' );
 kinds = { 'nanmedian' };
-sfuncs = { @nanmean };
+sfuncs = { @Container.nanmean_1d };
 measures = { 'sfcoherence' };
 epochs = { 'targacq', 'reward' };
-manipulations = { 'pro_minus_anti' };
+manipulations = { 'pro_v_anti_drug', 'pro_minus_anti_drug' };
 to_collapse = { {'trials', 'monkeys'} };
 
 cmbs = dsp2.util.general.allcomb( {sfuncs, kinds} );

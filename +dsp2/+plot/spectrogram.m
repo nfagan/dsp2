@@ -25,8 +25,11 @@ kind = params.kind;
 
 summary_function = conf.PLOT.summary_function;
 func_name = func2str( summary_function );
-if ( strcmp(func_name, 'nanmean') || strcmp(func_name, 'mean') )
+if ( ~isempty(strfind(func_name, 'nanmean')) || ~isempty(strfind(func_name, 'mean')) )
   func_name = 'meaned';
+end
+if ( ~isempty(strfind(func_name, 'nanmedian')) )
+  func_name = 'nanmedian';
 end
 
 %   loop over the combinations of each of these
@@ -60,7 +63,7 @@ for i = 1:size(C, 1)
   );
   %   mean across days and sites
   measure = measure.collapse( {'days', 'sites'} );
-  measure = measure.parfor_each( measure.categories(), summary_function );
+  measure = measure.for_each_1d( measure.categories(), summary_function );
   
   switch ( manip )
     case { 'standard', 'pro_v_anti', 'pro_minus_anti' }
@@ -184,7 +187,7 @@ for i = 1:size(C, 1)
     
     for j = 1:numel(formats)
       fmt = formats{j};
-      full_save_path = fullfile( base_save_path, func_name, meas_type, kind, epoch, manip, fmt );
+      full_save_path = fullfile( base_save_path, func_name, meas_type, kind, manip, epoch, fmt );
       
       dsp2.util.general.require_dir( full_save_path );
       

@@ -4,12 +4,13 @@ import dsp2.util.general.percell;
 import dsp2.util.general.flatten;
 import dsp2.util.general.load_mats;
 
-m_within = { 'outcomes', 'trialtypes', 'regions', 'permuted', 'channels', 'epochs', 'days' };
+m_within = { 'outcomes', 'trialtypes', 'regions', 'permuted', 'channels' ...
+  , 'epochs', 'days' };
 
 conf = dsp2.config.load();
 load_p = fullfile( conf.PATHS.analyses, 'granger', 'null' );
 % epochs = dsp2.util.general.dirnames( load_p, 'folders' );
-epochs = { 'targon', 'targacq' };
+% epochs = { 'targon', 'targacq' };
 per_epoch = cell( 1, numel(epochs) );
 names = cell( 1, numel(epochs) );
 for i = 1:numel( epochs )
@@ -21,14 +22,13 @@ for i = 1:numel( epochs )
     warning( 'off', 'all' );
     fprintf( '\n\t - Processing %s (%d of %d)', mats{k}, k, numel(mats) );
     current = dsp2.util.general.fload( fullfile(fullp, mats{k}) );
-    current = current.parfor_each( m_within, @nanmean );
+    current = current.for_each_1d( m_within, @Container.nanmean_1d );
     loaded{k} = current;
   end
   per_epoch{i} = loaded;
 end
 
 per_epoch = flatten( per_epoch );
-
 %%  MAKE PRO V ANTI
 
 proanti = per_epoch;
@@ -42,7 +42,7 @@ meaned = proanti.keep_within_freqs( [0, 100] );
 % meaned = meaned.only( {'targOn', 'cued'} );
 meaned = meaned.except( {'targOn', 'choice'} );
 meaned = meaned.replace( {'targOn', 'targAcq'}, 'choice+cue' );
-meaned = meaned.rm( 'permuted__true' );
+% meaned = meaned.rm( 'permuted__true' );
 
 pl = ContainerPlotter();
 pl.compare_series = false;
