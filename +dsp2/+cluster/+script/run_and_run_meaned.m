@@ -4,7 +4,7 @@ conf = dsp2.config.set.inactivate_epochs( 'all' );
 conf = dsp2.config.set.activate_epochs( {'targOn'}, conf );
 
 conf.SIGNALS.reference_type = 'non_common_averaged';
-conf.SIGNALS.summary_function = @Container.nanmedian_1d;
+conf.SIGNALS.meaned.summary_function = @Container.nanmedian_1d;
 
 % dsp2.analysis.run( 'sfcoherence', 'config', conf );
 
