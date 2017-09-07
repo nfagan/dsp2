@@ -126,7 +126,6 @@ switch ( manip )
         %   for each `require_per`, ensure all 'outcomes' are present.
         measure = dsp2.util.general.require_labels( measure ...
           , require_per, measure('outcomes') );
-%         measure = measure.parfor_each( require_per, @require, measure('outcomes') );
         measure = dsp2.process.manipulations.pro_v_anti( measure );
         if ( isequal(manip, 'pro_minus_anti') )
           measure = dsp2.process.manipulations.pro_minus_anti( measure );
@@ -151,7 +150,6 @@ switch ( manip )
     %   for each `require_per`, ensure all 'outcomes' are present.
     require_per = setdiff( m_within, {'outcomes', 'administration'} );
     required = measure.combs( {'outcomes', 'administration'} );
-%     measure = measure.parfor_each( require_per, @require, required );
     measure = dsp2.util.general.require_labels( measure, require_per, required );
     measure = dsp2.process.manipulations.post_minus_pre( measure );
     switch ( manip )
@@ -159,16 +157,22 @@ switch ( manip )
         %
       case {'pro_v_anti_drug', 'pro_v_anti_drug_minus_sal'}
         measure = dsp2.process.manipulations.pro_v_anti( measure );
-        if ( isequal(measure, 'pro_v_anti_drug_minus_sal') )
+        if ( strcmp(manip, 'pro_v_anti_drug_minus_sal') )
+          m_within_drug = setdiff( m_within, {'sites', 'days'} );
+          measure = measure.for_each_1d( m_within_drug, summary_func );
           measure = dsp2.process.manipulations.oxy_minus_sal( measure );
         end
       case {'pro_minus_anti_drug', 'pro_minus_anti_drug_minus_sal'}
         measure = dsp2.process.manipulations.pro_v_anti( measure );
         measure = dsp2.process.manipulations.pro_minus_anti( measure );
-        if ( isequal(measure, 'pro_minus_anti_drug_minus_sal') )
+        if ( strcmp(manip, 'pro_minus_anti_drug_minus_sal') )
+          m_within_drug = setdiff( m_within, {'sites', 'days'} );
+          measure = measure.for_each_1d( m_within_drug, summary_func );
           measure = dsp2.process.manipulations.oxy_minus_sal( measure );
         end
       case 'drug_minus_sal'
+        m_within_drug = setdiff( m_within, {'sites', 'days'} );
+        measure = measure.for_each_1d( m_within_drug, summary_func );
         measure = dsp2.process.manipulations.oxy_minus_sal( measure );
     end
   otherwise

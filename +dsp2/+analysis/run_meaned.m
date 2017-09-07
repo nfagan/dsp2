@@ -15,6 +15,8 @@ function run_meaned(measure_type, varargin)
 %         'raw_power'
 %       - `varargin` ('name', value)
 
+import dsp2.util.cluster.tmp_write
+
 io = dsp2.io.get_dsp_h5();
 
 defaults.config = dsp2.config.load();
@@ -36,9 +38,11 @@ pre_mean_ops = conf.SIGNALS.meaned.pre_mean_operations;
 summary_func = conf.SIGNALS.meaned.summary_function;
 
 func_name = func2str( summary_func );
-
 if ( strcmp(func_name, 'mean') || strcmp(func_name, 'nanmean') )
   func_name = 'meaned';
+end
+if ( ~isempty(strfind(func_name, 'nanmedian')) )
+  func_name = 'nanmedian';
 end
 
 base_complete_path = dsp2.io.get_signal_measure_path( measure_type, 'complete' ...
@@ -49,7 +53,7 @@ base_mean_path = dsp2.io.get_signal_measure_path( measure_type, func_name ...
 epochs = io.get_component_group_names( base_complete_path );
 
 for i = 1:numel(epochs)
-  fprintf( '\n Processing ''%s'' (%d of %d)', epochs{i}, i, numel(epochs) );
+  tmp_write( {'\n Processing ''%s'' (%d of %d)', epochs{i}, i, numel(epochs)} );
   
   full_complete_path = io.fullfile( base_complete_path, epochs{i} );
   full_mean_path = io.fullfile( base_mean_path, epochs{i} );
@@ -87,7 +91,7 @@ for i = 1:numel(epochs)
   end
   
   if ( isempty(new_days) )
-    fprintf( '\n No new data to add ...' );
+    tmp_write( '\n No new data to add ...' );
     continue;
   end
   
@@ -96,38 +100,35 @@ for i = 1:numel(epochs)
   end
   
   for k = 1:numel(new_days)
-    fprintf( '\n\t Processing ''%s'' (%d of %d)', new_days{k}, k, numel(new_days) );
-    fprintf( '\n\t Loading ... ' );
+    tmp_write( {'\n\t Processing ''%s'' (%d of %d)', new_days{k}, k, numel(new_days)} );
+    tmp_write( '\n\t Loading ... ' );
     complete = io.read( full_complete_path, 'only', new_days{k} );
-    fprintf( 'Done' );
+    tmp_write( 'Done' );
     %   perform pre-mean operations, as defined in the config file.
-    fprintf( '\n\t Performing pre-mean operations ... ' );
+    tmp_write( '\n\t Performing pre-mean operations ... ' );
     for h = 1:numel(pre_mean_ops)
       func = pre_mean_ops{h}{1};
       args = pre_mean_ops{h}{2};
       complete = func( complete, args{:} );
     end
-    fprintf( 'Done' );
-    fprintf( '\n\t Averaging ... ' );
+    tmp_write( 'Done' ); tmp_write( '\n\t Averaging ... ' );
+    
     meaned = complete.for_each_1d( m_within, summary_func );
-%     try
-%       meaned = complete.parfor_each( m_within, summary_func );
-%     catch err
-%       warning( 'The following error ocurred: %s', err.message );
-%       meaned = complete.for_each( m_within, summary_func );
-%     end
-    fprintf( 'Done' );
-    fprintf( '\n\t Saving ... ' );
+    
+    tmp_write( 'Done' ); tmp_write( '\n\t Saving ... ' );
     %   check whether to abort
-    if ( dsp2.cluster.should_abort(conf) ), return; end
+    if ( dsp2.cluster.should_abort(conf) )
+      tmp_write( 'Aborting ...' );
+      return; 
+    end
     %   indicate progress, if on the cluster
     base_write_str = sprintf( '%s (%d of %d)', new_days{k}, k, numel(new_days) );
     if ( conf.CLUSTER.use_cluster )
       write_str = sprintf( 'Saving %s', base_write_str );
-      dsp2.util.cluster.tmp_write( write_str );
+      tmp_write( write_str );
     end
     io.add( meaned, full_mean_path );
-    fprintf( 'Done' );
+    tmp_write( 'Done' );
   end
 end
 
