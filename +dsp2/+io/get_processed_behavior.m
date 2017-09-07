@@ -72,9 +72,11 @@ switch ( meas_type )
   case 'rt'
     measure = get_rt( measure, key );
   case 'preference_index'
-    measure = get_preference_index( measure, calc_within );
+    outcome_pairs = { {'other', 'none'}, {'self', 'both'} };
+    measure = get_preference_index( measure, calc_within, outcome_pairs );
     measure = measure.replace( 'other_none', 'otherMinusNone' );
-    measure = measure.replace( 'both_self', 'selfMinusBoth' );
+%     measure = measure.replace( 'both_self', 'selfMinusBoth' );
+    measure = measure.replace( 'self_both', 'selfMinusBoth' );
   case 'prosocial_preference'
     %   TODO: Implement this.
     error( 'Not yet implemented!' );

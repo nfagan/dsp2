@@ -63,9 +63,9 @@ for ii = 1:numel(all_days)
     error( 'Script not defined for ''%s''.', epoch );
   end
 
-  detrend_func = @dsp2.process.reference.detrend;
+  detrend_func = @dsp2.process.reference.detrend_data;
 
-  signals_ = signals_.parfor_each( {'channels', 'days'}, detrend_func );
+  signals_ = signals_.for_each_nd( {'channels', 'days'}, detrend_func );
 
   tmp_write( 'Done\n', tmp_fname );
 

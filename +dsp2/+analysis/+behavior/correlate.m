@@ -1,13 +1,14 @@
 function corred = correlate(varargin)
 
 defaults.config = dsp2.config.load();
-defaults.date = '072617';
+defaults.date = dsp2.process.format.get_date_dir();
 defaults.kinds = { 'nanmedian' };
 defaults.measures = { 'normalized_power', 'coherence' };
 defaults.epochs = { 'reward' };
 defaults.manipulations = { 'pro_v_anti' };
 defaults.to_collapse = { {'trials', 'monkeys'} };
-defaults.behavior_measures = { 'gaze_frequency', 'preference_index', 'rt' };
+% defaults.behavior_measures = { 'gaze_frequency', 'preference_index', 'rt' };
+defaults.behavior_measures = { 'rt' };
 % defaults.rois = { {[-50, 250], [15, 25]}, {[-50, 250], [30, 50]}, {[-50, 250], [50, 65]} };
 % defaults.rois = { {[-200, 0], [15, 25]}, {[-200, 0], [45 60]} };
 % defaults.rois = { {[50, 250], [15, 25]}, {[50, 250], [45 60]} };
