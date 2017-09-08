@@ -56,6 +56,7 @@ N1 = obj1.data;
 N2 = obj2.data;
 
 ind = (N1 - N2) / (N1 + N2);
+% ind = (N1 - N2);
 
 out = obj.collapse_non_uniform();
 out = out.keep_one();

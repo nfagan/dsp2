@@ -5,7 +5,7 @@ dsp2.cluster.init();
 config = dsp2.config.load();
 date = dsp2.process.format.get_date_dir();
 kinds = { 'nanmedian' };
-measures = { 'sfcoherence' };
+measures = { 'coherence' };
 epochs = { 'targacq' };
 manipulations = { 'pro_v_anti' };
 to_collapse = { {'trials', 'monkeys'} };
