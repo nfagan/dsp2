@@ -13,7 +13,7 @@ tmp_fname = sprintf( 'null_granger_%s.txt', epoch );
 tmp_write( '-clear', tmp_fname );
 P = io.fullfile( 'Signals/none/complete', epoch );
 %   set up save paths
-save_path = fullfile( conf.PATHS.analyses, 'granger', 'null', epoch );
+save_path = fullfile( conf.PATHS.analyses, 'granger', 'drug_effect_null', epoch );
 dsp2.util.general.require_dir( save_path );
 %   determine which files have already been processed
 granger_fname = 'granger_segment_';
