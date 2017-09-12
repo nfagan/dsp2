@@ -16,7 +16,7 @@ high_freqs = { [15, 30], [30, 50] };
 for j = 1:numel(epochs)
   %%  for each epoch ...
   
-  epoch = 'targacq';
+  epoch = epochs{j};
   tmp_fname = sprintf( 'pac_%s.txt', epoch );
   tmp_write( '-clear', tmp_fname );
   P = io.fullfile( 'Signals/none/complete', epoch );
