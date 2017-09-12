@@ -33,6 +33,7 @@ function [granger, fitted, freq_band_centers, ids, C] = ...
 if ( ~iscell(var_specifiers) ), var_specifiers = { var_specifiers }; end
 
 defaults.regression_method = 'LWR';
+defaults.estimate_model_order = false;
 defaults.model_order =  32;
 defaults.fit_func =     @normfit;
 defaults.inv_func =     @norminv;
@@ -48,7 +49,8 @@ fs =          signals.fs;
 n_vars =      size( X, 1 );
 n_obs =       size( X, 2 );
 n_trials =    size( X, 3 );
-n_freqs =     fs;
+% n_freqs =     fs;
+n_freqs =     fs/2;
 max_lags =    params.max_lags;
 regression_method = params.regression_method;
 model_order = params.model_order;
@@ -59,6 +61,11 @@ n_dist_p = params.n_dist_p;
 if ( n_trials_per_perm > n_trials )
   warning( 'Too many trials requested.' );
   n_trials_per_perm = n_trials;
+end
+
+%   optionally automatically estimate model order
+if ( params.estimate_model_order )
+  [~, ~, model_order, ~] = tsdata_to_infocrit( X, model_order, [] );
 end
 
 [granger, freq_band_centers] = calc_granger( false );

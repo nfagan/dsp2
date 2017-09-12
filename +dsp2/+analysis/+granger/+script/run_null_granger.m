@@ -33,6 +33,8 @@ for ii = 1:numel(all_days)
   %   load as necessary
   tmp_write( {'Loading %s ... ', epoch}, tmp_fname );
   signals = io.read( P, 'only', all_days{ii} );
+  signals = dsp2.process.format.fix_block_number( signals );
+  signals = dsp2.process.format.fix_administration( signals );
   tmp_write( 'Done\n', tmp_fname );
 
   %%  preprocess signals
@@ -79,10 +81,12 @@ for ii = 1:numel(all_days)
   n_perms = 100;
   n_perms_in_granger = 1; % only calculate granger once
   n_trials = Inf; % use all trials for that distribution
-  max_lags = [];
+  max_lags = 5e3;
   dist_type = 'ev';
+  estimate_model_order = false;
 
-  shuffle_within = { 'context', 'trialtypes' };
+%   shuffle_within = { 'context', 'trialtypes' };
+  shuffle_within = { 'context', 'trialtypes', 'drugs', 'administration' };
 
   for i = 1:numel(days)
 
@@ -117,6 +121,7 @@ for ii = 1:numel(all_days)
               , 'dist', dist_type ...
               , 'max_lags', max_lags ...
               , 'do_permute', false ...
+              , 'estimate_model_order', estimate_model_order ...
             );
             G.labels = G.labels.set_field( 'iteration', sprintf('iteration__%d', k) );
             out_cont = out_cont.append( G );
