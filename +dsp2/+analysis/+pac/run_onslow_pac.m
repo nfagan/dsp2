@@ -1,4 +1,18 @@
-function PAC = run_onslow_pac(signals, pac_within, regs)
+function PAC = run_onslow_pac(signals, pac_method, pac_within, regs, phase_freqs, amp_freqs)
+
+import dsp2.util.assertions.*;
+
+assert__isa( signals, 'SignalContainer', 'the signal object' );
+assert__isa( pac_method, 'char', 'the method' );
+assert__is_cellstr_or_char( pac_within );
+assert__is_cellstr( regs );
+
+pac_method = lower( pac_method );
+
+pac_methods = { 'mi', 'cfc', 'kl_mi' };
+
+assert( any(strcmp(pac_methods, pac_method)), ['Unrecognized method ''%s'';' ...
+  , ' must be one of:\n%s'], strjoin(pac_methods, '\n') );
 
 regs = dsp2.util.general.allcomb( {regs(:), flipud(regs(:))} );
 
@@ -6,15 +20,22 @@ days = signals( 'days' );
 
 PAC = cell( 1, numel(days) );
 for i = 1:numel(days)
-  PAC{i} = pac__one_day( signals.only(days{i}), pac_within, regs );
+  PAC{i} = pac__one_day( signals.only(days{i}), pac_method, pac_within, regs ...
+    , phase_freqs, amp_freqs );
 end
 PAC = dsp2.util.general.concat( PAC );
 
 end
 
-function PAC = pac__one_day(signals, pac_within, regs)
+function PAC = pac__one_day(signals, pac_method, pac_within, regs, target_flow, target_fhigh)
 
 fs = signals.fs;
+
+% target_flow = 1:0.5:100;
+% target_fhigh = 10:4:146;
+
+% target_flow = 1:5:100;
+% target_fhigh = 1:5:100;
 
 pairs = dsp2.io.get_site_pairs();
 day_ind = strcmp( pairs.days, signals('days') );
@@ -58,13 +79,22 @@ parfor i = 1:size(prod, 1)
   this_pac = cell( numel(inds1), 1 );
   
   for j = 1:numel(inds1)
-    reg1_data = reg1.data(inds1{j}, :);
-    reg2_data = reg2.data(inds2{j}, :);
+    r1_data = reg1.data(inds1{j}, :);
+    r2_data = reg2.data(inds2{j}, :);
     
     extr = reg1.keep( inds1{j} );
     extr = extr.one();
 
-    [pacmat, freqvec_ph, freqvec_amp] = find_pac_shf( reg2_data', fs, 'cfc', reg1_data' );
+    if ( ~strcmp(pac_method, 'kl_mi') )
+      [pacmat, freqvec_ph, freqvec_amp] = ...
+        find_pac_shf( r2_data', fs, pac_method, r1_data', target_flow, target_fhigh );
+    else
+      %   note, this isn't a typo -- reg1 comes first here, but second in
+      %   the above case
+      [pacmat, freqvec_ph, freqvec_amp] = ...
+        KL_MI2d_TEM__nf_edit( r1_data', r2_data', fs, target_flow, target_fhigh );
+      pacmat = pacmat';
+    end
     
     pacmat_3 = zeros( [1, size(pacmat)] );
     pacmat_3(1, :, :) = pacmat;
@@ -84,5 +114,6 @@ parfor i = 1:size(prod, 1)
 end
 
 PAC = dsp2.util.general.concat( PAC );
+PAC = PAC.add_field( 'method', pac_method );
 
 end

@@ -126,16 +126,16 @@ proanti = dsp2.process.manipulations.pro_v_anti( proanti );
 proanti = kept2.keep_within_freqs( [0, 100] );
 % proanti = per_epoch.keep_within_freqs( [0, 100] );
 proanti = proanti.collapse( {'blocks', 'sessions'} );
-proanti = dsp2.process.manipulations.post_minus_pre( proanti );
+% proanti = dsp2.process.manipulations.post_minus_pre( proanti );
 proanti = dsp2.process.manipulations.pro_v_anti( proanti );
 
 %%  PLOT
 % meaned = proanti.only( 'saline' );
-meaned = proanti;
+meaned = proanti.only( {'oxytocin', 'pre'} );
 
-scale_name = 'rescaled';
+scale_name = 'rescaled_pre';
 
-base_fname = dsp2.util.general.append_uniques( meaned, 'rescaled', {'epochs', 'drugs'} );
+base_fname = dsp2.util.general.append_uniques( meaned, 'rescaled', {'epochs', 'drugs', 'administration'} );
 
 pl = ContainerPlotter();
 pl.compare_series = false;
@@ -144,14 +144,17 @@ pl.add_ribbon = true;
 pl.main_line_width = 1;
 pl.x = meaned.frequencies;
 pl.shape = [2, 2];
-pl.y_lim = [-.02 .02];
+pl.y_lim = [-.04, .04];
 pl.y_label = 'Granger difference';
 pl.x_label = 'hz';
 pl.order_by = { 'real', 'permuted' };
 
 figure(1); clf();
 
-meaned.plot( pl, {'permuted', 'trialtypes', 'max_lags'}, {'regions', 'outcomes', 'drugs'} );
+meaned.plot( pl, {'permuted', 'trialtypes', 'administration'}, {'regions', 'outcomes', 'drugs'} );
+
+f = FigureEdits( gcf );
+f.one_legend();
 
 save_path = fullfile( conf.PATHS.plots, dsp2.process.format.get_date_dir(), 'granger' );
 dsp2.util.general.require_dir( save_path );

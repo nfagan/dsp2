@@ -13,6 +13,9 @@ regions = { 'acc', 'bla' };
 pac_within = { 'outcomes', 'trialtypes', 'days' };
 pac_method = 'cfc';
 
+phase_freqs = 1:1:100;
+amp_freqs = 1:1:100;
+
 for j = 1:numel(epochs)
   %%  for each epoch ...
   
@@ -21,7 +24,7 @@ for j = 1:numel(epochs)
   tmp_write( '-clear', tmp_fname );
   P = io.fullfile( 'Signals/none/complete', epoch );
   %   set up save paths
-  save_path = fullfile( conf.PATHS.analyses, 'onslow_pac', epoch );
+  save_path = fullfile( conf.PATHS.analyses, 'onslow_pac', pac_method, epoch );
   dsp2.util.general.require_dir( save_path );
   %   determine which files have already been processed
   pac_fname = 'onslow_pac_segment_';
@@ -57,6 +60,8 @@ for j = 1:numel(epochs)
     end
 
     signals_ = signals_.rm( 'errors' );
+    
+    signals_ = dsp2.process.reference.reference_subtract_within_day( signals_ );
 
     if ( strcmp(epoch, 'targacq') )
       % [ -200, 0 ]
@@ -75,7 +80,9 @@ for j = 1:numel(epochs)
 
     %%  run pac, save per day
 
-    PAC = dsp2.analysis.pac.run_onslow_pac( signals_, pac_within, regions );
+    PAC = dsp2.analysis.pac.run_onslow_pac( signals_, pac_method ...
+      , pac_within, regions, phase_freqs, amp_freqs );
+    
     pac_days = PAC( 'days' );
 
     for i = 1:numel(pac_days)    
