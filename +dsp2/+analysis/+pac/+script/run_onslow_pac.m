@@ -61,7 +61,7 @@ for j = 1:numel(epochs)
     end
 
     signals_ = signals_.rm( 'errors' );
-    
+    signals_ = update_min( update_max(signals_) );
     signals_ = dsp2.process.reference.reference_subtract_within_day( signals_ );
 
     if ( strcmp(epoch, 'targacq') )
