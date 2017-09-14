@@ -5,6 +5,7 @@ import dsp2.util.cluster.tmp_write;
 dsp2.cluster.init();
 conf = dsp2.config.load();
 addpath( genpath(fullfile(conf.PATHS.repositories, 'onslow_pac')) );
+addpath( genpath(fullfile(conf.PATHS.repositories, 'kl_cfc')) );
 %   get signals
 io = dsp2.io.get_dsp_h5();
 epochs = { 'targacq', 'reward', 'targon' };
