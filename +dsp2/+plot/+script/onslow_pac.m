@@ -1,8 +1,8 @@
 %%  LOAD
 
 conf = dsp2.config.load();
-epoch = 'reward';
-load_path = fullfile( conf.PATHS.analyses, 'onslow_pac', epoch );
+epoch = 'targacq';
+load_path = fullfile( conf.PATHS.analyses, 'onslow_pac', 'cfc', epoch );
 mats = dsp2.util.general.load_mats( load_path );
 pac = dsp2.util.general.concat( mats );
 
@@ -11,11 +11,15 @@ dsp2.util.general.require_dir( save_path );
 
 %%
 
+do_save = true;
+
 each_plot = { 'outcomes', 'trialtypes', 'epochs', 'regions' };
 append_to_fname = { 'epochs', 'trialtypes', 'regions' };
 formats = { 'epsc', 'fig', 'png' };
 
 meaned_ = pac.each1d( each_plot, @rowops.nanmean );
+
+% meaned_ = meaned_.only( 'acc_bla' );
 
 regions = meaned_( 'regions' );
 
@@ -27,7 +31,7 @@ for i = 1:numel( regions )
 
   figure(i); clf();
   meaned.spectrogram( each_plot, 'shape', [1, 2], 'colorMap', 'default' ...
-    , 'time', [0, 100], 'frequencies', [0, 100], 'clims', [-.005, .005]);
+    , 'time', [0, 100], 'frequencies', [0, 100], 'clims', [-.015, .015]);
 
   f = FigureEdits( gcf );
   f.ylabel( 'Amplitude frequency (hz)' );
@@ -36,9 +40,10 @@ for i = 1:numel( regions )
 
   fname = dsp2.util.general.append_uniques( meaned, 'heatmap', append_to_fname );
 
-  dsp2.util.general.save_fig( gcf, fullfile(save_path, fname), formats );
+  if ( do_save )
+    dsp2.util.general.save_fig( gcf, fullfile(save_path, fname), formats );
+  end
 end
-% dsp2.util.general.save_fig( gcf, fullfile(save_path, fname), formats );
 
 %% AREA subtraction
 

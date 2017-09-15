@@ -8,7 +8,7 @@ addpath( genpath(fullfile(conf.PATHS.repositories, 'onslow_pac')) );
 addpath( genpath(fullfile(conf.PATHS.repositories, 'kl_cfc')) );
 %   get signals
 io = dsp2.io.get_dsp_h5();
-epochs = { 'targacq', 'reward', 'targon' };
+epochs = { 'reward', 'targon' };
 
 regions = { 'acc', 'bla' };
 pac_within = { 'outcomes', 'trialtypes', 'days' };
@@ -35,7 +35,9 @@ for j = 1:numel(epochs)
   all_days = setdiff( all_days, current_days );
   %   load all at once for cluster, vs. load one at a time on local
   if ( conf.CLUSTER.use_cluster )
-    all_days = { all_days };
+    all_days = dsp2.util.general.group_cell( all_days, 10 );
+  else
+    all_days = dsp2.util.general.group_cell( all_days, 1 );
   end
 
   %% -- Main routine, for each group of days
@@ -44,6 +46,7 @@ for j = 1:numel(epochs)
 
     %   load as necessary
     tmp_write( {'Loading %s ... ', epoch}, tmp_fname );
+    tmp_write( {'\n  %s', strjoin(all_days{ii}, '\n  ')}, tmp_fname );
     signals = io.read( P, 'only', all_days{ii} );
     signals = dsp2.process.format.fix_block_number( signals );
     signals = dsp2.process.format.fix_administration( signals );
