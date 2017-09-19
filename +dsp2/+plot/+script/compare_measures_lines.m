@@ -24,6 +24,8 @@ require_load = true;
 
 base_save_path = fullfile( conf.PATHS.plots, 'compare_measures', date );
 
+tmp_write( '-clear' );
+
 for i = 1:size(C, 1)
   tmp_write( {'\n Processing combination %d of %d', i, size(C, 1)} );
   
@@ -46,6 +48,7 @@ for i = 1:size(C, 1)
   measure = Container();
   
   for k = 1:numel(measures)
+    tmpwrite( {'\n   Processing %d of %d ... ', k, numel(measures)} );
     c = [ measures(k), row(1:3) ];
     measure_ = dsp2.io.get_processed_measure( c, shared_inputs{:} );
     measure_ = measure_.keep_within_freqs( [0, 100] );
@@ -54,6 +57,8 @@ for i = 1:size(C, 1)
     measure_( 'signal_measure' ) = measures{k};
     measure = measure.append( measure_ );
   end
+  
+  meas = strjoin( measures, '_' );
   
   save_path = fullfile( base_save_path, sfunc_name, meas, kind, epoch, manip );
   

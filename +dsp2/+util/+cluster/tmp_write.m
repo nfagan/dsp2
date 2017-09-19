@@ -37,6 +37,10 @@ end
 assert__isa( conf, 'struct', 'the config file' );
 
 if ( ~conf.CLUSTER.use_cluster )
+  %   if we're not on the cluster, print the string to standard output
+  %   instead of writing to a file, but if the string is '-clear', just
+  %   return without printing anything
+  if ( strcmpi(str, '-clear') ), return; end
   fprintf( str );
   return;
 end
