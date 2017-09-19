@@ -126,12 +126,13 @@ proanti = dsp2.process.manipulations.pro_v_anti( proanti );
 proanti = kept2.keep_within_freqs( [0, 100] );
 % proanti = per_epoch.keep_within_freqs( [0, 100] );
 proanti = proanti.collapse( {'blocks', 'sessions'} );
-% proanti = dsp2.process.manipulations.post_minus_pre( proanti );
+proanti = dsp2.process.manipulations.post_minus_pre( proanti );
 proanti = dsp2.process.manipulations.pro_v_anti( proanti );
 
 %%  PLOT
 % meaned = proanti.only( 'saline' );
-meaned = proanti.only( {'oxytocin', 'pre'} );
+% meaned = proanti.only( {'oxytocin', 'pre'} );
+meaned = proanti.rm( 'unspecified' );
 
 scale_name = 'rescaled_pre';
 
@@ -141,30 +142,30 @@ pl = ContainerPlotter();
 pl.compare_series = false;
 pl.marker_size = 2;
 pl.add_ribbon = true;
-pl.add_legend = false;
+pl.add_legend = true;
 pl.main_line_width = 1;
 pl.x = meaned.frequencies;
-pl.shape = [2, 2];
-pl.y_lim = [-.04, .04];
+pl.shape = [4, 2];
+pl.y_lim = [-.07, .07];
 pl.y_label = 'Granger difference';
-pl.x_label = 'hz';
+% pl.x_label = 'hz';
 pl.order_by = { 'real', 'permuted' };
 
-figure(1); clf();
+% figure(1); clf();
 
-meaned.plot( pl, {'permuted', 'trialtypes', 'administration'}, {'regions', 'outcomes', 'drugs'} );
+meaned.plot( pl, {'permuted', 'trialtypes', 'administration'}, {'outcomes', 'drugs', 'regions'} );
 
 f = FigureEdits( gcf );
-% f.one_legend();
+f.one_legend();
 
-save_path = fullfile( conf.PATHS.plots, dsp2.process.format.get_date_dir(), 'granger' );
+save_path = fullfile( conf.PATHS.plots, 'granger', dsp2.process.format.get_date_dir() );
 dsp2.util.general.require_dir( save_path );
 fname = fullfile( save_path, base_fname );
-dsp2.util.general.save_fig( figure(1), fname, {'fig', 'png', 'epsc'} );
+% dsp2.util.general.save_fig( figure(1), fname, {'fig', 'png', 'epsc'} );
 
 %%  PLOT PER DAY AND SAVE
 
-save_path = fullfile( conf.PATHS.plots, dsp2.process.format.get_date_dir(), 'granger' );
+save_path = fullfile( conf.PATHS.plots, 'granger', dsp2.process.format.get_date_dir() );
 
 meaned = proanti.keep_within_freqs( [0, 100] );
 meaned = meaned.replace( {'targOn', 'targAcq'}, 'choice+cue' );

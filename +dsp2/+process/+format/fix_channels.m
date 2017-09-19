@@ -48,6 +48,7 @@ for i = 1:numel(days)
   map_chans = chans(:, 2);
   for k = 1:numel(map_sites)
     site_ind = labs.where( {days{i}, map_sites{k}} );
+    assert( any(site_ind), 'No sites matched the given site map.' );
     lab_ind = strcmp( labs.labels, map_chans{k} );
     if ( any(lab_ind) )
       labs.indices(:, lab_ind) = labs.indices(:, lab_ind) | site_ind;

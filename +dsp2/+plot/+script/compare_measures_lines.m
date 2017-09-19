@@ -12,7 +12,7 @@ sfuncs = { @nanmean };
 measures = { 'coherence', 'sfcoherence' };
 epochs = { 'reward', 'targacq' };
 manipulations = { 'pro_v_anti' };
-to_collapse = { {'trials', 'monkeys', 'sites'} };
+to_collapse = { {'trials', 'monkeys'} };
 
 bands = Container( {[15, 30]; [35, 50]}, 'band', {'beta'; 'gamma'} );
 
