@@ -48,7 +48,7 @@ for i = 1:size(C, 1)
   measure = Container();
   
   for k = 1:numel(measures)
-    tmpwrite( {'\n   Processing %d of %d ... ', k, numel(measures)} );
+    tmp_write( {'\n   Processing %d of %d ... ', k, numel(measures)} );
     c = [ measures(k), row(1:3) ];
     measure_ = dsp2.io.get_processed_measure( c, shared_inputs{:} );
     measure_ = measure_.keep_within_freqs( [0, 100] );
