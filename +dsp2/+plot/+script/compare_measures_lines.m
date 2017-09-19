@@ -2,6 +2,8 @@
 
 import dsp2.util.cluster.tmp_write;
 
+dsp2.cluster.init();
+
 conf = dsp2.config.load();
 
 date = dsp2.process.format.get_date_dir();
