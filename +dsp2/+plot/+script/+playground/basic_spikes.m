@@ -25,7 +25,7 @@ end
 plt = spikes;
 plt = plt.rm( {'ref', 'errors'} );
 
-if ( plt.contains('targacq') ), plt = plt.rm( 'cued' ); end
+if ( any(plt.contains({'targacq', 'targAcq'})) ), plt = plt.rm( 'cued' ); end
 
 plts = plt.enumerate( {'trialtypes'} );
 

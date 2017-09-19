@@ -16,7 +16,7 @@ end
 conf = dsp2.config.load();
 load_p = fullfile( conf.PATHS.analyses, 'granger', subdir );
 % epochs = dsp2.util.general.dirnames( load_p, 'folders' );
-epochs = { 'targacq' };
+epochs = { 'reward' };
 per_epoch = cell( 1, numel(epochs) );
 names = cell( 1, numel(epochs) );
 for i = 1:numel( epochs )
@@ -141,6 +141,7 @@ pl = ContainerPlotter();
 pl.compare_series = false;
 pl.marker_size = 2;
 pl.add_ribbon = true;
+pl.add_legend = false;
 pl.main_line_width = 1;
 pl.x = meaned.frequencies;
 pl.shape = [2, 2];
@@ -154,7 +155,7 @@ figure(1); clf();
 meaned.plot( pl, {'permuted', 'trialtypes', 'administration'}, {'regions', 'outcomes', 'drugs'} );
 
 f = FigureEdits( gcf );
-f.one_legend();
+% f.one_legend();
 
 save_path = fullfile( conf.PATHS.plots, dsp2.process.format.get_date_dir(), 'granger' );
 dsp2.util.general.require_dir( save_path );

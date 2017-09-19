@@ -1,5 +1,7 @@
 %%  COMPARE_MEASURES_LINES -- Script interface to compare_measures_lines()
 
+import dsp2.util.cluster.tmp_write;
+
 conf = dsp2.config.load();
 
 date = dsp2.process.format.get_date_dir();
@@ -18,10 +20,10 @@ C = dsp2.util.general.allcomb( ...
 
 require_load = true;
 
-base_save_path = fullfile( conf.PATHS.plots, date, 'lines_compare' );
+base_save_path = fullfile( conf.PATHS.plots, 'compare_measures', date );
 
 for i = 1:size(C, 1)
-  fprintf( '\n Processing combination %d of %d', i, size(C, 1) );
+  tmp_write( {'\n Processing combination %d of %d', i, size(C, 1)} );
   
   row = C(i, :);
   
@@ -51,6 +53,6 @@ for i = 1:size(C, 1)
   
   save_path = fullfile( base_save_path, sfunc_name, meas, kind, epoch, manip );
   
-  dsp2.plot.compare_measure_lines( measure, bands, save_path, 'config', conf );
+  dsp2.plot.compare_measures_lines( measure, bands, save_path, 'config', conf );
 end
 

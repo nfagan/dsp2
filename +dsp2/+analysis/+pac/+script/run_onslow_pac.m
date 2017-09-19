@@ -37,7 +37,7 @@ for j = 1:numel(epochs)
   if ( conf.CLUSTER.use_cluster )
     all_days = dsp2.util.general.group_cell( all_days, 10 );
   else
-    all_days = dsp2.util.general.group_cell( all_days, 1 );
+    all_days = dsp2.util.general.group_cell( all_days, 10 );
   end
 
   %% -- Main routine, for each group of days

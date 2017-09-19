@@ -4,9 +4,10 @@ conf = dsp2.config.load();
 epoch = 'targacq';
 load_path = fullfile( conf.PATHS.analyses, 'onslow_pac', 'cfc', epoch );
 mats = dsp2.util.general.load_mats( load_path );
-pac = dsp2.util.general.concat( mats );
+pac_choice = dsp2.util.general.concat( mats );
 
-save_path = fullfile( conf.PATHS.plots, 'onslow_pac', dsp2.process.format.get_date_dir(), epoch );
+base_save_path = fullfile( conf.PATHS.plots, 'onslow_pac', dsp2.process.format.get_date_dir() );
+save_path = fullfile( base_save_path, epoch );
 dsp2.util.general.require_dir( save_path );
 
 %%
@@ -23,9 +24,12 @@ meaned_ = pac.each1d( each_plot, @rowops.nanmean );
 
 regions = meaned_( 'regions' );
 
+meaned_ = meaned_.only( 'cued' );
+
 for i = 1:numel( regions )
 
-  meaned = meaned_.only( {'choice', regions{i}} );
+%   meaned = meaned_.only( {'choice', regions{i}} );
+  meaned = meaned_.only( regions{i} );
 
   meaned = dsp2.process.manipulations.pro_v_anti( meaned );
 
@@ -44,6 +48,40 @@ for i = 1:numel( regions )
     dsp2.util.general.save_fig( gcf, fullfile(save_path, fname), formats );
   end
 end
+
+%%  BAR plot
+
+phase_rois = { [1, 20] };
+amp_rois = { [1, 20], [55, 85] };
+
+cmbs = dsp2.util.general.allcomb( {phase_rois, amp_rois } );
+
+bands = Container();
+
+for i = 1:size(cmbs, 1)
+  
+  phase_roi = cmbs{i, 1};
+  amp_roi = cmbs{i, 2};
+  
+  meaned = pac.time_freq_mean( phase_roi, amp_roi );
+  meaned = meaned.require_fields( {'phase_freq', 'amp_freq'} );
+  meaned( 'phase_freq' ) = sprintf( '%d-%dhz (phase)', phase_roi(1), phase_roi(2) );
+  meaned( 'amp_freq' ) = sprintf( '%d-%dhz (amp)', amp_roi(1), amp_roi(2) );
+  
+  bands = bands.append( meaned );
+  
+end
+
+proanti = dsp2.process.manipulations.pro_v_anti( bands );
+%%
+
+fname = sprintf( 'choice_cued_targacq_targon_1_20' );
+
+plt = proanti;
+figure(1); clf();
+plt.bar( 'regions', {'trialtypes'}, {'phase_freq', 'amp_freq', 'outcomes'} );
+
+dsp2.util.general.save_fig( gcf, fullfile(base_save_path, 'combined', fname), {'epsc', 'fig', 'png'} );
 
 %% AREA subtraction
 
