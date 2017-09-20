@@ -170,6 +170,8 @@ for i = 1:numel(epochs)
         else
           measure = signals.run_coherence();
         end
+        measure = dsp2.process.format.fix_channels( measure );
+        measure = dsp2.process.format.only_pairs( measure );
       case 'sfcoherence'
         assert( strcmp(ref_type, 'non_common_averaged') ...
           , 'Only non_common_averaged has been implemented.' );
@@ -205,6 +207,8 @@ for i = 1:numel(epochs)
         end
         
         measure = extend( measure{:} );
+        measure = dsp2.process.format.fix_channels( measure );
+        measure = dsp2.process.format.only_pairs( measure );
       case 'raw_power'
         measure = signals.run_raw_power();
       case 'normalized_power'

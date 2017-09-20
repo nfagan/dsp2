@@ -1,6 +1,6 @@
 conf = dsp2.config.load();
 
-epoch = 'targacq';
+epoch = 'reward';
 date_dir = dsp2.process.format.get_date_dir();
 kind = 'pro_v_anti_drug';
 
@@ -11,8 +11,15 @@ dsp2.util.general.require_dir( save_path );
 do_normalize = false;
 do_save = false;
 
-% time_rois = { [50, 250]   };
-time_rois = { [-200, 0] };
+if ( strcmp(epoch, 'reward') )
+  time_rois = { [0, 200]   };
+elseif ( strcmp(epoch, 'targacq') )
+  time_rois = { [-200, 0] };
+elseif ( strcmp(epoch, 'targon') )
+  time_rois = { [50, 250] };
+else
+  error( 'Unrecognized epoch %s', epoch );
+end
 freq_rois = { [15, 25], [45, 60], [70, 95] };
 roi_cmbs = dsp2.process.format.get_roi_combinations( time_rois, freq_rois );
 
@@ -44,6 +51,7 @@ for i = 1:numel(spikes)
   current = current.each1d( m_within1, @rowops.mean );
   current = dsp2.process.format.fix_block_number( current );
   current = dsp2.process.format.fix_administration( current, 'config', conf );
+  current = dsp2.process.format.fix_epochs( current );
   if ( isempty(strfind(kind, 'drug')) )
     current = dsp2.process.manipulations.non_drug_effect( current );
     current = current.collapse( 'drugs' );
@@ -119,10 +127,10 @@ for i = 1:size(region_cmbs, 1)
   spikes_one_region = spikes.only( region_cmbs(i, :) );
   
   %   ensure ordering of elements is matched between spikes + coherence
-  assert( isequal(spikes_one_region('days', :), coh('days', :)) );
-  assert( isequal(spikes_one_region('outcomes', :), coh('outcomes', :)) );
-  assert( isequal(spikes_one_region('trialtypes', :), coh('trialtypes', :)) );
-  assert( isequal(spikes_one_region('drugs', :), coh('drugs', :)) );
+  assert( isequal(spikes_one_region('days', :),           coh('days', :)) );
+  assert( isequal(spikes_one_region('outcomes', :),       coh('outcomes', :)) );
+  assert( isequal(spikes_one_region('trialtypes', :),     coh('trialtypes', :)) );
+  assert( isequal(spikes_one_region('drugs', :),          coh('drugs', :)) );
   assert( isequal(spikes_one_region('administration', :), coh('administration', :)) );
   
   for j = 1:numel(roi_cmbs)    
@@ -175,6 +183,8 @@ stats = dsp2.util.general.concat( stats );
 
 %%  plot with each band as a line
 
+figs_are = { 'trialtypes' };
+
 for i = 1:size(region_cmbs, 1)
   spikes_one_region = spikes.only( region_cmbs(i, :) );
   
@@ -212,23 +222,27 @@ for i = 1:size(region_cmbs, 1)
   coh_meaned = dsp2.util.general.concat( coh_rebuilt );
   extr = dsp2.util.general.concat( spikes_rebuilt );
   
-  pl.default(); f = figure(1); clf(); 
-  set( f, 'units', 'normalized' ); set( f, 'position', [0, 0, 1, 1] );
+  fig_cmbs = extr.pcombs( figs_are );
   
-%   pl.x_lim = [-60, 60];
-  pl.x_lim = [-1, 1];
-  pl.y_lim = [-.08, .08];
-  pl.y_label = 'Coherence';
-  pl.x_label = 'Spikes';
-  
-  to_scatter = coh_meaned;
-  to_scatter.labels = extr.labels;
-  pl.scatter( extr, to_scatter, {'time_freq_roi'}, plots_are );
-  
-  fname = 'mua_combined';
-  fname = dsp2.util.general.append_uniques( to_scatter, fname, filenames_are );
-  if ( do_save )
-    dsp2.util.general.save_fig( figure(1), fullfile(save_path, fname), {'epsc', 'png', 'fig'} );
+  for j = 1:size( fig_cmbs, 1 )  
+    pl.default(); f = figure(1); clf(); 
+    set( f, 'units', 'normalized' ); set( f, 'position', [0, 0, 1, 1] );
+
+  %   pl.x_lim = [-60, 60];
+    pl.x_lim = [-1, 1];
+    pl.y_lim = [-.08, .08];
+    pl.y_label = 'Coherence';
+    pl.x_label = 'Spikes';
+    
+    to_scatter_mua = only( extr, fig_cmbs(j, :) );
+    to_scatter_coh = only( coh_meaned, fig_cmbs(j, :) );
+    to_scatter_coh.labels = to_scatter_mua.labels;
+    pl.scatter( to_scatter_mua, to_scatter_coh, {'time_freq_roi'}, plots_are );
+
+    fname = 'mua_combined';
+    fname = dsp2.util.general.append_uniques( to_scatter_coh, fname, filenames_are );
+    if ( do_save )
+      dsp2.util.general.save_fig( figure(1), fullfile(save_path, fname), {'epsc', 'png', 'fig'} );
+    end
   end
-  
 end
