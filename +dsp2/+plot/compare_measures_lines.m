@@ -24,6 +24,8 @@ F = figure(1);
 clf();
 
 pl = ContainerPlotter();
+pl.add_ribbon = true;
+pl.x = banded.get_time_series();
 pl.summary_function = conf.PLOT.summary_function;
 
 banded.plot( pl, 'signal_measure', {'outcomes', 'band', 'regions', 'monkeys'} );

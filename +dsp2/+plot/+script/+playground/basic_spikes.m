@@ -22,7 +22,7 @@ m_within1 = conf.SIGNALS.meaned.mean_within;
 to_clpse = { 'blocks', 'sessions' };
 m_within2 = setdiff( m_within1, to_clpse );
 m_within2 = union( m_within2, {'drugs', 'administration'} );
-parfor i = 1:numel(spikes)
+for i = 1:numel(spikes)
   disp( i );
   current = spikes{i};
   current = dsp2.process.spike.get_sps( current, bin_size );
@@ -56,12 +56,25 @@ end
 %%
 plt = spikes;
 plt = plt.rm( {'ref', 'errors'} );
+plt = plt.collapse( 'trialtypes' );
 
 if ( any(plt.contains({'targacq', 'targAcq'})) ), plt = plt.rm( 'cued' ); end
 if ( any(plt.contains({'targon', 'targOn'})) ), plt = plt.rm( 'choice' ); end
 
+% plt = plt.replace( {'self', 'none'}, 'antisocial' );
+% plt = plt.replace( {'both', 'other'}, 'prosocial' );
+
 if ( ~isempty(strfind(kind, 'drug')) )
-  plt = dsp2.process.manipulations.post_minus_pre( plt );
+%   plt = dsp2.process.manipulations.post_minus_pre( plt );
+  plt = dsp2.process.manipulations.post_over_pre( plt );
+  
+  plt = plt.remove_nans_and_infs();
+  
+%   plt = plt.each1d( {'outcomes', 'trialtypes', 'drugs', 'regions'}, @rowops.nanmean );
+%   plt = dsp2.process.manipulations.oxy_minus_sal( plt );
+  
+  plt = plt.each1d( {'outcomes', 'trialtypes', 'drugs', 'regions', 'channels', 'days'}, @rowops.nanmean );
+  plt = dsp2.util.general.require_labels( plt, {'trialtypes', 'drugs', 'regions', 'channels', 'days'}, plt('outcomes'));
 end
 if ( ~isempty(strfind(kind, 'pro')) )
   plt = dsp2.process.manipulations.pro_v_anti( plt );
@@ -93,12 +106,16 @@ for k = 1:numel(plts)
 
   pl = ContainerPlotter();
 
+  pl.summary_function = @nanmean;
   pl.x = start:bin_size:start+amt-1;
-%   pl.x_label = sprintf( 'Time (ms) from %s', strjoin(plt('epochs'), ', ') );
+  pl.x_label = sprintf( 'Time (ms) from %s', strjoin(plt('epochs'), ', ') );
   pl.y_label = 'sp/s';
-  pl.y_lim = ylims;
-  pl.y_lim = [-50, 50];
-  pl.shape = [2, 2];
+  pl.y_lim = [];
+  pl.order_groups_by = { 'otherMinusNone', 'selfMinusBoth' };
+  pl.order_by = { 'otherMinusNone', 'selfMinusBoth' };
+  pl.y_lim = [];
+%   pl.shape = [2, 2];
+  pl.shape = [1, 1];
   pl.add_ribbon = true;
   pl.vertical_lines_at = 0;
   pl.main_line_width = 1;

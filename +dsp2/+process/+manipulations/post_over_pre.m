@@ -1,6 +1,6 @@
-function out = post_minus_pre(obj, to_collapse)
+function out = post_over_pre(obj, to_collapse)
 
-%   POST_MINUS_PRE -- Subtract pre-injection data from post-injection data.
+%   POST_OVER_PRE -- Divide pre-injection data by post-injection data.
 %
 %     Post-injection data must have the same number of rows as
 %     pre-injection data. Additionally, the labels of the 'post' and 'pre'
@@ -21,15 +21,11 @@ dsp2.util.assertions.assert__isa( obj, 'Container', 'the object' );
 
 obj.labels.assert__contains_labels( {'post', 'pre'} );
 
-%   new
-out = dsp2.process.manipulations.post_over_pre( obj, to_collapse ); return;
-%   end new
-
 post = obj.only( 'post' );
 pre = obj.only( 'pre' );
 
-out = post.opc( pre, to_collapse, @minus );
+out = post.opc( pre, to_collapse, @rdivide );
 
-out( 'administration' ) = 'postMinusPre';
+out( 'administration' ) = 'postDividePre';
 
 end

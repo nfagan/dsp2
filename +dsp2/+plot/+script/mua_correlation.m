@@ -1,41 +1,78 @@
 conf = dsp2.config.load();
 
-epoch = 'targon';
+epoch = 'targacq';
 date_dir = dsp2.process.format.get_date_dir();
-kind = 'pro_v_anti';
+kind = 'pro_v_anti_drug';
 
 load_path = fullfile( conf.PATHS.analyses, '081617', 'spikes' );
 save_path = fullfile( conf.PATHS.plots, 'mua', 'correlations', date_dir, kind, epoch );
 dsp2.util.general.require_dir( save_path );
 
 do_normalize = false;
+do_save = false;
 
-time_rois = { [50, 250]   };
-% time_rois = { [-200, 0] };
+% time_rois = { [50, 250]   };
+time_rois = { [-200, 0] };
 freq_rois = { [15, 25], [45, 60], [70, 95] };
 roi_cmbs = dsp2.process.format.get_roi_combinations( time_rois, freq_rois );
 
-%   load
-spikes = dsp2.util.general.fload( fullfile(load_path, [epoch, '.mat']) );
+% %   load
+% spikes = dsp2.util.general.fload( fullfile(load_path, [epoch, '.mat']) );
+% 
+% if ( do_normalize )
+%   baseline = dsp2.util.general.fload( fullfile(load_path, 'magcue.mat') );
+%   baseline = baseline.mean(2);
+%   for i = 1:size(spikes.data, 2)
+%     spikes.data(:, i) = spikes.data(:, i) ./ baseline.data;
+%   end
+% end
 
-if ( do_normalize )
-  baseline = dsp2.util.general.fload( fullfile(load_path, 'magcue.mat') );
-  baseline = baseline.mean(2);
-  for i = 1:size(spikes.data, 2)
-    spikes.data(:, i) = spikes.data(:, i) ./ baseline.data;
+
+%
+%   begin new
+%
+load_path = fullfile( conf.PATHS.analyses, 'spikes', epoch );
+spikes = dsp2.util.general.load_mats( load_path, true );
+m_within1 = conf.SIGNALS.meaned.mean_within;
+to_clpse = { 'blocks', 'sessions' };
+m_within2 = setdiff( m_within1, to_clpse );
+m_within2 = union( m_within2, {'drugs', 'administration'} );
+for i = 1:numel(spikes)
+  disp( i );
+  current = spikes{i};
+  current = dsp2.process.spike.get_sps( current, bin_size );
+  current = current.each1d( m_within1, @rowops.mean );
+  current = dsp2.process.format.fix_block_number( current );
+  current = dsp2.process.format.fix_administration( current, 'config', conf );
+  if ( isempty(strfind(kind, 'drug')) )
+    current = dsp2.process.manipulations.non_drug_effect( current );
+    current = current.collapse( 'drugs' );
+  else
+    current = current.rm( 'unspecified' );
   end
+  if ( ~isempty(current) )
+    current = current.each1d( m_within2, @rowops.mean );
+    current = current.collapse( to_clpse );
+  end
+  spikes{i} = current;
 end
+spikes = SignalContainer.concat( spikes );
+%
+%   end new
+%
 
 spikes = spikes.rm( {'ref', 'errors'} );
 if ( any(spikes.contains({'targacq', 'targAcq'})) ), spikes = spikes.rm( 'cued' ); end
 if ( any(spikes.contains({'targon', 'targOn'})) ), spikes = spikes.rm( 'choice' ); end
 
-spikes = dsp2.process.format.fix_block_number( spikes );
-spikes = dsp2.process.format.fix_administration( spikes );
+% spikes = dsp2.process.format.fix_block_number( spikes );
+% spikes = dsp2.process.format.fix_administration( spikes );
 
 if ( isempty(strfind(kind, 'drug')) )
   spikes = dsp2.process.manipulations.non_drug_effect( spikes );
   spikes = spikes.collapse( {'drugs'} );
+else
+  spikes = dsp2.process.manipulations.post_over_pre( spikes );
 end
 if ( ~isempty(strfind(kind, 'pro')) )
   spikes = dsp2.process.manipulations.pro_v_anti( spikes );
@@ -67,7 +104,7 @@ spikes = spikes.only( shared_days );
 
 pl = ContainerPlotter();
 
-plots_are = { 'trialtypes', 'outcomes', 'drugs', 'administration' };
+plots_are = { 'trialtypes', 'outcomes', 'drugs', 'administration', 'epochs' };
 filenames_are = [ plots_are, {'regions'} ];
 region_cmbs = spikes.pcombs( {'regions'} );
 per_correlation_cmbs = coh.pcombs( plots_are );
@@ -112,7 +149,10 @@ for i = 1:size(region_cmbs, 1)
       , freq_component(1), freq_component(2) );
     fname = sprintf( 'mua_%s', time_freq_roi_str );
     fname = dsp2.util.general.append_uniques( to_scatter, fname, filenames_are );
-    dsp2.util.general.save_fig( figure(1), fullfile(save_path, fname), {'epsc', 'png', 'fig'} );
+    
+    if ( do_save )
+      dsp2.util.general.save_fig( figure(1), fullfile(save_path, fname), {'epsc', 'png', 'fig'} );
+    end
     
     for k = 1:size(per_correlation_cmbs, 1)      
       coh_ind = coh_meaned.where( per_correlation_cmbs(k, :) );
@@ -175,8 +215,11 @@ for i = 1:size(region_cmbs, 1)
   pl.default(); f = figure(1); clf(); 
   set( f, 'units', 'normalized' ); set( f, 'position', [0, 0, 1, 1] );
   
-  pl.x_lim = [-60, 60];
+%   pl.x_lim = [-60, 60];
+  pl.x_lim = [-1, 1];
   pl.y_lim = [-.08, .08];
+  pl.y_label = 'Coherence';
+  pl.x_label = 'Spikes';
   
   to_scatter = coh_meaned;
   to_scatter.labels = extr.labels;
@@ -184,6 +227,8 @@ for i = 1:size(region_cmbs, 1)
   
   fname = 'mua_combined';
   fname = dsp2.util.general.append_uniques( to_scatter, fname, filenames_are );
-  dsp2.util.general.save_fig( figure(1), fullfile(save_path, fname), {'epsc', 'png', 'fig'} );
+  if ( do_save )
+    dsp2.util.general.save_fig( figure(1), fullfile(save_path, fname), {'epsc', 'png', 'fig'} );
+  end
   
 end
