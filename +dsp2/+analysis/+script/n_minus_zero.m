@@ -72,8 +72,13 @@ for j = 1:numel(days)
     bandroi = bandrois.only( band );
     bandroi = bandroi.data;
     
-    meaned = coh.time_freq_mean( time, bandroi );
-%     meaned = meaned.only( {site, region} );
+    if ( ~strcmp(epoch, 'magcue') )
+      meaned = coh.time_freq_mean( time, bandroi );
+    else
+      %   only one time bin for magcue
+      meaned = coh.freq_mean( bandroi );
+    end
+    
     meaned = meaned.only( [site(:)', region] );
     meaned = meaned.rm( {'cued', 'errors'} );
     
