@@ -21,7 +21,7 @@ import dsp2.util.cluster.tmp_write;
 
 [varargin, conf] = dsp2.util.general.parse_for_config( varargin );
 
-defaults.norm_kind = 'normalized_coherence_to_block';
+defaults.norm_kind = 'normalized_coherence_to_trial';
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
