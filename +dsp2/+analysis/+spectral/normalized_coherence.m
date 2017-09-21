@@ -23,7 +23,7 @@ import dsp2.util.cluster.tmp_write;
 
 defaults.norm_kind = 'normalized_coherence_to_trial';
 
-params = dsp2.util.general.parsestruct( defaults, varargin );
+params = dsp2.util.general.parsestruct( defaults, varargin{:} );
 
 norm_kinds = { 'normalized_coherence_to_block', 'normalized_coherence_to_trial' };
 norm_kind = params.norm_kind;
@@ -44,18 +44,24 @@ epochs( cue_ind ) = [];
 
 tmp_write( '-clear' );
 
-for i = 1:numel(epochs)  
+for i = 1:numel(epochs)
+    
+  if ( dsp2.cluster.should_abort() )
+    tmp_write( '\n\tAborting ...' ); return;
+  end 
+  
   tmp_write( {'\nProcessing %s (%d of %d) ...', epochs{i}, i, numel(epochs)} );
   
   full_p = io.fullfile( base_p, epochs{i} );
+  full_save_p = io.fullfile( save_p, epochs{i} );
   full_base_p = io.fullfile( base_p, baseline_epoch );
   all_days = io.get_days( full_p );
   current_days = {};
   
-  io.require_group( save_p );
+  io.require_group( full_save_p );
   
-  if ( io.is_container_group(save_p) )
-    current_days = io.get_days( save_p );
+  if ( io.is_container_group(full_save_p) )
+    current_days = io.get_days( full_save_p );
   end
   
   new_days = setdiff( all_days, current_days );
@@ -63,8 +69,15 @@ for i = 1:numel(epochs)
   for j = 1:numel(new_days)    
     tmp_write( {'\n\tProcessing %s (%d of %d) ...', new_days{j}, j, numel(new_days)} );
     
+    if ( dsp2.cluster.should_abort() )
+      tmp_write( '\n\tAborting ...' ); return;
+    end
+    
     num_coh = io.read( full_p, 'only', new_days{j} );
     base_coh = io.read( full_base_p, 'only', new_days{j} );
+    
+    num_coh = num_coh.keep_within_freqs( [0, 250] );
+    base_coh = base_coh.keep_within_freqs( [0, 250] );
     
     %   match labels to baseline coherence
     num_coh = only_pairs( fix_channels(num_coh) );
@@ -73,9 +86,12 @@ for i = 1:numel(epochs)
       norm_coh = normalize_to_trial( num_coh, base_coh );
     else
       % TODO
+      error( 'Not yet implemented' );
     end
     
-    io.add( norm_coh, save_p );
+    tmp_write( '\n\t Saving ... ' );
+    io.add( norm_coh, full_save_p );
+    tmp_write( 'Done.' );
   end
 end
 
@@ -112,8 +128,8 @@ assert( eq_ignoring(targ.labels, base.labels, 'epochs') ...
 targ_data = targ.data;
 base_data = base.data;
 
-assert( ismatrix(base_data) && size(base_data, 2) == 1, ['Baseline data' ...
-  , ' are improperly dimensioned.'] );
+assert( ismatrix(base_data) && size(base_data, 2) == size(targ_data, 2) ...
+  , 'Baseline data are improperly dimensioned.' );
 
 norm_data = zeros( size(targ_data) );
 
