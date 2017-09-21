@@ -40,24 +40,27 @@ labs.labels( chan_inds ) = [];
 labs.indices(:, chan_inds) = [];
 
 days = labs.flat_uniques( 'days' );
+present_sites = labs.flat_uniques( 'sites' );
 
 for i = 1:numel(days)
   map_ind = strcmp( map.days, days{i} );
   chans = map.channel_map{ map_ind };
   map_sites = chans(:, 1);
   map_chans = chans(:, 2);
-  for k = 1:numel(map_sites)
-    site_ind = labs.where( {days{i}, map_sites{k}} );
-    assert( any(site_ind), 'No sites matched the given site map.' );
-    lab_ind = strcmp( labs.labels, map_chans{k} );
+  for k = 1:numel(present_sites)
+    site_ind_in_map = strcmp( map_sites, present_sites{k} );
+    assert( any(site_ind_in_map), 'No sites matched the given site map.' );
+    map_chan = map_chans{ site_ind_in_map };
+    site_ind = labs.where( {days{i}, present_sites{k}} );
+    lab_ind = strcmp( labs.labels, map_chan );
     if ( any(lab_ind) )
       labs.indices(:, lab_ind) = labs.indices(:, lab_ind) | site_ind;
     else
-      labs.labels{end+1, 1} = map_chans{k};
+      labs.labels{end+1, 1} = map_chan;
       labs.categories{end+1, 1} = 'channels';
       labs.indices(:, end+1) = site_ind;
     end
-    channels( site_ind ) = map_chans(k);
+    channels( site_ind ) = { map_chan };
   end
 end
 
