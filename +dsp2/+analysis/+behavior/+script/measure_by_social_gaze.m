@@ -121,7 +121,7 @@ dsp2.util.general.save_fig( gcf, fpath, {'epsc', 'png', 'fig'} );
 
 %% concatenated bands
 
-base_fname = 'combined';
+base_fname = 'combined__non_drug_effect';
 
 band_names = { 'beta', 'gamma' };
 
@@ -143,7 +143,7 @@ end
 require_each = { 'days', 'channels', 'regions', 'sites', 'looks_to', 'trialtypes' };
 required = pcombs( meaned, {'outcomes'} );
 meaned = dsp2.util.general.require_labels( meaned, require_each, required );
-meaned = meaned.collapse( {'magnitudes', 'administration'} );
+meaned = meaned.collapse( {'magnitudes', 'administration', 'trials', 'recipients'} );
 meaned = dsp2.process.manipulations.pro_v_anti( meaned );
 
 meaned = meaned.add_field( 'band' );
@@ -167,7 +167,8 @@ pl.x_tick_rotation = 0;
 
 catted.bar( pl, 'looks_to', 'outcomes', {'regions', 'epochs', 'band'} );
 
-fname = dsp2.util.general.append_uniques( catted, base_fname, {'looks_to', 'outcomes', 'regions', 'epochs'} );
+fname = dsp2.util.general.append_uniques( catted, base_fname ...
+  , {'looks_to', 'outcomes', 'regions', 'epochs'} );
 fpath = fullfile( plt_save_path, fname );
 dsp2.util.general.save_fig( gcf, fpath, {'epsc', 'png', 'fig'} );
 

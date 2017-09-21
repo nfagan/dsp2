@@ -4,7 +4,7 @@ import dsp2.util.general.group_cell;
 
 dsp2.cluster.init();
 
-epoch = 'targacq';
+epoch = 'magcue';
 meas_type = 'coherence';
 resolution = 'days';
 
@@ -13,9 +13,9 @@ io = dsp2.io.get_dsp_h5();
 P = dsp2.io.get_path( 'Measures', meas_type, 'complete', epoch );
 ngroup = conf.DATABASES.n_days_per_group;
 days = group_cell( io.get_days(P), ngroup );
-save_path = fullfile( conf.PATHS.analyses, 'n_minus_n' );
+save_path = fullfile( conf.PATHS.analyses, 'n_minus_zero' );
 fname = sprintf( 'n_minus_n_%s_%s_%s.mat', resolution, epoch, datestr(now) );
-tmp_fname = 'n_minus_n.txt';
+tmp_fname = 'n_minus_zero.txt';
 dsp2.util.general.require_dir( save_path );
 dsp2.util.cluster.tmp_write( '-clear', tmp_fname );
 
