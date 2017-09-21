@@ -43,6 +43,12 @@ for j = 1:numel(days)
   end
   
   coh = dsp2.process.format.add_trial_ids( coh );
+  
+  coh = dsp2.process.format.fix_block_number( coh );
+  coh = dsp2.process.format.fix_administration( coh );
+  coh = dsp2.process.manipulations.non_drug_effect( coh );
+  
+  if ( isempty(coh) ), continue; end
     
   if ( strcmp(resolution, 'days') )
     sites = { coh('sites') };
@@ -71,6 +77,7 @@ for j = 1:numel(days)
     meaned = meaned.only( [site(:)', region] );
     meaned = meaned.rm( {'cued', 'errors'} );
     
+    N = meaned;
     N = N.replace( {'self', 'none'}, 'antisocial' );
     N = N.replace( {'both', 'other'}, 'prosocial' );
     

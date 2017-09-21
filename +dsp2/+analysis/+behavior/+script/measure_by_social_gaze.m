@@ -2,8 +2,6 @@ conf = dsp2.config.load();
 
 io = dsp2.io.get_dsp_h5();
 
-is_drug_effect = false;
-
 epoch = 'targacq';
 measure = 'coherence';
 
@@ -73,9 +71,9 @@ for i = 1:numel(days)
   
   coh = coh.each1d( m_within, @rowops.nanmean );
   
-  if ( ~is_drug_effect )
-    coh = dsp2.process.manipulations.non_drug_effect( coh );
-  end
+%   if ( ~is_drug_effect )
+%     coh = dsp2.process.manipulations.non_drug_effect( coh );
+%   end
   
   coh = coh.collapse( {'blocks', 'sessions'} );
   coh = coh.each1d( m_within, @rowops.nanmean );
