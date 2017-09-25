@@ -12,7 +12,9 @@ dsp2.util.cluster.tmp_write( 'Done calculating complete.' );
 
 % calculate + save meaned versions of these measures
 
-dsp2.analysis.run_meaned( 'coherence', 'config', conf );
+conf.SIGNALS.meaned.pre_mean_operations{end+1} = { @remove_nans_and_infs, {} };
+
+dsp2.analysis.run_meaned( 'normalized_coherence_to_trial', 'config', conf );
 
 dsp2.util.cluster.tmp_write( 'Done calculating meaned.' );
 
