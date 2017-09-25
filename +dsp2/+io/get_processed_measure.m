@@ -103,7 +103,9 @@ if ( ~isempty(strfind(meas_type, 'coherence')) )
   if ( strcmp(meas_type, 'sfcoherence') )
     measure.labels = dsp2.process.format.make_channels_fp( measure.labels );
   end
-  measure.labels = dsp2.process.format.fix_channels( measure.labels );
+  if ( isempty(strfind(meas_type, 'normalized_coherence')) )
+    measure.labels = dsp2.process.format.fix_channels( measure.labels );
+  end
   measure = dsp2.process.format.only_pairs( measure );
 end
 
