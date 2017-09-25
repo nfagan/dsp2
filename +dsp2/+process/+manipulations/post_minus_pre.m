@@ -22,7 +22,7 @@ dsp2.util.assertions.assert__isa( obj, 'Container', 'the object' );
 obj.labels.assert__contains_labels( {'post', 'pre'} );
 
 %   new
-out = dsp2.process.manipulations.post_over_pre( obj, to_collapse ); return;
+% out = dsp2.process.manipulations.post_over_pre( obj, to_collapse ); return;
 %   end new
 
 post = obj.only( 'post' );
