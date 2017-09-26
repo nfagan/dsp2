@@ -69,8 +69,8 @@ rt = rt.rm( {'errors', 'unspecified', 'all__administration'} );
 rt = rt.each1d( {'days', 'outcomes', 'administration'}, @rowops.mean );
 
 %%  plot rt pre vs. post
-\
-figure(1); clf();
+
+figure(1); clf(); colormap( 'default' );
 
 pl = ContainerPlotter();
 pl.y_lim = [.2, .32];
