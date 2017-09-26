@@ -146,7 +146,7 @@ for ii = 1:numel(all_days)
     conts = extend( conts{:} );
     conts = dsp2.analysis.granger.convert_null_granger( conts );
 
-    fname = sprintf( [granger_fname, '%s'], days{i} );
+    fname = sprintf( [granger_fname, '%s.mat'], days{i} );
 
     save( fullfile(save_path, fname), 'conts' );
   end
