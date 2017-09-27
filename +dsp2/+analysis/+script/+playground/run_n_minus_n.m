@@ -100,31 +100,27 @@ for j = 1:numel(days)
     shuffled = N_minus_one;
     shuffled.data = shuffled.data( shuffle_ind, : );
     
-    try
-      assert( numel(unique(N.data)) == 2, 'Expected 2 unique outcomes; got %d' ...
-        , numel(unique(N.data)) );
-    catch err
+    if ( numel(unique(N.data)) == 2 )
+      N.data = N.data == 2;
+    
+      assert( all(N.data == N.where('prosocial')), '1 was not prosocial.' );
+
+      mdl = dsp2.analysis.n_minus_n.logistic( N, N_minus_one, {} );
+      mdl2 = dsp2.analysis.n_minus_n.logistic( N, shuffled, {} );
+      mdl = mdl.require_fields( 'shuffled' );
+      mdl( 'shuffled' ) = 'shuffled__false';
+      mdl2 = mdl2.require_fields( 'shuffled' );
+      mdl2( 'shuffled' ) = 'shuffled__true';
+      mdl = mdl.append( mdl2 );
+
+      mdl = mdl.require_fields( {'previous_was', 'band'} );
+      mdl( 'previous_was' ) = [ 'previous_was__', prev_was ];
+      mdl( 'band' ) = band;
+
+      current_mdls{i} = mdl;
+    else
       bad_mdls(i) = true;
-      continue;
     end
-    
-    N.data = N.data == 2;
-    
-    assert( all(N.data == N.where('prosocial')), '1 was not prosocial.' );
-
-    mdl = dsp2.analysis.n_minus_n.logistic( N, N_minus_one, {} );
-    mdl2 = dsp2.analysis.n_minus_n.logistic( N, shuffled, {} );
-    mdl = mdl.require_fields( 'shuffled' );
-    mdl( 'shuffled' ) = 'shuffled__false';
-    mdl2 = mdl2.require_fields( 'shuffled' );
-    mdl2( 'shuffled' ) = 'shuffled__true';
-    mdl = mdl.append( mdl2 );
-
-    mdl = mdl.require_fields( {'previous_was', 'band'} );
-    mdl( 'previous_was' ) = [ 'previous_was__', prev_was ];
-    mdl( 'band' ) = band;
-
-    current_mdls{i} = mdl;
   end
   
   current_mdls = dsp2.util.general.concat( current_mdls(~bad_mdls) );  
