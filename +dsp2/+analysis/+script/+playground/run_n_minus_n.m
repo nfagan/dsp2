@@ -67,6 +67,7 @@ for j = 1:numel(days)
   cmbs = dsp2.util.general.allcomb( {prev_is, bands, sites, regions} );
   
   current_mdls = cell( 1, size(cmbs, 1) );
+  bad_mdls = false( size(current_mdls) );
   
   parfor i = 1:size(cmbs, 1)
     row = cmbs(i, :);
@@ -99,8 +100,13 @@ for j = 1:numel(days)
     shuffled = N_minus_one;
     shuffled.data = shuffled.data( shuffle_ind, : );
     
-    assert( numel(unique(N.data)) == 2, 'Expected 2 unique outcomes; got %d' ...
-      , numel(unique(N.data)) );
+    try
+      assert( numel(unique(N.data)) == 2, 'Expected 2 unique outcomes; got %d' ...
+        , numel(unique(N.data)) );
+    catch err
+      bad_mdls(i) = true;
+      continue;
+    end
     
     N.data = N.data == 2;
     
@@ -121,7 +127,8 @@ for j = 1:numel(days)
     current_mdls{i} = mdl;
   end
   
-  all_mdls = all_mdls.append( extend(current_mdls{:}) );  
+  current_mdls = dsp2.util.general.concat( current_mdls(~bad_mdls) );  
+  all_mdls = all_mdls.append( current_mdls );  
 end
 
 all_mdls = all_mdls.require_fields( {'resolution', 'run_time', 'measure_type'} );
