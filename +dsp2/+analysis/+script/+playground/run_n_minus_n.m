@@ -79,7 +79,8 @@ for j = 1:numel(days)
     bandroi = bandroi.data;
     
     meaned = coh.time_freq_mean( time, bandroi );
-    meaned = meaned.only( {site, region} );
+%     meaned = meaned.only( {site, region} );
+    meaned = meaned.only( [site(:)', region] );
     meaned = meaned.rm( {'cued', 'errors'} );
     
     nminus = meaned.for_each( 'sites' ...
