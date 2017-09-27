@@ -54,6 +54,8 @@ for j = 1:numel(days)
   coh = dsp2.process.format.fix_administration( coh );
   coh = dsp2.process.manipulations.non_drug_effect( coh );
   coh = coh.remove_nans_and_infs();
+  
+  if ( isempty(coh) ), continue; end;
     
   if ( strcmp(resolution, 'days') )
     sites = { coh('sites') };
@@ -87,20 +89,24 @@ for j = 1:numel(days)
     nminus = meaned.for_each( 'sites' ...
       , @dsp2.process.format.get_n_minus_n_distribution, n_prev, prev_was );
 
-    N = nminus.only( 'n_minus_0' );
-    N_minus_one = nminus.only( sprintf('n_minus_%d', n_prev) );
-    % if using current trial's measure
-%     N_minus_one.data = N.data;
+    if ( ~isempty(nminus) )
     
-    N = N.replace( {'self', 'none'}, 'antisocial' );
-    N = N.replace( {'both', 'other'}, 'prosocial' );
-    N.data = dsp2.process.format.get_factor_matrix( N, 'outcomes' );
+      N = nminus.only( 'n_minus_0' );
+      N_minus_one = nminus.only( sprintf('n_minus_%d', n_prev) );
+      % if using current trial's measure
+  %     N_minus_one.data = N.data;
 
-    shuffle_ind = randperm( shape(N, 1) );
-    shuffled = N_minus_one;
-    shuffled.data = shuffled.data( shuffle_ind, : );
+      N = N.replace( {'self', 'none'}, 'antisocial' );
+      N = N.replace( {'both', 'other'}, 'prosocial' );
+      N.data = dsp2.process.format.get_factor_matrix( N, 'outcomes' );
+
+      shuffle_ind = randperm( shape(N, 1) );
+      shuffled = N_minus_one;
+      shuffled.data = shuffled.data( shuffle_ind, : );
+      
+    end
     
-    if ( numel(unique(N.data)) == 2 )
+    if ( numel(unique(N.data)) == 2 && ~isempty(nminus) )
       N.data = N.data == 2;
     
       assert( all(N.data == N.where('prosocial')), '1 was not prosocial.' );
