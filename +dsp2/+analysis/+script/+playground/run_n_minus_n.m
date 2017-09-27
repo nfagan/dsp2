@@ -106,7 +106,7 @@ for j = 1:numel(days)
       
     end
     
-    if ( numel(unique(N.data)) == 2 && ~isempty(nminus) )
+    if ( ~isempty(nminus) && numel(unique(N.data)) == 2 )
       N.data = N.data == 2;
     
       assert( all(N.data == N.where('prosocial')), '1 was not prosocial.' );
