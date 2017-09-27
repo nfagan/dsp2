@@ -1,7 +1,8 @@
 %%  LOAD
 conf = dsp2.config.load();
 
-load_p = fullfile( conf.PATHS.analyses, 'n_minus_zero' );
+% load_p = fullfile( conf.PATHS.analyses, 'n_minus_zero' );
+load_p = fullfile( conf.PATHS.analyses, 'n_minus_n' );
 
 mats = dsp2.util.general.dirnames( load_p, '.mat' );
 
@@ -37,13 +38,31 @@ perc_sig = perc( overall_sig_ind );
 perc_sig_per_band = each1d( ps, 'band', @(x) perc(x < .05) );
 sig_betas = betas( overall_sig_ind );
 
-%%
+%%  PLOT IRRESPECTIVE OF PREVIOUS TRIAL-TYPE
 
 % plt = sig_betas;
 plt = betas;
 
 x_is = 'band';
 groups_are = 'outcomes';
+panels_are = 'epochs';
+
+pl = ContainerPlotter();
+pl.y_label = 'Beta';
+pl.x_label = 'Band';
+pl.y_lim = [];
+
+figure(1); clf();
+
+plt.bar( pl, x_is, groups_are, panels_are );
+
+%%
+
+plt = sig_betas;
+% plt = betas;
+
+x_is = 'band';
+groups_are = 'previous_was';
 panels_are = 'epochs';
 
 pl = ContainerPlotter();
