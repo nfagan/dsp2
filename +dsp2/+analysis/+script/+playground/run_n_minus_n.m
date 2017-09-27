@@ -5,7 +5,7 @@ import dsp2.util.general.group_cell;
 dsp2.cluster.init();
 
 epoch = 'targacq';
-meas_type = 'coherence';
+meas_type = 'normalized_coherence_to_trial';
 resolution = 'days';
 
 conf = dsp2.config.load();
@@ -42,11 +42,18 @@ for j = 1:numel(days)
     coh.labels = dsp2.process.format.make_channels_fp( coh.labels );
   end
   if ( ~isempty(strfind(meas_type, 'coherence')) )
-    coh.labels = dsp2.process.format.fix_channels( coh.labels );
+    if ( isempty(strfind(meas_type, 'normalized_coherence')) )
+      coh.labels = dsp2.process.format.fix_channels( coh.labels );
+    end
     coh = dsp2.process.format.only_pairs( coh );
   end
   
   coh = dsp2.process.format.add_trial_ids( coh );
+  
+  coh = dsp2.process.format.fix_block_number( coh );
+  coh = dsp2.process.format.fix_administration( coh );
+  coh = dsp2.process.manipulations.non_drug_effect( coh );
+  coh = coh.remove_nans_and_infs();
     
   if ( strcmp(resolution, 'days') )
     sites = { coh('sites') };
