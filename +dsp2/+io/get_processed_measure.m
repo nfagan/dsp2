@@ -97,9 +97,6 @@ measure = read_measure.collapse( collapse_after_load );
 measure = measure.remove_nans_and_infs();
 
 if ( ~isempty(strfind(meas_type, 'coherence')) )
-%   dsp2.util.general.seed_rng();
-%   measure = measure.parfor_each( {'days', 'regions'}, 'regions', ...
-%     @dsp2.process.format.subsample_sites );
   if ( strcmp(meas_type, 'sfcoherence') )
     measure.labels = dsp2.process.format.make_channels_fp( measure.labels );
   end
@@ -187,3 +184,7 @@ prev.meas_type = meas_type;
 prev.kind = kind;
 
 end
+
+%   dsp2.util.general.seed_rng();
+%   measure = measure.parfor_each( {'days', 'regions'}, 'regions', ...
+%     @dsp2.process.format.subsample_sites );
