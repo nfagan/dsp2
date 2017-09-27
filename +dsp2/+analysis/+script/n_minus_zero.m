@@ -4,7 +4,7 @@ import dsp2.util.general.group_cell;
 
 dsp2.cluster.init();
 
-epoch = 'magcue';
+epoch = 'targacq';
 meas_type = 'normalized_coherence_to_trial';
 resolution = 'days';
 
