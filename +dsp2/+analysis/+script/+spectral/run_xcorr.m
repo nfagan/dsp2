@@ -1,3 +1,5 @@
+dsp2.cluster.init();
+
 io = dsp2.io.get_dsp_h5();
 conf = dsp2.config.load();
 
