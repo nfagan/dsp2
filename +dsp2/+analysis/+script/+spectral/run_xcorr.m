@@ -51,8 +51,11 @@ for i = 1:numel(days)
     
     if ( strcmp(epoch, 'targacq') )
       % [ -200, 0 ]
-      first_data = first.data( :, 301:500 );
-      sec_data = sec.data( :, 301:500 );
+%       first_data = first.data( :, 301:500 );
+%       sec_data = sec.data( :, 301:500 );
+      % [ 50, 150 ]
+      first_data = first.data( :, 551:700 );
+      sec_data = sec.data( :, 551:700 );
     else
       error( 'not implemented for %s', epoch );
     end

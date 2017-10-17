@@ -2,8 +2,10 @@ conf = dsp2.config.load();
 
 io = dsp2.io.get_dsp_h5();
 
-epoch = 'targacq';
+epoch = 'reward';
 measure = 'coherence';
+
+is_drug = true;
 
 p = dsp2.io.get_path( 'measures', measure, 'nanmedian', epoch );
 p2 = dsp2.io.get_path( 'behavior' );
@@ -14,13 +16,22 @@ key = io.read( io.fullfile(p2, 'Key') );
 
 coh = dsp2.process.format.fix_block_number( coh );
 coh = dsp2.process.format.fix_administration( coh );
-coh = dsp2.process.manipulations.non_drug_effect( coh );
+if ( is_drug )
+  coh = coh.rm( {'unspecified', 'errors'} );
+else
+  coh = dsp2.process.manipulations.non_drug_effect( coh );
+end
 coh.labels = dsp2.process.format.fix_channels( coh.labels );
 coh = dsp2.process.format.only_pairs( coh );
 
 behav = dsp2.process.format.fix_block_number( behav );
 behav = dsp2.process.format.fix_administration( behav );
-behav = dsp2.process.manipulations.non_drug_effect( behav );
+
+if ( is_drug )
+  behav = behav.rm( {'unspecified', 'errors'} );
+else
+  behav = dsp2.process.manipulations.non_drug_effect( behav );
+end
 
 %   looks to bottle are actually looks to monkey
 looked_to_bottle = strcmp( key, 'lateLookCount' );
@@ -38,30 +49,45 @@ behav( 'looked_to', trials_looked_to_nothing ) = 'nothing';
 behav( 'looked_to', trials_looked_to_bottle ) = 'bottle';
 behav( 'looked_to', trials_looked_to_monkey ) = 'monkey';
 
-props = behav.for_each( {'days', 'outcomes', 'trialtypes'} ...
-  , @proportions, 'looked_to', behav('looked_to') );
+mean_within = { 'administration', 'outcomes', 'trialtypes', 'days' };
+
+if ( ~is_drug )
+  mean_within{end+1} = 'blocks';
+else
+  mean_within{end+1} = 'drugs';
+end
+
+look_types = behav.pcombs( 'looked_to' );
+
+props = behav.for_each( mean_within, @proportions, 'looked_to', look_types );
 
 med_split_fname = 'median_split_group';
 
 %%
 
-is_pro_v_anti = true;
+is_pro_v_anti = false;
+roi = { [-200, 0], [35, 50] };
 
 processed_props = props;
 if ( is_pro_v_anti )
   processed_props = dsp2.process.manipulations.pro_v_anti( processed_props );
 end
+if ( is_drug )
+  processed_props = processed_props.collapse( {'sessions', 'blocks'} );
+  processed_props = dsp2.process.manipulations.post_minus_pre( processed_props );
+end
 
-roi = { [-200, 0], [35, 50] };
-
-mean_within = { 'outcomes', 'trialtypes', 'days' };
 median_within = setdiff( mean_within, 'days' );
 
-meaned_coh = processed_coh.time_freq_mean( roi{:} );
+meaned_coh = coh.time_freq_mean( roi{:} );
 meaned_coh = meaned_coh.each1d( mean_within, @rowops.nanmean );
 
 if ( is_pro_v_anti )
   meaned_coh = dsp2.process.manipulations.pro_v_anti( meaned_coh );
+end
+if ( is_drug )
+  meaned_coh = meaned_coh.collapse( {'sessions', 'blocks'} );
+  meaned_coh = dsp2.process.manipulations.post_minus_pre( meaned_coh );
 end
 
 median_coh = meaned_coh.each1d( median_within, @rowops.nanmedian );
@@ -98,6 +124,7 @@ plt = processed_props.rm( {'cued', 'errors', 'nothing'} );
 pl = ContainerPlotter();
 pl.order_by = { 'belowMedian', 'aboveMedian' };
 
-figure(1); clf();
+figure(1); clf(); colormap( 'default' );  
 
-plt.bar( pl, med_split_fname, 'looked_to', {'outcomes', 'trialtypes'} );
+% plt.bar( pl, med_split_fname, 'looked_to', {'outcomes', 'trialtypes'} );
+plt.bar( pl, med_split_fname, 'outcomes', {'looked_to', 'trialtypes', 'drugs'} );
