@@ -24,7 +24,7 @@ tmp_fname = 'xcorr.txt';
 
 lag = [];
 corrs = Container();
-freq_roi = [ 7, 12 ];
+freq_roi = [ 35, 50 ];
 
 tmp_write( '-clear', tmp_fname );
 
@@ -46,16 +46,22 @@ for i = 1:numel(days)
     first = first.filter( 'cutoffs', freq_roi );
     sec = sec.filter( 'cutoffs', freq_roi );
     
-    first.data = detrend( first.data' )';
-    sec.data = detrend( sec.data' )';
+    first1 = detrend( abs(hilbert(first.data')), 'constant' )';
+    sec1 = detrend( abs(hilbert(sec.data')), 'constant' )';
+    
+    first.data = first1;
+    sec.data = sec1;
+    
+%     first.data = detrend( first.data' )';
+%     sec.data = detrend( sec.data' )';
     
     if ( strcmp(epoch, 'targacq') )
       % [ -200, 0 ]
-%       first_data = first.data( :, 301:500 );
-%       sec_data = sec.data( :, 301:500 );
+      first_data = first.data( :, 301:500 );
+      sec_data = sec.data( :, 301:500 );
       % [ 50, 150 ]
-      first_data = first.data( :, 551:700 );
-      sec_data = sec.data( :, 551:700 );
+%       first_data = first.data( :, 551:700 );
+%       sec_data = sec.data( :, 551:700 );
     else
       error( 'not implemented for %s', epoch );
     end
@@ -65,8 +71,8 @@ for i = 1:numel(days)
     for k = 1:size(first_data, 1)
       s1 = first_data(k, :);
       s2 = sec_data(k, :);
-      [acor, lag] = xcorr( s1, s2 );
-      
+%       [acor, lag] = xcorr( s1, s2 );
+      [acor, lag] = xcorr( s1, s2, [], 'coeff' );
       corr_data(k, :) = acor;
     end
     
