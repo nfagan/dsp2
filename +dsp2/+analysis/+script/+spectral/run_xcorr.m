@@ -1,5 +1,7 @@
 dsp2.cluster.init();
 
+import dsp2.cluster.tmp_write;
+
 io = dsp2.io.get_dsp_h5();
 conf = dsp2.config.load();
 
@@ -18,12 +20,16 @@ full_fname = fullfile( save_p, fname );
 corr_set_name = '/corrs';
 lag_set_name = '/lags';
 
+tmp_fname = 'xcorr.txt';
+
 lag = [];
 corrs = Container();
 freq_roi = [ 35, 50 ];
 
+tmp_write( '-clear', tmp_fname );
+
 for i = 1:numel(days)
-  fprintf( '\n processing %s (%d of %d)', days{i}, i, numel(days) );
+  tmp_write( {'\n processing %s (%d of %d)', days{i}, i, numel(days)}, tmp_fname );
   
   signals = io.read( p, 'only', days{i} );
   signals = update_min( update_max(signals) );
