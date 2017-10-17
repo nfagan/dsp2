@@ -15,7 +15,11 @@ date_dir = dsp2.process.format.get_date_dir();
 save_p = fullfile( conf.PATHS.analyses, 'xcorr', date_dir, epoch );
 dsp2.util.general.require_dir( save_p );
 
-fname = 'xcorr.h5';
+freq_roi = [ 15, 30 ];
+time_roi = [ -200, 0 ];
+band_name = 'beta';
+
+fname = sprintf( 'xcorr_%s_%d_%d.h5', band_name, time_roi(1), time_roi(2) );
 full_fname = fullfile( save_p, fname );
 corr_set_name = '/corrs';
 lag_set_name = '/lags';
@@ -24,7 +28,6 @@ tmp_fname = 'xcorr.txt';
 
 lag = [];
 corrs = Container();
-freq_roi = [ 35, 50 ];
 
 tmp_write( '-clear', tmp_fname );
 
