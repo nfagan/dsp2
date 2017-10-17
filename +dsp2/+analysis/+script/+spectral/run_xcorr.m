@@ -1,6 +1,6 @@
 dsp2.cluster.init();
 
-import dsp2.cluster.tmp_write;
+import dsp2.util.cluster.tmp_write;
 
 io = dsp2.io.get_dsp_h5();
 conf = dsp2.config.load();
