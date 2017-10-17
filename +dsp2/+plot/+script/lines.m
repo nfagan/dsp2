@@ -2,12 +2,12 @@
 
 conf = dsp2.config.load();
 
-date = '072617';
+date = dsp2.process.format.get_date_dir();
 kinds = { 'nanmedian' };
-sfuncs = { @nanmean };
-measures = { 'coherence', 'normalized_power' };
-epochs = { 'reward' };
-manipulations = { 'pro_v_anti' };
+sfuncs = { @rowops.nanmean };
+measures = { 'coherence' };
+epochs = { 'reward', 'targon', 'targacq' };
+manipulations = { 'pro_v_anti_drug_minus_sal' };
 to_collapse = { {'trials', 'monkeys'} };
 
 plotby = 'frequency';
