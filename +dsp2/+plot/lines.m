@@ -65,7 +65,15 @@ for i = 1:size(C, 1)
   
   measure = measure.keep_within_freqs( [0, 100] );
   
-  figs_for_each = { 'drugs', 'trialtypes', 'monkeys' };
+  if ( isempty(strfind(manip, 'drug')) )
+    figs_for_each = { 'drugs', 'trialtypes', 'monkeys' };
+    lines_are = { 'outcomes' };
+    fnames_are = { 'monkeys', 'drugs', 'trialtypes' };
+  else
+    figs_for_each = { 'outcomes', 'trialtypes', 'monkeys' };
+    lines_are = 'drugs';
+    fnames_are = { 'monkeys', 'outcomes', 'trialtypes' };
+  end
   [~, c] = measure.get_indices( figs_for_each );
   roi = rois.only( epoch );
   
@@ -110,9 +118,9 @@ for i = 1:size(C, 1)
 
       pl.y_label = strrep( meas_type, '_', ' ' );
 
-      pl.plot( measure_, 'outcomes', {'monkeys', 'regions', 'trialtypes'} );
+      pl.plot( measure_, lines_are, {'monkeys', 'regions', 'trialtypes'} );
 
-      labs = measure_.labels.flat_uniques( {'monkeys', 'drugs', 'trialtypes'} );    
+      labs = measure_.labels.flat_uniques( fnames_are );    
       fname = strjoin( labs, '_' );
       fname = sprintf( '%s_%s', fname, f_str );
 

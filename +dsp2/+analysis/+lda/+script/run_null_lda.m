@@ -27,7 +27,7 @@ lda_group = 'outcomes';
 all_lda_results = Container();
 
 for i = 1:numel(epochs)
-  tmpwrite( {'\nProcessing %s (%d of %d)', epochs{i}, i, numel(epochs)}, tmp_fname );
+  tmp_write( {'\nProcessing %s (%d of %d)', epochs{i}, i, numel(epochs)}, tmp_fname );
   p = io.fullfile( base_p, epochs{i} );
   measure = io.read( p, 'frequencies', [0, 100], 'time', [-500, 500] );
   
@@ -43,7 +43,7 @@ for i = 1:numel(epochs)
   measure = measure.remove_nans_and_infs();
   
   for j = 1:numel(freq_rois)
-    tmpwrite( {'\n\tProcessing roi %d of %d', j, numel(freq_rois)}, tmp_fname );
+    tmp_write( {'\n\tProcessing roi %d of %d', j, numel(freq_rois)}, tmp_fname );
     meaned = measure.freq_mean( freq_rois{j} );
     meaned.data = squeeze( meaned.data );
     

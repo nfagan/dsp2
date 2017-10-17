@@ -4,10 +4,10 @@ conf = dsp2.config.load();
 
 date = dsp2.process.format.get_date_dir();
 kinds = { 'nanmedian' };
-sfuncs = { @rowops.nanmean };
+sfuncs = { @nanmean };
 measures = { 'coherence' };
 epochs = { 'reward', 'targon', 'targacq' };
-manipulations = { 'pro_v_anti_drug_minus_sal' };
+manipulations = { 'pro_v_anti_drug' };
 to_collapse = { {'trials', 'monkeys'} };
 
 plotby = 'frequency';
