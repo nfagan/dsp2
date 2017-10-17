@@ -2,7 +2,7 @@ conf = dsp2.config.load();
 date_dir = '101717';
 epoch = 'targacq';
 p = fullfile( conf.PATHS.analyses, 'xcorr', date_dir, epoch );
-fname = 'xcorr_theta_50_150.h5';
+fname = 'xcorr_gamma_200_0.h5';
 fname = fullfile( p, fname );
 sname = 'corrs';
 lname = 'lags';
@@ -55,7 +55,7 @@ pl.x = lag;
 pl.vertical_lines_at = 0;
 pl.x_label = '<- acc leads | amy leads ->';
 
-plt = normed.each1d( {'sites', 'days', 'outcomes', 'trialtypes'}, @rowops.nanmean );
+plt = normed.each1d( {'days', 'outcomes', 'trialtypes'}, @rowops.nanmean );
 plt = plt.rm( {'errors', 'cued'} );
 
 plt.plot( pl, 'outcomes', 'trialtypes' );
@@ -89,13 +89,14 @@ meaned.data = max_lags;
 figure(1); clf();
 
 plt2 = meaned.each1d( {'outcomes', 'days'}, @rowops.mean );
-plt2.hist( 1000, [], 'outcomes' );
+plt2.hist( 10, [], 'outcomes' );
 
 %%  n zeros
 
 EPSILON = 1;
 perc_thresh = 30;
 
+figure(1); clf();
 plt2 = meaned.each1d( {'outcomes', 'days'}, @(x) perc(abs(x) <= EPSILON) );
 plt2.plot_by( 'days', [], 'outcomes' );
 
@@ -109,11 +110,11 @@ pl.x = lag;
 pl.vertical_lines_at = 0;
 pl.x_label = '<- acc leads | amy leads ->';
 
-plt = normed.each1d( {'days', 'sites', 'outcomes', 'trialtypes'}, @rowops.nanmean );
-plt = plt.rm( {'errors', 'cued'} );
-plt = plt.rm( bad_days );
-
-plt.plot( pl, 'outcomes', 'trialtypes' );
+% plt = normed.each1d( {'days', 'outcomes', 'trialtypes'}, @rowops.nanmean );
+% plt = plt.rm( {'errors', 'cued'} );
+% plt = plt.rm( bad_days );
+% 
+% plt.plot( pl, 'outcomes', 'trialtypes' );
 
 %%
 
