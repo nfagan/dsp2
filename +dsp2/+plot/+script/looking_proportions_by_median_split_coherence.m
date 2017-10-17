@@ -5,7 +5,7 @@ io = dsp2.io.get_dsp_h5();
 epoch = 'reward';
 measure = 'coherence';
 
-is_drug = true;
+is_drug = false;
 
 p = dsp2.io.get_path( 'measures', measure, 'nanmedian', epoch );
 p2 = dsp2.io.get_path( 'behavior' );
@@ -124,7 +124,31 @@ plt = processed_props.rm( {'cued', 'errors', 'nothing'} );
 pl = ContainerPlotter();
 pl.order_by = { 'belowMedian', 'aboveMedian' };
 
-figure(1); clf(); colormap( 'default' );  
+figure(2); clf(); colormap( 'default' );  
 
 % plt.bar( pl, med_split_fname, 'looked_to', {'outcomes', 'trialtypes'} );
-plt.bar( pl, med_split_fname, 'outcomes', {'looked_to', 'trialtypes', 'drugs'} );
+plt.bar( pl, med_split_fname, 'outcomes', {'looked_to', 'trialtypes'} );
+
+%%
+
+plt = plt.only( 'other' );
+
+grp1 = plt.full_fields( 'looked_to' );
+% grp2 = plt.full_fields( 'outcomes' );
+grp3 = plt.full_fields( med_split_fname );
+
+% [p, tbl, stats] = anovan( plt.data, {grp1, grp2, grp3}, 'model', 'full' );
+[p, tbl, stats] = anovan( plt.data, {grp1, grp3}, 'model', 'full' );
+
+s = multcompare( stats, 'dimension', [1:2] );
+
+unqs1 = unique( grp1 );
+unqs2 = unique( grp2 );
+unqs3 = unique( grp3 );
+
+all_unqs = [unqs1; unqs2; unqs3];
+
+
+
+
+
