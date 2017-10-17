@@ -24,7 +24,7 @@ tmp_fname = 'xcorr.txt';
 
 lag = [];
 corrs = Container();
-freq_roi = [ 35, 50 ];
+freq_roi = [ 7, 12 ];
 
 tmp_write( '-clear', tmp_fname );
 
@@ -45,6 +45,9 @@ for i = 1:numel(days)
     
     first = first.filter( 'cutoffs', freq_roi );
     sec = sec.filter( 'cutoffs', freq_roi );
+    
+    first.data = detrend( first.data' )';
+    sec.data = detrend( sec.data' )';
     
     if ( strcmp(epoch, 'targacq') )
       % [ -200, 0 ]
