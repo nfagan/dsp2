@@ -4,7 +4,7 @@ import dsp2.util.cluster.tmp_write;
 
 conf = dsp2.config.load();
 
-epochs = { 'targacq', 'reward' };
+epochs = { 'targacq', 'reward', 'targon' };
 
 freq_rois = { [15, 30], [35, 50] };
 band_names = { 'beta', 'gamma' };
@@ -14,7 +14,7 @@ assert( numel(freq_rois) == numel(band_names) );
 io = dsp2.io.get_dsp_h5();
 base_p = dsp2.io.get_path( 'Measures', 'coherence', 'complete' );
 save_p = fullfile( conf.PATHS.analyses, 'lda', dsp2.process.format.get_date_dir() );
-fname = 'lda.mat';
+fname = 'lda_per_context.mat';
 dsp2.util.general.require_dir( save_p );
 
 tmp_fname = 'lda.txt';
@@ -23,6 +23,8 @@ tmp_write( '-clear', tmp_fname );
 n_perms = 100;
 perc_training = .75;
 lda_group = 'outcomes';
+shuff_within = { 'trialtypes', 'contexts' };
+per_context = true;
 
 all_lda_results = Container();
 
@@ -36,52 +38,63 @@ for i = 1:numel(epochs)
   measure = dsp2.process.format.fix_channels( measure );
   measure = dsp2.process.format.only_pairs( measure );
   measure = dsp2.process.manipulations.non_drug_effect( measure );
-  
   measure = measure.rm( 'errors' );
-  measure = measure.replace( {'self', 'none'}, 'antisocial' );
-  measure = measure.replace( {'both', 'other'}, 'prosocial' );
-  measure = measure.remove_nans_and_infs();
+  if ( ~per_context )
+    measure = measure.replace( {'self', 'none'}, 'antisocial' );
+    measure = measure.replace( {'both', 'other'}, 'prosocial' );
+  else
+    measure = measure.require_fields( 'contexts' );
+    measure( 'contexts', measure.where({'self', 'both'}) ) = 'selfBoth';
+    measure( 'contexts', measure.where({'other', 'none'}) ) = 'otherNone';
+  end
+  measure = measure.remove_nans_and_infs();  
   
   for j = 1:numel(freq_rois)
     tmp_write( {'\n\tProcessing roi %d of %d', j, numel(freq_rois)}, tmp_fname );
     meaned = measure.freq_mean( freq_rois{j} );
     meaned.data = squeeze( meaned.data );
     
-    real_perc_correct = zeros( 1, size(meaned.data, 2) );
-    shuf_perc_correct = zeros( 1, size(meaned.data, 2) );
-    shuf_perc_std = zeros( 1, size(meaned.data, 2) );
+    C = meaned.pcombs( shuff_within );
     
-    for k = 1:size( meaned.data, 2 );
-      current = meaned;
-      current.data = current.data(:, k);
-      [~, real_perc] = dsp2.analysis.lda.lda( current, lda_group, perc_training );
-      shuf_percs = zeros( 1, n_perms );
-      
-      parfor h = 1:n_perms
-        current = meaned.shuffle();
+    for ii = 1:size(C, 1)
+      subset = meaned.only( C(ii, :) );
+    
+      real_perc_correct = zeros( 1, size(subset.data, 2) );
+      shuf_perc_correct = zeros( 1, size(subset.data, 2) );
+      shuf_perc_std = zeros( 1, size(subset.data, 2) );
+
+      for k = 1:size( subset.data, 2 );
+        current = subset;
         current.data = current.data(:, k);
-        [~, shuffed_perc_correct] = ...
-          dsp2.analysis.lda.lda( current, lda_group, perc_training );
-        shuf_percs(h) = shuffed_perc_correct;
+        [~, real_perc] = dsp2.analysis.lda.lda( current, lda_group, perc_training );
+        shuf_percs = zeros( 1, n_perms );
+
+        parfor h = 1:n_perms
+          current = subset.shuffle();
+          current.data = current.data(:, k);
+          [~, shuffed_perc_correct] = ...
+            dsp2.analysis.lda.lda( current, lda_group, perc_training );
+          shuf_percs(h) = shuffed_perc_correct;
+        end
+
+        real_perc_correct(k) = real_perc;
+        shuf_perc_correct(k) = mean( shuf_percs );
+        shuf_perc_std(k) = std( shuf_percs );
       end
-      
-      real_perc_correct(k) = real_perc;
-      shuf_perc_correct(k) = mean( shuf_percs );
-      shuf_perc_std(k) = std( shuf_percs );
+
+      clpsed = subset.one();
+      clpsed = clpsed.require_fields( {'band', 'measure'} );
+      clpsed( 'band' ) = band_names{j};
+
+      clpsed = extend( clpsed, clpsed, clpsed );
+      clpsed( 'measure', 1 ) = 'real_percent';
+      clpsed( 'measure', 2 ) = 'shuffled_percent';
+      clpsed( 'measure', 3 ) = 'shuffled_std';
+
+      clpsed.data = [ real_perc_correct; shuf_perc_correct; shuf_perc_std ];
+
+      all_lda_results = all_lda_results.append( clpsed );
     end
-    
-    clpsed = meaned.one();
-    clpsed = clpsed.require_fields( {'band', 'measure'} );
-    clpsed( 'band' ) = band_names{j};
-    
-    clpsed = extend( clpsed, clpsed, clpsed );
-    clpsed( 'measure', 1 ) = 'real_percent';
-    clpsed( 'measure', 2 ) = 'shuffled_percent';
-    clpsed( 'measure', 3 ) = 'shuffled_std';
-    
-    clpsed.data = [ real_perc_correct; shuf_perc_correct; shuf_perc_std ];
-    
-    all_lda_results = all_lda_results.append( clpsed );
   end
 end
 
