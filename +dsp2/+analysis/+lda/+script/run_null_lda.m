@@ -14,7 +14,7 @@ assert( numel(freq_rois) == numel(band_names) );
 io = dsp2.io.get_dsp_h5();
 base_p = dsp2.io.get_path( 'Measures', 'coherence', 'complete' );
 save_p = fullfile( conf.PATHS.analyses, 'lda', dsp2.process.format.get_date_dir() );
-fname = 'lda_per_context.mat';
+fname = 'lda_per_drug.mat';
 dsp2.util.general.require_dir( save_p );
 
 tmp_fname = 'lda.txt';
@@ -23,8 +23,16 @@ tmp_write( '-clear', tmp_fname );
 n_perms = 100;
 perc_training = .75;
 lda_group = 'outcomes';
-shuff_within = { 'trialtypes', 'contexts' };
+shuff_within = { 'trialtypes', 'administration' };
 per_context = true;
+is_drug = true;
+
+if ( per_context )
+  shuff_within{end+1} = 'contexts';
+end
+if ( is_drug )
+  shuff_within{end+1} = 'drugs';
+end
 
 all_lda_results = Container();
 
@@ -37,7 +45,11 @@ for i = 1:numel(epochs)
   measure = dsp2.process.format.fix_administration( measure );
   measure = dsp2.process.format.fix_channels( measure );
   measure = dsp2.process.format.only_pairs( measure );
-  measure = dsp2.process.manipulations.non_drug_effect( measure );
+  if ( ~is_drug )
+    measure = dsp2.process.manipulations.non_drug_effect( measure );
+  else
+    measure = measure.rm( {'unspecified', 'pre'} );
+  end
   measure = measure.rm( 'errors' );
   if ( ~per_context )
     measure = measure.replace( {'self', 'none'}, 'antisocial' );
