@@ -1,6 +1,6 @@
 conf = dsp2.config.load();
-date_dir = '101717';
-fname = 'lda.mat';
+date_dir = '101817';
+fname = 'lda_per_context.mat';
 loadp = fullfile( conf.PATHS.analyses, 'lda', date_dir );
 
 lda = dsp2.util.general.fload( fullfile(loadp, fname) );
@@ -8,9 +8,9 @@ lda = dsp2.util.general.fload( fullfile(loadp, fname) );
 %%
 
 N = 100;
-w_in = { 'band', 'epochs' };
+w_in = { 'band', 'epochs', 'contexts', 'trialtypes' };
 C = lda.pcombs( w_in );
-alpha = .001;
+alpha = .05;
 
 transformed = Container();
 
@@ -44,10 +44,12 @@ transformed.data = transformed.data * 100;
 
 plt = transformed;
 
+plt = plt.only( {'targAcq', 'choice'} );
+
 figure(1); clf();
 pl = ContainerPlotter();
 pl.x = -500:50:500;
-pl.y_lim = [47, 53];
+% pl.y_lim = [47, 53];
 pl.y_label = '% Accurate';
 
-plt.plot( pl, 'measure', {'band', 'epochs'} );
+plt.plot( pl, 'measure', {'band', 'epochs', 'trialtypes', 'contexts'} );
