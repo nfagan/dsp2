@@ -17,7 +17,7 @@ params = dsp2.util.general.parsestruct( defaults, varargin );
 
 conf = params.config;
 
-base_save_path = fullfile( conf.PATHS.plots, params.date, 'spectra' );
+base_save_path = fullfile( conf.PATHS.plots, 'spectra', params.date );
 
 formats = params.formats;
 
@@ -169,9 +169,12 @@ for i = 1:size(C, 1)
     end
     
     if ( strcmp(epoch, 'reward') )
-      tlims = [-500, 500];
+      tlims = [ -500, 500 ];
+    elseif ( strcmp(epoch, 'targacq') )
+      tlims = [ -350, 300 ];
     else
-      tlims = [-350, 300];
+      assert( strcmp(epoch, 'targon'), 'Unrecognized epoch %s.', epoch );
+      tlims = [ -50, 350 ];
     end
     
     measure_ = measure.only( c(k, :) );

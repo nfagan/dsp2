@@ -7,9 +7,9 @@ dsp2.cluster.init();
 date = datestr( now, 'mmddyy' );
 kinds = { 'nanmedian' };
 sfuncs = { @Container.nanmean_1d };
-measures = { 'coherence' };
-epochs = { 'targacq', 'targon', 'reward' };
-manipulations = { 'pro_v_anti_drug_minus_sal' };
+measures = { 'coherence', 'normalized_power' };
+epochs = { 'targon' };
+manipulations = { 'pro_v_anti', 'pro_v_anti_drug_minus_sal' };
 % manipulations = { 'standard', 'pro_v_anti' };
 to_collapse = { {'trials', 'monkeys'} };
 

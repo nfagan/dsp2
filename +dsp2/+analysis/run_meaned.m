@@ -17,14 +17,14 @@ function run_meaned(measure_type, varargin)
 
 import dsp2.util.cluster.tmp_write
 
-io = dsp2.io.get_dsp_h5();
-
 defaults.config = dsp2.config.load();
 defaults.sessions = 'new';
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
 conf = params.config;
+
+io = dsp2.io.get_dsp_h5( 'config', conf );
 
 if ( dsp2.cluster.should_abort(conf) ), return; end
 
