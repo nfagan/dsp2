@@ -1,7 +1,7 @@
 %%  LOAD
 
 conf = dsp2.config.load();
-epoch = 'targon';
+epoch = 'targacq';
 load_path = fullfile( conf.PATHS.analyses, 'pac', epoch );
 mats = dsp2.util.general.load_mats( load_path );
 pac = dsp2.util.general.concat( mats );

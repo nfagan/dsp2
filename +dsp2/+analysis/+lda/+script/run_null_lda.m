@@ -6,10 +6,10 @@ conf = dsp2.config.load();
 
 epochs = { 'targacq', 'reward', 'targon' };
 
-% freq_rois = { [4, 12], [15, 30], [35, 50] };
-% band_names = { 'theta_alpha', 'beta', 'gamma' };
-freq_rois = { [4, 12] };
-band_names = { 'theta_alpha' };
+freq_rois = { [4, 12], [15, 30], [35, 50] };
+band_names = { 'theta_alpha', 'beta', 'gamma' };
+% freq_rois = { [4, 12] };
+% band_names = { 'theta_alpha' };
 
 assert( numel(freq_rois) == numel(band_names) );
 

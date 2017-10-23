@@ -1,12 +1,12 @@
 conf = dsp2.config.load();
-date_dir = '101917';
-fname = 'lda_per_drug.mat';
+date_dir = '102317';
+fname = 'lda_all_contexts.mat';
 loadp = fullfile( conf.PATHS.analyses, 'lda', date_dir );
 
 lda = dsp2.util.general.fload( fullfile(loadp, fname) );
 lda = lda.require_fields( 'contexts' );
 
-DO_SAVE = true;
+DO_SAVE = false;
 
 save_dir = fullfile( conf.PATHS.plots, 'lda', dsp2.process.format.get_date_dir() );
 dsp2.util.general.require_dir( save_dir );
@@ -48,25 +48,34 @@ transformed.data = transformed.data * 100;
 
 %%
 
-plt = transformed;
+% plt = transformed;
 
-plt = plt.only( {'targAcq', 'choice'} );
+C = transformed.pcombs( {'epochs', 'trialtypes'} );
 
-figure(1); clf();
-pl = ContainerPlotter();
-pl.x = -500:50:500;
-pl.y_lim = [45, 55];
-pl.shape = [4, 2];
-pl.y_label = '% Accurate';
+for i = 1:size(C, 1)
 
-plt.plot( pl, 'measure', {'band', 'epochs', 'trialtypes', 'contexts', 'drugs'} );
+  plt = transformed.only( C(i, :) );
 
-f = FigureEdits( gcf );
-f.one_legend();
+  figure(1); clf();
+  pl = ContainerPlotter();
+  pl.x = -500:50:500;
+  pl.y_lim = [45, 55];
+  pl.shape = [1, 1];
+  pl.y_label = '% Accurate';
 
-if ( DO_SAVE )
-  plt_save_name = dsp2.util.general.append_uniques( plt, fname, w_in );
-  dsp2.util.general.save_fig( gcf, fullfile(save_dir, plt_save_name), {'epsc', 'png', 'fig'} );
+  plt.plot( pl, 'measure', {'band', 'epochs', 'trialtypes', 'contexts', 'drugs'} );
+
+  f = FigureEdits( gcf );
+%   f.one_legend();
+  
+  full_save_dir = fullfile( save_dir, char(plt('epochs')) );
+  dsp2.util.general.require_dir( full_save_dir );
+
+  if ( DO_SAVE )
+    plt_save_name = dsp2.util.general.append_uniques( plt, fname, w_in );
+    dsp2.util.general.save_fig( gcf, fullfile(full_save_dir, plt_save_name), {'epsc', 'png', 'fig'} );
+  end
+  
 end
 
 
