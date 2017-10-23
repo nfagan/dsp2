@@ -7,7 +7,10 @@ import dsp2.util.general.load_mats;
 m_within = { 'outcomes', 'trialtypes', 'regions', 'permuted', 'channels' ...
   , 'epochs', 'days', 'administration' };
 
-COLLAPSE_DRUGS = false;
+COLLAPSE_DRUGS = true;
+
+DO_SAVE = true;
+
 if ( COLLAPSE_DRUGS )
   subdir = 'null';
 else
@@ -16,7 +19,7 @@ end
 conf = dsp2.config.load();
 load_p = fullfile( conf.PATHS.analyses, 'granger', subdir );
 % epochs = dsp2.util.general.dirnames( load_p, 'folders' );
-epochs = { 'reward' };
+epochs = { 'targacq' };
 per_epoch = cell( 1, numel(epochs) );
 names = cell( 1, numel(epochs) );
 for i = 1:numel( epochs )
@@ -129,14 +132,100 @@ proanti = proanti.collapse( {'blocks', 'sessions'} );
 proanti = dsp2.process.manipulations.post_minus_pre( proanti );
 proanti = dsp2.process.manipulations.pro_v_anti( proanti );
 
-%%  PLOT
-% meaned = proanti.only( 'saline' );
-% meaned = proanti.only( {'oxytocin', 'pre'} );
-meaned = proanti.rm( 'unspecified' );
+%%  STATS - across outcomes
 
-scale_name = 'rescaled_pre';
+to_stats = proanti;
+compare_within = { 'trialtypes', 'epochs', 'drugs', 'regions' };
+[I, C] = to_stats.get_indices( compare_within);
 
-base_fname = dsp2.util.general.append_uniques( meaned, 'rescaled', {'epochs', 'drugs', 'administration'} );
+assert( numel(to_stats('outcomes')) == 2 );
+
+PS = Container();
+
+for i = 1:numel(I)
+  pro = to_stats.keep( to_stats.where('otherMinusNone') & I{i} );
+  anti = to_stats.keep( to_stats.where('selfMinusBoth') & I{i} );
+  
+  ps = zeros( 1, shape(pro, 2) );
+  extr = pro.one();
+  extr( 'outcomes' ) = 'pro_v_anti';
+  for j = 1:shape(pro, 2)
+    [~, ps(j)] = ttest2( pro.data(:, j), anti.data(:, j) );
+  end
+  ps = ContainerPlotter.fdr_bh( ps );
+  extr.data = ps;
+  PS = PS.append( extr );
+end
+
+%%  STATS - first test null
+
+meaned2 = cellfun( @(x) proanti.freq_mean(x), bands, 'un', false );
+dat = cell2mat( cellfun( @(x) get_data(x), meaned2, 'un', false) );
+meaned2 = proanti;
+meaned2.data = dat;
+
+thresh = any( meaned2.data < -.5 | meaned2.data > .5, 2 );
+
+% to_stats = proanti.rm( {'day__02142017', 'day__02132017'} );
+% to_stats = proanti.keep( ~thresh );
+to_stats = proanti;
+
+compare_within = { 'trialtypes', 'outcomes', 'epochs', 'drugs', 'regions' };
+[I, C] = to_stats.get_indices( compare_within);
+
+assert( numel(to_stats('permuted')) == 2 );
+
+PS = Container();
+
+for i = 1:numel(I)
+  real_data = to_stats.keep( to_stats.where('permuted__false') & I{i} );
+  null_dist = to_stats.keep( to_stats.where('permuted__true') & I{i} );
+  
+  ps = zeros( 1, shape(real_data, 2) );
+  extr = real_data.one();
+  extr( 'permuted' ) = 'permuted__false__permuted__true';
+  for j = 1:shape(real_data, 2)
+    [~, ps(j)] = ttest2( real_data.data(:, j), null_dist.data(:, j) );
+  end
+  ps = ContainerPlotter.fdr_bh( ps );
+  extr.data = ps;
+  PS = PS.append( extr );
+end
+
+non_permuted = to_stats.only( 'permuted__false' );
+compare_within = { 'trialtypes', 'epochs', 'drugs', 'regions' };
+[I, C] = non_permuted.get_indices( compare_within);
+
+assert( numel(to_stats('outcomes')) == 2 );
+adjusted_ps = Container();
+sig_ind = Container();
+
+for i = 1:numel(I)
+  pro = non_permuted.keep( non_permuted.where('otherMinusNone') & I{i} );
+  anti = non_permuted.keep( non_permuted.where('selfMinusBoth') & I{i} );
+  
+  ps = zeros( 1, shape(pro, 2) );
+  extr = pro.one();
+  extr( 'outcomes' ) = 'pro_v_anti';
+  for j = 1:shape(pro, 2)
+    [~, ps(j)] = ttest2( pro.data(:, j), anti.data(:, j) );
+  end
+  ps = ContainerPlotter.fdr_bh( ps );
+  extr.data = ps;
+  adjusted_ps = adjusted_ps.append( extr );
+  
+  matching_ps_ind = PS.where( C(i, :) );
+  matching_data = PS.data( matching_ps_ind, : );
+  below_thresh = matching_data <= .05;
+  below_thresh = all( below_thresh, 1 );
+  below_thresh = all( below_thresh, 1 ) & ps <= .05;
+  
+  sig_ind_ = extr;
+  sig_ind_.data = below_thresh;
+  sig_ind = sig_ind.append( sig_ind_ );
+end
+
+figure(1); clf();
 
 pl = ContainerPlotter();
 pl.compare_series = false;
@@ -144,24 +233,83 @@ pl.marker_size = 2;
 pl.add_ribbon = true;
 pl.add_legend = true;
 pl.main_line_width = 1;
+pl.x = non_permuted.frequencies;
+pl.shape = [1, 2];
+pl.y_lim = [-.03, .03];
+pl.y_label = 'Granger difference';
+% pl.x_label = 'hz';
+pl.order_by = { 'real', 'permuted' };
+axs = non_permuted.plot( pl, {'outcomes', 'trialtypes', 'administration'}, {'drugs', 'regions'} );
+
+stp = 1;
+for i = 1:numel(axs)
+% for i = 1:numel(axs)  
+  current_ax = axs(i);
+  for j = 1:size(sig_ind.data, 2)
+    if ( sig_ind.data(stp, j) )
+      plot( current_ax, pl.x(j), 0.02, '*', 'markersize', 15 );
+    end
+  end
+  stp = stp + 1;
+end
+
+if ( DO_SAVE )
+  save_path = fullfile( conf.PATHS.plots, 'granger', dsp2.process.format.get_date_dir() );
+  dsp2.util.general.require_dir( save_path );
+  fname = fullfile( save_path, base_fname );
+  dsp2.util.general.save_fig( figure(1), fname, {'fig', 'png', 'epsc'} );
+end
+
+%%  PLOT
+% meaned = proanti.only( 'saline' );
+% meaned = proanti.only( {'oxytocin', 'pre'} );
+% meaned = proanti.rm( 'unspecified' );
+meaned = proanti.keep( ~thresh );
+% meaned = meaned.rm( 'permuted__true' );
+
+% meaned = meaned.rm( {'day__02142017', 'iteration__101', 'oth );
+% meaned = meaned.only_not( b.flat_uniques({'outcomes', 'days', 'trialtypes'}) );
+
+scale_name = 'rescaled_pre';
+
+base_fname = dsp2.util.general.append_uniques( meaned, 'rescaled', {'epochs', 'drugs', 'administration'} );
+
+pl = ContainerPlotter();
+pl.compare_series = true;
+pl.marker_size = 2;
+pl.add_ribbon = true;
+pl.add_legend = true;
+pl.main_line_width = 1;
 pl.x = meaned.frequencies;
-pl.shape = [4, 2];
-pl.y_lim = [-.07, .07];
+pl.shape = [1, 2];
+pl.y_lim = [-.03, .03];
 pl.y_label = 'Granger difference';
 % pl.x_label = 'hz';
 pl.order_by = { 'real', 'permuted' };
 
-% figure(1); clf();
+figure(1); clf();
 
 meaned.plot( pl, {'permuted', 'trialtypes', 'administration'}, {'outcomes', 'drugs', 'regions'} );
+% meaned.plot( pl, {'outcomes', 'trialtypes', 'administration'}, {'drugs', 'regions'} );
 
 f = FigureEdits( gcf );
 f.one_legend();
 
-save_path = fullfile( conf.PATHS.plots, 'granger', dsp2.process.format.get_date_dir() );
-dsp2.util.general.require_dir( save_path );
-fname = fullfile( save_path, base_fname );
-% dsp2.util.general.save_fig( figure(1), fname, {'fig', 'png', 'epsc'} );
+if ( DO_SAVE )
+  save_path = fullfile( conf.PATHS.plots, 'granger', dsp2.process.format.get_date_dir() );
+  dsp2.util.general.require_dir( save_path );
+  fname = fullfile( save_path, base_fname );
+  dsp2.util.general.save_fig( figure(1), fname, {'fig', 'png', 'epsc'} );
+end
+
+%%
+
+meaned = proanti.rm( 'unspecified' );
+meaned = meaned.freq_mean( [35, 50] );
+
+
+figure(1); clf(); 
+meaned.hist( 100, [], {'outcomes', 'regions'} );
 
 %%  PLOT PER DAY AND SAVE
 

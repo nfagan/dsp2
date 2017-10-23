@@ -2,19 +2,21 @@ dsp2.cluster.init();
 
 conf = dsp2.config.load();
 
+conf.PATHS.data_disk = 'H:\';
+conf.PATHS.database = 'H:\SIGNALS\database';
 conf.DATABASES.h5_file = 'high_res_measures.h5';
 dsp2.io.require_h5_database( conf );
 
 conf = dsp2.config.set.inactivate_epochs( 'all', conf );
-conf = dsp2.config.set.activate_epochs( {'cueOn', 'targOn', 'targAcq', 'rwdOn'}, conf );
+conf = dsp2.config.set.activate_epochs( {'targOn', 'targAcq', 'rwdOn'}, conf );
 
 conf.SIGNALS.handle_missing_trials = 'skip';
 
 epochs = fieldnames( conf.SIGNALS.EPOCHS );
 for i = 1:numel(epochs)
   if ( ~conf.SIGNALS.EPOCHS.(epochs{i}).active ), continue; end
-  conf.SIGNALS.(epochs{i}).win_size = 500;
-  conf.SIGNALS.(epochs{i}).stp_size = 10;
+  conf.SIGNALS.EPOCHS.(epochs{i}).win_size = 500;
+  conf.SIGNALS.EPOCHS.(epochs{i}).stp_size = 10;
 end
 
 conf.SIGNALS.EPOCHS.rwdOn.time = [-500, 500];
@@ -40,4 +42,4 @@ dsp2.util.cluster.tmp_write( 'Calculating mean ... ' );
 dsp2.analysis.run_meaned( 'coherence', 'config', conf );
 dsp2.util.cluster.tmp_write( 'Done calculating meaned.' );
 
-exit();
+% exit();

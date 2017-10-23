@@ -1,14 +1,20 @@
 conf = dsp2.config.load();
-date_dir = '101817';
-fname = 'lda_per_context.mat';
+date_dir = '101917';
+fname = 'lda_per_drug.mat';
 loadp = fullfile( conf.PATHS.analyses, 'lda', date_dir );
 
 lda = dsp2.util.general.fload( fullfile(loadp, fname) );
+lda = lda.require_fields( 'contexts' );
+
+DO_SAVE = true;
+
+save_dir = fullfile( conf.PATHS.plots, 'lda', dsp2.process.format.get_date_dir() );
+dsp2.util.general.require_dir( save_dir );
 
 %%
 
 N = 100;
-w_in = { 'band', 'epochs', 'contexts', 'trialtypes' };
+w_in = { 'band', 'epochs', 'contexts', 'trialtypes', 'drugs' };
 C = lda.pcombs( w_in );
 alpha = .05;
 
@@ -49,7 +55,19 @@ plt = plt.only( {'targAcq', 'choice'} );
 figure(1); clf();
 pl = ContainerPlotter();
 pl.x = -500:50:500;
-% pl.y_lim = [47, 53];
+pl.y_lim = [45, 55];
+pl.shape = [4, 2];
 pl.y_label = '% Accurate';
 
-plt.plot( pl, 'measure', {'band', 'epochs', 'trialtypes', 'contexts'} );
+plt.plot( pl, 'measure', {'band', 'epochs', 'trialtypes', 'contexts', 'drugs'} );
+
+f = FigureEdits( gcf );
+f.one_legend();
+
+if ( DO_SAVE )
+  plt_save_name = dsp2.util.general.append_uniques( plt, fname, w_in );
+  dsp2.util.general.save_fig( gcf, fullfile(save_dir, plt_save_name), {'epsc', 'png', 'fig'} );
+end
+
+
+
