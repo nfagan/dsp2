@@ -1,12 +1,13 @@
 conf = dsp2.config.load();
 
-date = '072417';
-measures = { 'preference_proportion' };
+date = dsp2.process.format.get_date_dir();
+measures = { 'gaze_frequency' };
 % manipulations = { 'pro_v_anti' };
-manipulations = { 'standard' };
-to_collapse = { {'trials'}, {'trials', 'monkeys'} };
+% manipulations = { 'standard' };
+manipulations = { 'drug' };
+to_collapse = { {'trials'} };
 
-sfuncs = { @nanmean, @nanmedian };
+sfuncs = { @nanmean };
 
 for i = 1:numel(sfuncs)
   

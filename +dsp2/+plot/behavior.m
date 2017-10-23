@@ -22,7 +22,7 @@ to_collapse = params.to_collapse;
 
 C = dsp2.util.general.allcomb( {measures, manipulations, to_collapse} );
 
-base_savepath = fullfile( conf.PATHS.plots, params.date, 'behavior' );
+base_savepath = fullfile( conf.PATHS.plots, 'behavior', params.date );
 
 pl = ContainerPlotter();
 
