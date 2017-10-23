@@ -7,7 +7,7 @@ import dsp2.util.general.load_mats;
 m_within = { 'outcomes', 'trialtypes', 'regions', 'permuted', 'channels' ...
   , 'epochs', 'days', 'administration' };
 
-COLLAPSE_DRUGS = true;
+COLLAPSE_DRUGS = false;
 
 DO_SAVE = true;
 
