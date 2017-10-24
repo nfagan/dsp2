@@ -7,7 +7,7 @@ import dsp2.util.general.load_mats;
 m_within = { 'outcomes', 'trialtypes', 'regions', 'permuted', 'channels' ...
   , 'epochs', 'days', 'administration' };
 
-COLLAPSE_DRUGS = true;
+COLLAPSE_DRUGS = false;
 
 DO_SAVE = false;
 
@@ -290,8 +290,8 @@ end
 % meaned = proanti.keep( ~bad_site_ind );
 % meaned = proanti.only_not( {'day__02142017', 'otherMinusNone'} );
 
-% meaned = proanti.keep( ~bad_site_ind );
-meaned = proanti.only( {'saline', 'post'} );
+meaned = proanti.keep( ~bad_site_ind );
+meaned = meaned.only( {'saline', 'post'} );
 
 % meaned = orig_dev_thresholded.only( {'oxytocin', 'post'} );
 
@@ -299,12 +299,12 @@ meaned = proanti.only( {'saline', 'post'} );
 % meaned = meaned.only_not( b.flat_uniques({'outcomes', 'days', 'trialtypes'}) );
 
 scale_name = 'rescaled_pre';
-% dat = meaned.data;
-% 
-% for i = 1:size(meaned.data, 1)
-%   dat(i, :) = smooth( dat(i, :), 30 );
-% end
-% meaned.data = dat;
+dat = meaned.data;
+
+for i = 1:size(meaned.data, 1)
+  dat(i, :) = smooth( dat(i, :), 30 );
+end
+meaned.data = dat;
 
 base_fname = dsp2.util.general.append_uniques( meaned, 'rescaled', {'epochs', 'drugs', 'administration'} );
 
@@ -323,7 +323,7 @@ pl.y_label = 'Grnger difference';
 % pl.x_label = 'hz';
 pl.order_by = { 'real', 'permuted' };
 
-figure(3); clf();
+figure(1); clf();
 
 meaned.plot( pl, {'permuted', 'trialtypes', 'administration'}, {'outcomes', 'drugs', 'regions'} );
 % meaned.plot( pl, {'outcomes', 'trialtypes', 'administration'}, {'drugs', 'regions'} );
@@ -332,7 +332,8 @@ f = FigureEdits( gcf );
 f.one_legend();
 
 if ( DO_SAVE )
-  save_path = fullfile( conf.PATHS.plots, 'granger', dsp2.process.format.get_date_dir() );
+  save_path = fullfile( conf.PATHS.plots, 'granger', dsp2.process.format.get_date_dir() ...
+    , char(meaned('epochs')), 'drug', 'smoothed');
   dsp2.util.general.require_dir( save_path );
   fname = fullfile( save_path, base_fname );
   dsp2.util.general.save_fig( figure(1), fname, {'fig', 'png', 'epsc'} );
@@ -411,8 +412,8 @@ for i = 1:numel(band_names)
   all_bands = append( all_bands, one_mean );
 end
 
-plt = all_bands;
-% plt = plt.only( 'permuted__false' );
+plt = all_bands.rm( 'unspecified' );
+plt = plt.only( {'post'} );
 plt = plt.only( 'permuted__false' ) - plt.only( 'permuted__true' );
 
 figure(1); clf(); colormap( 'default' );
@@ -420,16 +421,17 @@ set( figure(1), 'units', 'normalized' );
 set( figure(1), 'position', [0, 0, 1, 1] );
 
 pl = ContainerPlotter();
-pl.y_lim = [-.015, .015];
+pl.y_lim = [-.03, .03];
 pl.x_tick_rotation = 0;
 pl.shape = [3, 2];
 pl.order_by = { 'theta_alpha', 'beta', 'gamma' };
 
-plt.bar( pl, 'outcomes', 'trialtypes', {'bands', 'regions'} );
+plt.bar( pl, 'outcomes', {'trialtypes', 'drugs'}, {'bands', 'regions', 'administration'} );
 
 if ( DO_SAVE )
-  base_fname = dsp2.util.general.append_uniques( all_bands, 'rescaled', {'epochs', 'drugs', 'administration'} );
-  save_path = fullfile( conf.PATHS.plots, 'granger', dsp2.process.format.get_date_dir() );
+  base_fname = dsp2.util.general.append_uniques( plt, 'rescaled', {'epochs', 'drugs', 'administration'} );
+  save_path = fullfile( conf.PATHS.plots, 'granger', dsp2.process.format.get_date_dir() ...
+    , char(plt('epochs')), 'drug', 'minus_null' );
   dsp2.util.general.require_dir( save_path );
   fname = fullfile( save_path, base_fname );
   dsp2.util.general.save_fig( gcf, fname, {'fig', 'png', 'epsc'} );

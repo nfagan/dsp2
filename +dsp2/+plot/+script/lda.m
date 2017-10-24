@@ -1,12 +1,13 @@
 conf = dsp2.config.load();
 date_dir = '102417';
-fname = 'lda_all_contexts_with_ci.mat';
+% fname = 'lda_all_contexts_with_ci.mat';
+fname = 'lda_all_contexts_with_ci_per_drug.mat';
 loadp = fullfile( conf.PATHS.analyses, 'lda', date_dir );
 
 lda = dsp2.util.general.fload( fullfile(loadp, fname) );
 lda = lda.require_fields( 'contexts' );
 
-DO_SAVE = false;
+DO_SAVE = true;
 
 save_dir = fullfile( conf.PATHS.plots, 'lda', dsp2.process.format.get_date_dir() );
 dsp2.util.general.require_dir( save_dir );
@@ -38,36 +39,57 @@ transformed.data = transformed.data * 100;
 
 %%
 
-
-subset = transformed.only( {'targAcq'} );
+% subset = transformed.only( {'choice'} );
+subset = transformed;
 
 C = subset.pcombs( {'epochs', 'trialtypes'} );
 
 for i = 1:size(C, 1)
 
   plt = subset.only( C(i, :) );
+  
+%   for j = 1:size(plt.data, 1)
+%     plt.data(j, :) = smooth( plt.data(j, :), 10 );
+%   end
 
   figure(1); clf();
   pl = ContainerPlotter();
   pl.x = -500:50:500;
   pl.y_lim = [45, 55];
-  pl.shape = [1, 1];
+  pl.shape = [3, 2];
   pl.y_label = '% Accurate';
 
   plt.plot( pl, 'measure', {'band', 'epochs', 'trialtypes', 'contexts', 'drugs'} );
 
   f = FigureEdits( gcf );
-%   f.one_legend();
+  f.one_legend();
   
   full_save_dir = fullfile( save_dir, char(plt('epochs')) );
   dsp2.util.general.require_dir( full_save_dir );
 
   if ( DO_SAVE )
-    plt_save_name = dsp2.util.general.append_uniques( plt, fname, w_in );
+    plt_save_name = dsp2.util.general.append_uniques( plt, ['drug', fname], w_in );
     dsp2.util.general.save_fig( gcf, fullfile(full_save_dir, plt_save_name), {'epsc', 'png', 'fig'} );
   end
   
 end
 
+%%
 
+figure(1); clf();
+pl = ContainerPlotter();
+pl.x = -500:50:500;
+pl.y_lim = [45, 55];
+pl.y_label = '% Accurate';
 
+plt = transformed.only( {'targAcq', 'real_mean', 'real_confidence_low', 'real_confidence_high'} );
+
+plt.plot( pl, {'drugs', 'measure'}, {'band', 'epochs', 'trialtypes', 'contexts'} );
+
+full_save_dir = fullfile( save_dir, char(plt('epochs')) );
+dsp2.util.general.require_dir( full_save_dir );
+
+if ( DO_SAVE )
+  plt_save_name = dsp2.util.general.append_uniques( plt, fname, w_in );
+  dsp2.util.general.save_fig( gcf, fullfile(full_save_dir, plt_save_name), {'epsc', 'png', 'fig'} );
+end
