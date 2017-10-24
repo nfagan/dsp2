@@ -168,9 +168,23 @@ for i = 1:numel(epochs)
           C = signals.run_coherence( 'reg1', 'acc', 'reg2', 'ref' );
           measure = A.extend( B, C );
         else
-          measure = signals.run_coherence();
+          pairs = dsp2.io.get_site_pairs();
+          map = dsp2.io.get_site_map();
+          current_pairs = pairs.channels( strcmp(pairs.days, new_days{k}) );
+          current_map = map.channel_map( strcmp(map.days, new_days{k}) );
+          assert( numel(current_pairs) == 1 && numel(current_map) == 1);
+          current_pairs = current_pairs{1};
+          current_map = current_map{1};
+          measure = signals.run_coherence( 'combs', current_pairs );
         end
-        measure = dsp2.process.format.fix_channels( measure );
+%         measure = dsp2.process.format.fix_channels( measure );
+        chans = measure( 'channels' );
+        for jj = 1:numel(chans)
+          site_ind = strcmp( current_map(:, 2), chans{jj} );
+          assert( sum(site_ind) == 1 );
+          site_name = current_map( site_ind, 1 );
+          measure( 'sites', measure.where(chans{jj}) ) = site_name;
+        end
         measure = dsp2.process.format.only_pairs( measure );
       case 'sfcoherence'
         assert( strcmp(ref_type, 'non_common_averaged') ...
