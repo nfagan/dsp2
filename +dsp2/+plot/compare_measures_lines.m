@@ -20,7 +20,7 @@ end
 
 banded.data = squeeze( banded.data );
 
-figs_are = { 'outcomes', 'band' };
+figs_are = { 'outcomes', 'band', 'trialtypes' };
 C = banded.pcombs( figs_are );
 
 for j = 1:size(C, 1)
