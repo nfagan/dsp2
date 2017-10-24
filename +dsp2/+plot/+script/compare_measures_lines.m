@@ -14,7 +14,7 @@ epochs = { 'reward', 'targacq' };
 manipulations = { 'pro_v_anti' };
 to_collapse = { {'trials', 'monkeys'} };
 
-bands = Container( {[15, 30]; [35, 50]}, 'band', {'beta'; 'gamma'} );
+bands = Container( {[4, 12], [15, 30]; [35, 50]}, 'band', {'theta_alpha'; 'beta'; 'gamma'} );
 
 C = dsp2.util.general.allcomb( ...
   {epochs, manipulations, to_collapse, kinds, sfuncs} ...
@@ -52,7 +52,7 @@ for i = 1:size(C, 1)
     c = [ measures(k), row(1:3) ];
     measure_ = dsp2.io.get_processed_measure( c, shared_inputs{:} );
     %   get rid of acc spikes -> bla field
-    measure_ = measure_.only( 'bla_acc' );
+%     measure_ = measure_.only( 'bla_acc' );
     measure_ = measure_.keep_within_freqs( [0, 100] );
     measure_ = measure_.keep_within_times( [-500, 500] );
     measure_ = measure_.require_fields( 'signal_measure' );
