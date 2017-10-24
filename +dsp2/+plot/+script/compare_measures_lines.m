@@ -14,7 +14,7 @@ epochs = { 'reward', 'targacq' };
 manipulations = { 'pro_v_anti' };
 to_collapse = { {'trials', 'monkeys'} };
 
-bands = Container( {[4, 12], [15, 30]; [35, 50]}, 'band', {'theta_alpha'; 'beta'; 'gamma'} );
+bands = Container( {[4, 12]; [15, 30]; [35, 50]}, 'band', {'theta_alpha'; 'beta'; 'gamma'} );
 
 C = dsp2.util.general.allcomb( ...
   {epochs, manipulations, to_collapse, kinds, sfuncs} ...
