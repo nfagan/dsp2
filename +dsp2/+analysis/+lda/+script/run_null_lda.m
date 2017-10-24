@@ -16,7 +16,7 @@ assert( numel(freq_rois) == numel(band_names) );
 io = dsp2.io.get_dsp_h5();
 base_p = dsp2.io.get_path( 'Measures', 'coherence', 'complete' );
 save_p = fullfile( conf.PATHS.analyses, 'lda', dsp2.process.format.get_date_dir() );
-fname = 'lda_per_drug_all_contexts.mat';
+fname = 'lda_all_contexts_with_ci.mat';
 dsp2.util.general.require_dir( save_p );
 
 tmp_fname = 'lda.txt';
@@ -74,15 +74,20 @@ for i = 1:numel(epochs)
       subset = meaned.only( C(ii, :) );
     
       real_perc_correct = zeros( 1, size(subset.data, 2) );
+      real_perc_std = zeros( 1, size(subset.data, 2) );
       shuf_perc_correct = zeros( 1, size(subset.data, 2) );
       shuf_perc_std = zeros( 1, size(subset.data, 2) );
 
       for k = 1:size( subset.data, 2 );
         current = subset;
         current.data = current.data(:, k);
-        [~, real_perc] = dsp2.analysis.lda.lda( current, lda_group, perc_training );
         shuf_percs = zeros( 1, n_perms );
-
+        real_percs = zeros( 1, n_perms );
+        
+        parfor h = 1:n_perms
+          [~, real_perc] = dsp2.analysis.lda.lda( current, lda_group, perc_training );
+          real_percs(h) = real_perc;
+        end
         parfor h = 1:n_perms
           current = subset.shuffle();
           current.data = current.data(:, k);
@@ -91,7 +96,8 @@ for i = 1:numel(epochs)
           shuf_percs(h) = shuffed_perc_correct;
         end
 
-        real_perc_correct(k) = real_perc;
+        real_perc_correct(k) = mean( real_percs );
+        real_perc_std(k) = std( real_percs );
         shuf_perc_correct(k) = mean( shuf_percs );
         shuf_perc_std(k) = std( shuf_percs );
       end
@@ -100,12 +106,13 @@ for i = 1:numel(epochs)
       clpsed = clpsed.require_fields( {'band', 'measure'} );
       clpsed( 'band' ) = band_names{j};
 
-      clpsed = extend( clpsed, clpsed, clpsed );
+      clpsed = extend( clpsed, clpsed, clpsed, clpsed );
       clpsed( 'measure', 1 ) = 'real_percent';
-      clpsed( 'measure', 2 ) = 'shuffled_percent';
-      clpsed( 'measure', 3 ) = 'shuffled_std';
+      clpsed( 'measure', 2 ) = 'real_std';
+      clpsed( 'measure', 3 ) = 'shuffled_percent';
+      clpsed( 'measure', 4 ) = 'shuffled_std';
 
-      clpsed.data = [ real_perc_correct; shuf_perc_correct; shuf_perc_std ];
+      clpsed.data = [ real_perc_correct; real_perc_std; shuf_perc_correct; shuf_perc_std ];
 
       all_lda_results = all_lda_results.append( clpsed );
     end

@@ -50,6 +50,8 @@ transformed.data = transformed.data * 100;
 
 % plt = transformed;
 
+transformed = transformed.only( {'targAcq', 'gamma'} );
+
 C = transformed.pcombs( {'epochs', 'trialtypes'} );
 
 for i = 1:size(C, 1)

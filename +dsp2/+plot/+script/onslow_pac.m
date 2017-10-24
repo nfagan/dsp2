@@ -4,7 +4,7 @@ conf = dsp2.config.load();
 epoch = 'targacq';
 load_path = fullfile( conf.PATHS.analyses, 'onslow_pac', 'cfc', epoch );
 mats = dsp2.util.general.load_mats( load_path );
-pac_choice = dsp2.util.general.concat( mats );
+pac = dsp2.util.general.concat( mats );
 
 base_save_path = fullfile( conf.PATHS.plots, 'onslow_pac', dsp2.process.format.get_date_dir() );
 save_path = fullfile( base_save_path, epoch );
@@ -24,7 +24,7 @@ meaned_ = pac.each1d( each_plot, @rowops.nanmean );
 
 regions = meaned_( 'regions' );
 
-meaned_ = meaned_.only( 'cued' );
+% meaned_ = meaned_.only( 'cued' );
 
 for i = 1:numel( regions )
 
@@ -35,7 +35,7 @@ for i = 1:numel( regions )
 
   figure(i); clf();
   meaned.spectrogram( each_plot, 'shape', [1, 2], 'colorMap', 'default' ...
-    , 'time', [0, 100], 'frequencies', [0, 100], 'clims', [-.015, .015]);
+    , 'time', [0, 30], 'frequencies', [0, 100], 'clims', [-.015, .015]);
 
   f = FigureEdits( gcf );
   f.ylabel( 'Amplitude frequency (hz)' );
