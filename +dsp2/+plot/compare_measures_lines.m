@@ -20,24 +20,32 @@ end
 
 banded.data = squeeze( banded.data );
 
-F = figure(1);
-clf();
+figs_are = { 'outcomes', 'band' };
+C = banded.pcombs( figs_are );
 
-pl = ContainerPlotter();
-pl.add_ribbon = true;
-pl.x = banded.get_time_series();
-pl.summary_function = conf.PLOT.summary_function;
+for j = 1:size(C, 1)
+  F = figure(1);
+  clf();
+  
+  plt = banded.only( C(j, :) );
 
-banded.plot( pl, 'signal_measure', {'outcomes', 'band', 'regions', 'monkeys'} );
+  pl = ContainerPlotter();
+  pl.add_ribbon = true;
+  pl.x = plt.get_time_series();
+  pl.summary_function = conf.PLOT.summary_function;
 
-labs = banded.labels.flat_uniques( {'monkeys', 'drugs', 'trialtypes'} );
-fname = strjoin( labs, '_' );
+  % banded.plot( pl, 'signal_measure', {'outcomes', 'band', 'regions', 'monkeys'} );
+  plt.plot( pl, {'signal_measure', 'regions'}, {'outcomes', 'band', 'monkeys'} );
 
-for i = 1:numel( params.formats )
-  full_save_dir = fullfile( save_path, params.formats{i} );
-  dsp2.util.general.require_dir( full_save_dir );
-  full_fname = fullfile( full_save_dir, fname );
-  saveas( F, full_fname, params.formats{i} );
+  labs = plt.labels.flat_uniques( {'monkeys', 'drugs', 'trialtypes'} );
+  fname = strjoin( labs, '_' );
+
+  for i = 1:numel( params.formats )
+    full_save_dir = fullfile( save_path, params.formats{i} );
+    dsp2.util.general.require_dir( full_save_dir );
+    full_fname = fullfile( full_save_dir, fname );
+    saveas( F, full_fname, params.formats{i} );
+  end
 end
 
 end
