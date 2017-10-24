@@ -37,7 +37,7 @@ for j = 1:size(C, 1)
   % banded.plot( pl, 'signal_measure', {'outcomes', 'band', 'regions', 'monkeys'} );
   plt.plot( pl, {'signal_measure', 'regions'}, {'outcomes', 'band', 'monkeys'} );
 
-  labs = plt.labels.flat_uniques( {'monkeys', 'drugs', 'trialtypes'} );
+  labs = plt.labels.flat_uniques( union({'monkeys', 'drugs', 'trialtypes'}, figs_are) );
   fname = strjoin( labs, '_' );
 
   for i = 1:numel( params.formats )
