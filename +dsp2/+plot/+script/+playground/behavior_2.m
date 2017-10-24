@@ -14,7 +14,8 @@ behav = dsp2.process.format.fix_administration( behav );
 %%
 
 is_drug = true;
-is_post_only = true;
+is_post_only = false;
+is_post_minus_pre = false;
 is_pref_proportion = false;
 is_rt = true;
 is_pref_index = false;
@@ -57,7 +58,9 @@ if ( is_drug && is_post_only )
   percs = percs.only( 'post' );
 elseif ( is_drug )
   percs = percs.collapse( {'blocks', 'recipients', 'sessions'} );
-  percs = dsp2.process.manipulations.post_minus_pre( percs );
+  if ( is_post_minus_pre )
+    percs = dsp2.process.manipulations.post_minus_pre( percs );
+  end
 end
 
 %%  SD CUTOFFS
