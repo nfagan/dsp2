@@ -17,8 +17,8 @@ is_drug = true;
 is_post_only = false;
 is_post_minus_pre = false;
 is_pref_proportion = false;
-is_rt = true;
-is_pref_index = false;
+is_rt = false;
+is_pref_index = true;
 
 %%
 
@@ -60,6 +60,35 @@ elseif ( is_drug )
   percs = percs.collapse( {'blocks', 'recipients', 'sessions'} );
   if ( is_post_minus_pre )
     percs = dsp2.process.manipulations.post_minus_pre( percs );
+  end
+end
+
+%%  BAR PER DAY
+figs_are = { 'drugs', 'days' };
+x_is = 'administration';
+groups_are = { 'outcomes' };
+panels_are = { 'drugs' };
+
+meas_type = 'preference_index';
+
+per_day_save_path = fullfile( plt_save_path, meas_type, 'per_day_plots', 'drug' );
+dsp2.util.general.require_dir( per_day_save_path );
+
+C = percs.pcombs( figs_are );
+for i = 1:size(C, 1)
+  plt = percs.only( C(i, :) );
+  
+  pl = ContainerPlotter();
+  pl.order_by = { 'pre', 'post' };
+  pl.y_lim = [-0.7, 0.7];
+  
+  figure(1); clf(); colormap( 'default' );
+  
+  plt.bar( pl, x_is, groups_are, panels_are );
+  
+  if ( DO_SAVE )
+    fname = dsp2.util.general.append_uniques( plt, meas_type, {'days'} );
+    dsp2.util.general.save_fig( gcf, fullfile(per_day_save_path, fname), {'epsc', 'png', 'fig'} );
   end
 end
 
