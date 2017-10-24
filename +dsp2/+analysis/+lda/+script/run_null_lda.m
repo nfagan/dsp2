@@ -16,7 +16,7 @@ assert( numel(freq_rois) == numel(band_names) );
 io = dsp2.io.get_dsp_h5();
 base_p = dsp2.io.get_path( 'Measures', 'coherence', 'complete' );
 save_p = fullfile( conf.PATHS.analyses, 'lda', dsp2.process.format.get_date_dir() );
-fname = 'lda_all_contexts_with_ci.mat';
+fname = 'lda_all_contexts_with_ci_per_drug.mat';
 dsp2.util.general.require_dir( save_p );
 
 tmp_fname = 'lda.txt';
@@ -27,7 +27,7 @@ perc_training = .75;
 lda_group = 'outcomes';
 shuff_within = { 'trialtypes', 'administration' };
 per_context = false;
-is_drug = false;
+is_drug = true;
 
 if ( per_context )
   shuff_within{end+1} = 'contexts';

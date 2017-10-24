@@ -1,7 +1,7 @@
 %%  LOAD
 
 conf = dsp2.config.load();
-epoch = 'targacq';
+epoch = 'reward';
 load_path = fullfile( conf.PATHS.analyses, 'onslow_pac', 'cfc', epoch );
 mats = dsp2.util.general.load_mats( load_path );
 pac = dsp2.util.general.concat( mats );
@@ -34,7 +34,7 @@ for i = 1:numel( regions )
   meaned = dsp2.process.manipulations.pro_v_anti( meaned );
 
   figure(i); clf();
-  meaned.spectrogram( each_plot, 'shape', [1, 2], 'colorMap', 'default' ...
+  meaned.spectrogram( each_plot, 'shape', [2, 2], 'colorMap', 'default' ...
     , 'time', [0, 30], 'frequencies', [0, 100], 'clims', [-.015, .015]);
 
   f = FigureEdits( gcf );
