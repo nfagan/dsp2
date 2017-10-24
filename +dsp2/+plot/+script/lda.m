@@ -1,6 +1,6 @@
 conf = dsp2.config.load();
-date_dir = '102317';
-fname = 'lda_all_contexts.mat';
+date_dir = '102417';
+fname = 'lda_all_contexts_with_ci.mat';
 loadp = fullfile( conf.PATHS.analyses, 'lda', date_dir );
 
 lda = dsp2.util.general.fload( fullfile(loadp, fname) );
@@ -24,39 +24,28 @@ for i = 1:size(C, 1)
   shuffed_mean = lda.only( [C(i, :), 'shuffled_percent'] );
   shuffed_dev = lda.only( [C(i, :), 'shuffled_std'] );
   real_mean = lda.only( [C(i, :), 'real_percent'] );
+  real_dev = lda.only( [C(i, :), 'real_std'] );
   
   assert( shape(shuffed_mean, 1) == 1 && shapes_match(shuffed_mean, shuffed_dev) );
   
-  sem = shuffed_dev.data / sqrt(N);
-  t_stat = tinv( alpha, N-1 );
-  ci = t_stat * sem;
-  ci_lo = shuffed_mean.data - ci;
-  ci_hi = shuffed_mean.data + ci;
+  shuffed = dsp2.analysis.lda.add_confidence_interval( shuffed_mean, shuffed_dev, alpha, N, 'shuffled' );
+  actual = dsp2.analysis.lda.add_confidence_interval( real_mean, real_dev, alpha, N, 'real' );
   
-  current = shuffed_mean.one();
-  current = extend( current, current );
-  current.data = zeros( 2, size(real_mean.data, 2) );
-  current( 'measure' ) = { 'confidence_low', 'confidence_high' };
-  current.data(1, :) = ci_lo;
-  current.data(2, :) = ci_hi;
-  
-  transformed = transformed.append( current );
-  transformed = transformed.append( real_mean );
+  transformed = transformed.extend( shuffed, actual );
 end
 
 transformed.data = transformed.data * 100;
 
 %%
 
-% plt = transformed;
 
-transformed = transformed.only( {'targAcq', 'gamma'} );
+subset = transformed.only( {'targAcq'} );
 
-C = transformed.pcombs( {'epochs', 'trialtypes'} );
+C = subset.pcombs( {'epochs', 'trialtypes'} );
 
 for i = 1:size(C, 1)
 
-  plt = transformed.only( C(i, :) );
+  plt = subset.only( C(i, :) );
 
   figure(1); clf();
   pl = ContainerPlotter();

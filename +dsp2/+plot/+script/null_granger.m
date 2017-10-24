@@ -126,6 +126,25 @@ proanti = proanti.keep_within_freqs( [0, 100] );
 % proanti = per_epoch.keep_within_freqs( [0, 100] );
 proanti = dsp2.process.manipulations.pro_v_anti( proanti );
 
+%%
+proanti = per_epoch;
+proanti = dsp2.process.manipulations.pro_v_anti( proanti );
+% proanti = proanti.each1d( {'drugs', 'outcomes', 'regions', 'permuted', 'administration'}, @rowops.nanmean );
+% subbed = dsp2.process.manipulations.oxy_minus_sal( proanti );
+subbed = proanti;
+
+subbed = subbed.only( {'permuted__false', 'post', 'oxytocin', 'saline'} );
+
+subbed = subbed.keep_within_freqs( [0, 100] );
+
+pl = ContainerPlotter();
+pl.x = subbed.frequencies;
+pl.add_ribbon = true;
+
+figure(1); clf();
+
+subbed.plot( pl, {'drugs'}, {'administration', 'outcomes', 'regions'} );
+
 %%  MAKE POST - PRE
 
 proanti = kept2.keep_within_freqs( [0, 100] );
@@ -264,12 +283,17 @@ end
 
 %%  PLOT
 % meaned = proanti.only( 'saline' );
-% meaned = proanti.only( {'oxytocin', 'pre'} );
+% meaned = proanti.only( {'oxytocin', 'post'} );
 % meaned = proanti.rm( 'unspecified' );
 % meaned = proanti.keep( ~thresh );
 % meaned = meaned.rm( 'permuted__true' );
-meaned = proanti.keep( ~bad_site_ind );
+% meaned = proanti.keep( ~bad_site_ind );
 % meaned = proanti.only_not( {'day__02142017', 'otherMinusNone'} );
+
+% meaned = proanti.keep( ~bad_site_ind );
+meaned = proanti.only( {'saline', 'post'} );
+
+% meaned = orig_dev_thresholded.only( {'oxytocin', 'post'} );
 
 % meaned = meaned.rm( {'day__02142017', 'iteration__101', 'oth );
 % meaned = meaned.only_not( b.flat_uniques({'outcomes', 'days', 'trialtypes'}) );
@@ -284,7 +308,7 @@ scale_name = 'rescaled_pre';
 
 base_fname = dsp2.util.general.append_uniques( meaned, 'rescaled', {'epochs', 'drugs', 'administration'} );
 
-meaned = meaned.keep_within_freqs( [4, 12] );
+% meaned = meaned.keep_within_freqs( [4, 12] );
 
 pl = ContainerPlotter();
 pl.compare_series = true;
@@ -294,12 +318,12 @@ pl.add_legend = true;
 pl.main_line_width = 1;
 pl.x = meaned.frequencies;
 pl.shape = [1, 2];
-pl.y_lim = [-.03, .03];
+pl.y_lim = [-.042, .042];
 pl.y_label = 'Grnger difference';
 % pl.x_label = 'hz';
 pl.order_by = { 'real', 'permuted' };
 
-figure(2); clf();
+figure(3); clf();
 
 meaned.plot( pl, {'permuted', 'trialtypes', 'administration'}, {'outcomes', 'drugs', 'regions'} );
 % meaned.plot( pl, {'outcomes', 'trialtypes', 'administration'}, {'drugs', 'regions'} );
@@ -388,7 +412,8 @@ for i = 1:numel(band_names)
 end
 
 plt = all_bands;
-plt = plt.only( 'permuted__false' );
+% plt = plt.only( 'permuted__false' );
+plt = plt.only( 'permuted__false' ) - plt.only( 'permuted__true' );
 
 figure(1); clf(); colormap( 'default' );
 set( figure(1), 'units', 'normalized' );
