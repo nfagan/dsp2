@@ -2,7 +2,8 @@ conf = dsp2.config.load();
 
 io = dsp2.io.get_dsp_h5();
 p = dsp2.io.get_path( 'behavior' );
-behav = io.read( p );
+% behav = io.read( p );
+behav = dsp2.util.general.fload( fullfile(conf.PATHS.analyses, 'behavior', 'trial_info', '112817', 'behavior.mat') );
 key = io.read( io.fullfile(p, 'Key') );
 
 plt_save_path = fullfile( conf.PATHS.plots, 'behavior', dsp2.process.format.get_date_dir() );
@@ -13,19 +14,26 @@ behav = dsp2.process.format.fix_administration( behav );
 
 %%
 
-is_drug = true;
+meas_type = 'rt';
+drug_type = 'none';
+
+is_within_mag_cue = false;
+is_drug = false;
 is_post_only = false;
 is_post_minus_pre = false;
+is_post_v_pre = false;
 is_pref_proportion = false;
 is_rt = true;
 is_pref_index = false;
+is_errors = false;
 
 %%
 
-processed_behav = behav;
-processed_behav = processed_behav.require_fields( 'contexts' );
-processed_behav( 'contexts', processed_behav.where({'self','both'}) ) = 'selfBoth';
-processed_behav( 'contexts', processed_behav.where({'other','none'}) ) = 'otherNone';
+processed_behav = behav.require_fields( {'channels','regions','sites', 'contexts'} );
+processed_behav = processed_behav.replace( 'selfboth', 'selfBoth' );
+processed_behav = processed_behav.replace( 'othernone', 'otherNone' );
+processed_behav( 'contexts', processed_behav.where({'self','both', 'choice'}) ) = 'selfBoth';
+processed_behav( 'contexts', processed_behav.where({'other','none', 'choice'}) ) = 'otherNone';
 
 if ( is_pref_proportion )
   w_in = { 'days', 'administration', 'contexts', 'trialtypes' };
@@ -33,23 +41,35 @@ else
   w_in = { 'days', 'administration', 'trialtypes' };
 end
 
+if ( is_within_mag_cue )
+  w_in{end+1} = 'magnitudes';
+else
+  processed_behav = processed_behav.collapse( 'magnitudes' );
+end
+
 if ( ~is_drug )
+  [non_inject, processed_behav] = processed_behav.pop( 'unspecified' );
+  non_inject = non_inject.for_each( 'days', @dsp2.process.format.keep_350, 350 );
+  processed_behav = processed_behav.append( non_inject );
   processed_behav = dsp2.process.manipulations.non_drug_effect( processed_behav );
 else
   processed_behav = processed_behav.rm( 'unspecified' );
 end
 
-processed_behav = processed_behav.rm( {'errors', 'cued'} );
+if ( ~is_errors )
+  processed_behav = processed_behav.rm( {'errors', 'cued'} );
+else
+  percs = processed_behav.for_each( w_in, @dsp2.analysis.behavior.get_error_percentages );
+end
 
 targ_field = 'outcomes';
 targ_items = processed_behav.pcombs( targ_field );
 
-% percs = processed_behav.for_each( w_in, @percentages, targ_field, targ_items );
-% percs = processed_behav.for_each( w_in, @percentages, targ_field );
-if ( is_pref_index )
+if ( is_pref_proportion )
+  percs = processed_behav.for_each( w_in, @percentages, targ_field, targ_items );
+elseif ( is_pref_index )
   percs = dsp2.analysis.behavior.get_preference_index( processed_behav, w_in ); 
-end
-if ( is_rt )
+elseif ( is_rt )
   percs = dsp2.analysis.behavior.get_rt( processed_behav, key );
   percs = percs.each1d( [w_in, 'outcomes'], @rowops.mean );
 end
@@ -128,26 +148,43 @@ cutoffed = percs.keep( good_data );
 
 %% BAR
 
-figure(1); clf(); colormap( 'default' );
+DO_SAVE = true;
 
-% plt = percs.rm( {'day__02012017', 'day__02132017', 'day__06092016'} );
+cutoffed = percs.rm( {'day__05172016', 'day__05192016', 'day__02142017' });
+
 plt = cutoffed;
-% plt = cutoffed;
 
 pl = ContainerPlotter();
-pl.y_label = '% each choice';
-pl.y_lim = [];
+pl.y_label = meas_type;
+% pl.y_lim = [-.3, .4];
+
+figure(2); clf(); colormap( 'default' );
 
 if ( ~is_drug )
-  plt.bar( pl, 'sessions',  {'outcomes', 'trialtypes'} );
+  if ( is_errors )
+    plt.data = plt.data * 100;
+    pl.x_tick_rotation = 0;
+    pl.order_by = { 'context__self', 'context__both', 'context__other', 'context__none' };
+    pl.per_panel_labels = true;
+    plt.bar( pl, 'contexts', 'magnitudes', {'trialtypes', 'administration'} );
+  else
+    pl.order_by = { 'low', 'medium', 'high' };
+    plt.bar( pl, 'magnitudes',  {'outcomes', 'trialtypes'} );
+  end
 else
-%   pl.order_by = { 'saline', 'oxytocin' };
   pl.order_by = { 'self', 'both', 'other', 'none' };
-  plt.bar( pl, 'outcomes', 'drugs', {'administration', 'trialtypes'} );
+  plt.bar( pl, 'drugs', 'administration', {'outcomes', 'trialtypes'} );
 end
 
-fname = dsp2.util.general.append_uniques( plt, 'proportions', {'drugs', 'outcomes', 'trialtypes'} );
-% dsp2.util.general.save_fig( gcf, fullfile(plt_save_path, fname), {'epsc', 'png', 'fig'} );
+f = FigureEdits( gcf );
+% f.one_legend();
+
+fname = dsp2.util.general.append_uniques( plt, 'proportions', {'drugs', 'outcomes', 'magnitudes', 'trialtypes'} );
+full_plt_save_path = fullfile( plt_save_path, meas_type, drug_type );
+if ( DO_SAVE )
+  dsp2.util.general.require_dir( full_plt_save_path );
+  dsp2.util.general.save_fig( gcf, fullfile(full_plt_save_path, fname), {'epsc', 'png', 'fig'} );
+end
 
 %%  STATS -- PREF proportion
 

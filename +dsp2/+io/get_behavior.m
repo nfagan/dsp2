@@ -15,14 +15,14 @@ function [behavioral_data, all_data_fields] = get_behavior(varargin)
 
 defaults = struct();
 defaults.sessions = 'all';
-defaults.INCLUDE_GAZE = true;
+defaults.INCLUDE_GAZE = false;
 defaults.config = dsp2.config.load();
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
 DATA_FIELDS.meta = { 'session', 'actor', 'recipient', 'drug' };
 DATA_FIELDS.gaze = { 'x', 'y', 't' };
-DATA_FIELDS.events = { 'fixOn', 'targOn' };
+DATA_FIELDS.events = { 'fixOn', 'cueOn', 'targOn', 'targAcq', 'rwdOn' };
 EXCLUDE_FIELDS.trial_info = { 'session' };
 
 INCLUDE_GAZE = params.INCLUDE_GAZE;
@@ -37,7 +37,11 @@ else
   SESSIONS = dsp2.util.general.ensure_cell( params.sessions );
 end
 
-behavioral_data = Structure.create( {'trial_info', 'gaze_data', 'events'}, Container() );
+if ( INCLUDE_GAZE )
+  behavioral_data = Structure.create( {'trial_info', 'gaze_data', 'events'}, Container() );
+else
+  behavioral_data = Structure.create( {'trial_info', 'events'}, Container() );
+end
 
 for i = 1:numel(SESSIONS)
   session = sprintf( '"%s"', SESSIONS{i} );
@@ -48,20 +52,26 @@ for i = 1:numel(SESSIONS)
   gaze =        db.get_fields_where_session( DATA_FIELDS.gaze, 'gaze', session );
   events =      db.get_fields_where_session( DATA_FIELDS.events, 'events', session );
   
+  events = cell2mat( events );
+  
   labels = build_labels( db, trial_info, meta, DATA_FIELDS.meta );
   [trial_data, fields] = get_trial_data( db, trial_info, EXCLUDE_FIELDS.trial_info );
   
-  if ( INCLUDE_GAZE )
-    events = cell2mat( events );
-    targ_on_time = diff( events, 1, 2 );
-    [gd, rt] = get_gaze_data( gaze, DATA_FIELDS.gaze, targ_on_time );
-    trial_data(:, end+1) = rt;
-    fields{end+1} = 'reaction_time';
-    behavioral_data.gaze_data = behavioral_data.gaze_data.append( ...
-      build_gaze_data_containers(gd, labels) ...
-    );
-    behavioral_data.events = behavioral_data.events.append( Container(events, labels) );
-  end
+  labels = add_error_types( labels, trial_data, fields, events, DATA_FIELDS.events );
+  
+%   if ( INCLUDE_GAZE )
+%   events = cell2mat( events );
+  fix_on = events(:, strcmp(DATA_FIELDS.events, 'fixOn'));
+  targ_on = events(:, strcmp(DATA_FIELDS.events, 'targOn'));
+  targ_on_time = diff( [fix_on, targ_on], 1, 2 );
+%   [gd, rt] = get_gaze_data( gaze, DATA_FIELDS.gaze, targ_on_time );
+%   trial_data(:, end+1) = rt;
+%   fields{end+1} = 'reaction_time';
+%   behavioral_data.gaze_data = behavioral_data.gaze_data.append( ...
+%     build_gaze_data_containers(gd, labels) ...
+%   );
+  behavioral_data.events = behavioral_data.events.append( Container(events, labels) );
+%   end
   
   cont = Container( trial_data, labels );
   behavioral_data.trial_info = behavioral_data.trial_info.append( cont );
@@ -80,6 +90,22 @@ if ( INCLUDE_GAZE )
   gd = cellfun( @(x) x.remove_empty_indices(), gd, 'un', false );
   behavioral_data.gaze_data.data = gd;
 end
+
+end
+
+function labels = add_error_types(labels, trial_data, trial_key, evts, evt_key)
+
+labels = labels.add_field( 'error_types' );
+broke_initial_fixation = evts(:, strcmp(evt_key, 'fixOn')) == 0;
+did_not_look_to_cue = trial_data(:, strcmp(trial_key, 'fix')) == 0;
+target_fixation_error = did_not_look_to_cue & ~broke_initial_fixation;
+
+labels = labels.set_field( 'error_types', 'error__none' );
+labels = labels.set_field( 'error_types', 'error__initial_fixation', broke_initial_fixation );
+labels = labels.set_field( 'error_types', 'error__target_fixation', target_fixation_error );
+
+assert( sum(broke_initial_fixation | target_fixation_error) == ...
+  sum(labels.where('errors')), 'Errors did not match fixation vs. target-fixation errors.' );
 
 end
 
@@ -186,13 +212,18 @@ inds.outcomes.none =  (cue_type == 3 & fixed_on == 1) | (cue_type == 2 & fixed_o
 inds.outcomes.errors = ...
   ~any( [inds.outcomes.self, inds.outcomes.both, inds.outcomes.other, inds.outcomes.none], 2 );
 
-%   define contexts
-inds.contexts.selfboth = cue_type == 0 | cue_type == 1;
-inds.contexts.othernone = cue_type == 2 | cue_type == 3;
-
 %   define trialtypes
 inds.trialtypes.choice = logical( indices.trialType );
 inds.trialtypes.cued = ~inds.trialtypes.choice;
+
+%   define contexts
+inds.contexts.selfboth = (cue_type == 0 | cue_type == 1) & inds.trialtypes.choice;
+inds.contexts.othernone = (cue_type == 2 | cue_type == 3) & inds.trialtypes.choice;
+inds.contexts.context__self = cue_type == 0 & inds.trialtypes.cued;
+inds.contexts.context__both = cue_type == 1 & inds.trialtypes.cued;
+inds.contexts.context__other = cue_type == 2 & inds.trialtypes.cued;
+inds.contexts.context__none = cue_type == 3 & inds.trialtypes.cued;
+
 %   define magnitudes
 inds.magnitudes.high = indices.magnitude == 3;
 inds.magnitudes.medium = indices.magnitude == 2;

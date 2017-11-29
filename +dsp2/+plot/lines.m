@@ -21,7 +21,7 @@ params = dsp2.util.general.parsestruct( defaults, varargin );
 
 conf = params.config;
 
-base_save_path = fullfile( conf.PATHS.plots, params.date, 'lines' );
+base_save_path = fullfile( conf.PATHS.plots, 'lines', params.date );
 formats = params.formats;
 compare_series = params.compare_series;
 
@@ -72,7 +72,9 @@ for i = 1:size(C, 1)
   else
     figs_for_each = { 'outcomes', 'trialtypes', 'monkeys' };
     lines_are = 'drugs';
-    fnames_are = { 'monkeys', 'outcomes', 'trialtypes' };
+%     figs_for_each = { 'drugs', 'trialtypes', 'monkeys' };
+%     lines_are = 'outcomes';
+    fnames_are = { 'monkeys', 'outcomes', 'trialtypes', 'drugs' };
   end
   [~, c] = measure.get_indices( figs_for_each );
   roi = rois.only( epoch );
@@ -119,6 +121,39 @@ for i = 1:size(C, 1)
       pl.y_label = strrep( meas_type, '_', ' ' );
 
       pl.plot( measure_, lines_are, {'monkeys', 'regions', 'trialtypes'} );
+      
+      %%
+      
+%       means = measure_.each1d( {'outcomes', 'regions'}, @rowops.nanmean );
+%       errs = measure_.each1d( {'outcomes', 'regions'}, @rowops.sem );
+%       
+%       smoothed_means = means.each1d( {'outcomes', 'regions'}, @(x) smooth(x(1, :))' );
+%       smoothed_errs = errs.each1d( {'outcomes', 'regions'}, @(x) smooth(x(1, :))' );
+%       
+%       figure(1); clf();
+%       colors = { 'r', 'b' };
+%       
+%       outs = means( 'outcomes' );
+%       
+%       regs = means( 'regions' );
+%       
+%       for h = 1:numel(regs)
+%         subplot( 2, 1, h );
+%         subset = smoothed_means( regs(h) );
+%         subset_errs = smoothed_errs( regs(h) );
+%         for j = 1:numel(outs)
+% 
+%           plot( subset.frequencies, get_data(subset(outs(j))), colors{j} );
+%           hold on;
+%           plot( subset.frequencies, get_data(subset(outs(j))) - get_data(subset_errs(outs(j))), colors{j} );
+%           plot( subset.frequencies, get_data(subset(outs(j))) + get_data(subset_errs(outs(j))), colors{j} );
+%         end
+%       
+%       end
+%       
+      
+      
+      %%
 
       labs = measure_.labels.flat_uniques( fnames_are );    
       fname = strjoin( labs, '_' );

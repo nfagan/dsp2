@@ -67,6 +67,15 @@ for i = 1:numel(epochs)
     num_coh = io.read( full_p, 'only', all_days{j} ); 
     num_coh = num_coh.keep_within_freqs( [0, 250] );
     
+    num_coh = num_coh.rm( {'day__05172016', 'day__05192016' 'day__02142017'} );
+    if ( isempty(num_coh) ), continue; end
+    if ( num_coh.contains('unspecified') )
+      num_coh = dsp2.process.format.keep_350( num_coh, 350 );
+    end
+    num_coh = dsp2.process.format.fix_block_number( num_coh );
+    num_coh = dsp2.process.format.fix_administration( num_coh );
+    num_coh = dsp2.process.manipulations.non_drug_effect( num_coh );
+    
     %   match labels to baseline coherence
     num_coh = only_pairs( fix_channels(num_coh) );
     

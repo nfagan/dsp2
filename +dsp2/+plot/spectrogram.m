@@ -93,7 +93,11 @@ for i = 1:size(C, 1)
               clims = Container( [-.14 .1; -.14 .1], 'regions', {'acc'; 'bla'} );
           end
       end
-    case { 'drug', 'drug_minus_sal', 'pro_v_anti_drug', 'pro_minus_anti_drug', 'pro_v_anti_drug_minus_sal', 'pro_minus_anti_drug_minus_sal' }
+    case { 'drug', 'drug_minus_sal', 'pro_v_anti_drug', ...
+        'pro_minus_anti_drug', 'pro_v_anti_drug_minus_sal' ...
+        , 'pro_minus_anti_drug_minus_sal' ...
+        , 'pro_v_anti_post_drug_minus_sal', 'pro_v_anti_post_drug' ...
+        , 'pro_minus_anti_post_drug', 'pro_minus_anti_post_drug_minus_sal' }
       shape = [2, 2];
       switch ( manip )
         case 'drug'
@@ -103,7 +107,8 @@ for i = 1:size(C, 1)
             case 'normalized_power'
               clims = Container( [0, .35; -.5, .5], 'regions', {'acc'; 'bla'} );
           end
-        case {'pro_v_anti_drug', 'pro_v_anti_drug_minus_sal'}
+        case {'pro_v_anti_drug', 'pro_v_anti_drug_minus_sal' ...
+            , 'pro_v_anti_post_drug', 'pro_v_anti_post_drug_minus_sal' }
           shape = [ 1, 2 ];
           switch ( manip )
             case 'pro_v_anti_drug'
@@ -121,7 +126,8 @@ for i = 1:size(C, 1)
                   clims = Container( [-.2, .2; -.2, .2], 'regions', {'acc'; 'bla'} );
               end
           end
-        case {'pro_minus_anti_drug', 'pro_minus_anti_drug_minus_sal'}
+        case {'pro_minus_anti_drug', 'pro_minus_anti_drug_minus_sal' ...
+            , 'pro_minus_anti_post_drug', 'pro_minus_anti_post_drug_minus_sal' }
           shape = [1, 2];
           switch ( manip )
             case 'pro_minus_anti_drug'
@@ -148,7 +154,9 @@ for i = 1:size(C, 1)
           end
       end
     otherwise
-      error( 'Unrecognized manipulation ''%s''', manip );
+      if ( use_custom_limits )
+        error( 'Unrecognized manipulation ''%s''', manip );
+      end
   end
   
   figs_for_each = { 'monkeys', 'regions', 'drugs', 'trialtypes' };
@@ -174,7 +182,8 @@ for i = 1:size(C, 1)
       tlims = [ -350, 300 ];
     else
       assert( strcmp(epoch, 'targon'), 'Unrecognized epoch %s.', epoch );
-      tlims = [ -50, 350 ];
+%       tlims = [ -50, 350 ];
+      tlims = [ -300, 500 ];
     end
     
     measure_ = measure.only( c(k, :) );

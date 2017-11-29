@@ -96,6 +96,10 @@ measure = read_measure.collapse( collapse_after_load );
 
 measure = measure.remove_nans_and_infs();
 
+% measure = measure.rm( {'day__05172016', 'day__05192016' 'day__02142017', 'day__06022017'} );
+measure = measure.rm( {'day__05172016', 'day__05192016' 'day__02142017'} );
+measure = measure.rm( 'cued' );
+
 if ( ~isempty(strfind(meas_type, 'coherence')) )
   if ( strcmp(meas_type, 'sfcoherence') )
     measure.labels = dsp2.process.format.make_channels_fp( measure.labels );
@@ -132,9 +136,10 @@ switch ( manip )
       otherwise
         error( 'Unrecognized manipulation ''%s''', manip );
     end
-  case { 'drug', 'drug_minus_sal', 'pro_v_anti_drug', ...
+  case { 'drug', 'drug_post_v_pre', 'drug_minus_sal', 'pro_v_anti_drug', ...
       'pro_minus_anti_drug', 'pro_v_anti_drug_minus_sal', ...
-      'pro_minus_anti_drug_minus_sal' }
+      'pro_minus_anti_drug_minus_sal', 'pro_v_anti_post_drug', 'pro_v_anti_post_drug_minus_sal' ...
+      , 'pro_minus_anti_post_drug', 'pro_minus_anti_post_drug_minus_sal' }
     
     measure = measure.rm( 'unspecified' );
     m_within = { 'outcomes', 'administration', 'drugs', 'monkeys' ...
@@ -150,21 +155,31 @@ switch ( manip )
     require_per = setdiff( m_within, {'outcomes', 'administration'} );
     required = measure.combs( {'outcomes', 'administration'} );
     measure = dsp2.util.general.require_labels( measure, require_per, required );
-    measure = dsp2.process.manipulations.post_minus_pre( measure );
+    is_post_minus_pre = isempty( strfind(manip, 'post') );
+    if ( is_post_minus_pre )
+      measure = dsp2.process.manipulations.post_minus_pre( measure );
+    elseif ( ~isempty(strfind(manip, 'post_v_pre')) )
+      %
+    else
+      measure = measure.only( 'post' );
+    end
     switch ( manip )
-      case 'drug'
+      case {'drug', 'drug_post_v_pre'}
         %
-      case {'pro_v_anti_drug', 'pro_v_anti_drug_minus_sal'}
+      case {'pro_v_anti_drug', 'pro_v_anti_drug_minus_sal' ...
+          , 'pro_v_anti_post_drug', 'pro_v_anti_post_drug_minus_sal' }
         measure = dsp2.process.manipulations.pro_v_anti( measure );
-        if ( strcmp(manip, 'pro_v_anti_drug_minus_sal') )
+        if ( any(strcmp({'pro_v_anti_drug_minus_sal', 'pro_v_anti_post_drug_minus_sal'}, manip)) )
           m_within_drug = setdiff( m_within, {'sites', 'days'} );
           measure = measure.for_each_1d( m_within_drug, summary_func );
           measure = dsp2.process.manipulations.oxy_minus_sal( measure );
         end
-      case {'pro_minus_anti_drug', 'pro_minus_anti_drug_minus_sal'}
+      case {'pro_minus_anti_drug', 'pro_minus_anti_drug_minus_sal' ...
+          , 'pro_minus_anti_post_drug', 'pro_minus_anti_post_drug_minus_sal' }
         measure = dsp2.process.manipulations.pro_v_anti( measure );
         measure = dsp2.process.manipulations.pro_minus_anti( measure );
-        if ( strcmp(manip, 'pro_minus_anti_drug_minus_sal') )
+        is_minus_sal = ~isempty( strfind(manip, 'minus_sal') );
+        if ( is_minus_sal )
           m_within_drug = setdiff( m_within, {'sites', 'days'} );
           measure = measure.for_each_1d( m_within_drug, summary_func );
           measure = dsp2.process.manipulations.oxy_minus_sal( measure );
