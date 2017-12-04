@@ -2,18 +2,25 @@
 
 import dsp2.util.cluster.tmp_write;
 
+IS_DRUG = false;
+
 dsp2.cluster.init();
 conf = dsp2.config.load();
 %   setup mvgc toolbox
 run( fullfile(conf.PATHS.repositories, 'mvgc_v1.0', 'startup.m') );
 %   get signals
 io = dsp2.io.get_dsp_h5();
-epoch = 'targon';
+epoch = 'targacq';
 tmp_fname = sprintf( 'null_granger_%s.txt', epoch );
 tmp_write( '-clear', tmp_fname );
 P = io.fullfile( 'Signals/none/complete', epoch );
 %   set up save paths
-save_path = fullfile( conf.PATHS.analyses, 'granger', 'drug_effect_null', epoch );
+date_dir = dsp2.process.format.get_date_dir();
+if ( IS_DRUG )
+  save_path = fullfile( conf.PATHS.analyses, 'granger', date_dir, 'drug_effect_null', epoch );
+else
+  save_path = fullfile( conf.PATHS.analyses, 'granger', date_dir, 'non_drug_null', epoch );
+end
 dsp2.util.general.require_dir( save_path );
 %   determine which files have already been processed
 granger_fname = 'granger_segment_';
@@ -35,6 +42,15 @@ for ii = 1:numel(all_days)
   signals = io.read( P, 'only', all_days{ii} );
   signals = dsp2.process.format.fix_block_number( signals );
   signals = dsp2.process.format.fix_administration( signals );
+  if ( ~IS_DRUG )
+    [injection, rest] = signals.pop( 'unspecified' );
+    if ( ~isempty(injection) )
+      injection = dsp2.process.format.keep_350( injection, 350 );
+      signals = append( injection, rest );
+    end
+    signals = dsp2.process.manipulations.non_drug_effect( signals );
+    signals = signals.collapse( {'drugs', 'administration'} );
+  end
   tmp_write( 'Done\n', tmp_fname );
 
   %%  preprocess signals

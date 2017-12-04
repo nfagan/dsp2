@@ -15,14 +15,16 @@ import dsp2.util.cluster.tmp_write;
 defaults.epochs = { 'all' };
 defaults.days = { 'all' };
 defaults.N = 100;
+defaults.meas_type = 'coherence';
 defaults.date_dir = dsp2.process.format.get_date_dir();
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
+meas_type = params.meas_type;
 io = dsp2.io.get_dsp_h5( 'config', conf );
-base_p = dsp2.io.get_path( 'measures', 'coherence', 'complete' );
+base_p = dsp2.io.get_path( 'measures', meas_type, 'complete' );
 
-base_save_p = fullfile( conf.PATHS.analyses, 'z_scored_coherence', params.date_dir );
+base_save_p = fullfile( conf.PATHS.analyses, 'z_scored_spectra', params.date_dir, meas_type );
 
 if ( strcmp(params.epochs, 'all') )
   epochs = io.get_component_group_names( base_p );
@@ -47,7 +49,7 @@ for i = 1:numel(epochs)
   tmp_write( {'\nProcessing %s (%d of %d) ...', epochs{i}, i, numel(epochs)} );
   
   full_p = io.fullfile( base_p, epochs{i} );
-  full_save_p = fullfile( base_save_p, epochs{i} );
+  full_save_p = fullfile( base_save_p, epochs{i}, 'pro_v_anti' );
   dsp2.util.general.require_dir( full_save_p );
   
   if ( strcmp(params.days, 'all') )
@@ -67,8 +69,19 @@ for i = 1:numel(epochs)
     num_coh = io.read( full_p, 'only', all_days{j} ); 
     num_coh = num_coh.keep_within_freqs( [0, 250] );
     
-    %   match labels to baseline coherence
-    num_coh = only_pairs( fix_channels(num_coh) );
+    num_coh = num_coh.rm( {'day__05172016', 'day__05192016' 'day__02142017'} );
+    if ( isempty(num_coh) ), continue; end
+    if ( num_coh.contains('unspecified') )
+      num_coh = dsp2.process.format.keep_350( num_coh, 350 );
+    end
+    num_coh = dsp2.process.format.fix_block_number( num_coh );
+    num_coh = dsp2.process.format.fix_administration( num_coh );
+    num_coh = dsp2.process.manipulations.non_drug_effect( num_coh );
+    
+    if ( ~isempty(strfind(meas_type, 'coherence')) )
+      %   match labels to baseline coherence
+      num_coh = only_pairs( fix_channels(num_coh) );
+    end
     
     %   do z-scoring
     num_coh = do_zscore_pro_v_anti( num_coh, params.N, m_within, summary_func );

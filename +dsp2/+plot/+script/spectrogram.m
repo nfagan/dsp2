@@ -2,14 +2,19 @@
 
 conf = dsp2.config.load();
 
+% conf.PATHS.database = 'H:\SIGNALS\database';
+% conf.DATABASES.h5_file = 'high_res_measures.h5';
+
 dsp2.cluster.init();
 
 date = datestr( now, 'mmddyy' );
-kinds = { 'nanmedian' };
+% date = [ date ];
+kinds = { 'nanmedian_2' };
 sfuncs = { @Container.nanmean_1d };
-measures = { 'coherence', 'normalized_power' };
+measures = { 'normalized_power', 'coherence' };
 epochs = { 'targon' };
-manipulations = { 'pro_v_anti', 'pro_v_anti_drug_minus_sal' };
+manipulations = { 'pro_minus_anti', 'pro_v_anti' };
+% manipulations = { 'pro_minus_anti_drug_minus_sal' };
 % manipulations = { 'standard', 'pro_v_anti' };
 to_collapse = { {'trials', 'monkeys'} };
 

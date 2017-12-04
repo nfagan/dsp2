@@ -121,10 +121,12 @@ kept2 = dsp2.util.general.require_labels( kept, require_per, required_labs );
 %%  MAKE PRO V ANTI
 
 % proanti = kept2.keep_within_freqs( [0, 100] );
-proanti = proanti.keep_within_freqs( [0, 100] );
+proanti = per_epoch.keep_within_freqs( [0, 100] );
 
 % proanti = per_epoch.keep_within_freqs( [0, 100] );
 proanti = dsp2.process.manipulations.pro_v_anti( proanti );
+proanti = proanti.collapse( {'sessions','blocks','recipients','magnitudes'} );
+proanti = dsp2.process.manipulations.post_minus_pre( proanti );
 
 %%
 proanti = per_epoch;
@@ -147,11 +149,20 @@ subbed.plot( pl, {'drugs'}, {'administration', 'outcomes', 'regions'} );
 
 %%  MAKE POST - PRE
 
-proanti = kept2.keep_within_freqs( [0, 100] );
-% proanti = per_epoch.keep_within_freqs( [0, 100] );
+% proanti = kept2.keep_within_freqs( [0, 100] );
+proanti = per_epoch.keep_within_freqs( [0, 100] );
 proanti = proanti.collapse( {'blocks', 'sessions'} );
 proanti = dsp2.process.manipulations.post_minus_pre( proanti );
 proanti = dsp2.process.manipulations.pro_v_anti( proanti );
+
+proanti = proanti.rm( {'day__05172016', 'day__05192016' 'day__02142017', 'day__06022017' } );
+
+%%  MAKE POST ONLY
+
+proanti = per_epoch.keep_within_freqs( [0, 100] );
+proanti = dsp2.process.manipulations.pro_v_anti( proanti );
+proanti = proanti.only( 'post' );
+proanti = proanti.rm( {'day__05172016', 'day__05192016' 'day__02142017', 'day__06022017' } );
 
 %%  STATS - across outcomes
 
@@ -290,8 +301,9 @@ end
 % meaned = proanti.keep( ~bad_site_ind );
 % meaned = proanti.only_not( {'day__02142017', 'otherMinusNone'} );
 
-meaned = proanti.keep( ~bad_site_ind );
-meaned = meaned.only( {'saline', 'post'} );
+meaned = proanti.rm( 'unspecified' );
+% meaned = proanti.keep( ~bad_site_ind );
+% meaned = meaned.only( {'saline', 'post'} );
 
 % meaned = orig_dev_thresholded.only( {'oxytocin', 'post'} );
 
@@ -299,12 +311,12 @@ meaned = meaned.only( {'saline', 'post'} );
 % meaned = meaned.only_not( b.flat_uniques({'outcomes', 'days', 'trialtypes'}) );
 
 scale_name = 'rescaled_pre';
-dat = meaned.data;
-
-for i = 1:size(meaned.data, 1)
-  dat(i, :) = smooth( dat(i, :), 30 );
-end
-meaned.data = dat;
+% dat = meaned.data;
+% 
+% for i = 1:size(meaned.data, 1)
+%   dat(i, :) = smooth( dat(i, :), 30 );
+% end
+% meaned.data = dat;
 
 base_fname = dsp2.util.general.append_uniques( meaned, 'rescaled', {'epochs', 'drugs', 'administration'} );
 
@@ -317,13 +329,13 @@ pl.add_ribbon = true;
 pl.add_legend = true;
 pl.main_line_width = 1;
 pl.x = meaned.frequencies;
-pl.shape = [1, 2];
-pl.y_lim = [-.042, .042];
+pl.shape = [4, 2];
+pl.y_lim = [];
 pl.y_label = 'Grnger difference';
 % pl.x_label = 'hz';
 pl.order_by = { 'real', 'permuted' };
 
-figure(1); clf();
+figure(2); clf();
 
 meaned.plot( pl, {'permuted', 'trialtypes', 'administration'}, {'outcomes', 'drugs', 'regions'} );
 % meaned.plot( pl, {'outcomes', 'trialtypes', 'administration'}, {'drugs', 'regions'} );
@@ -400,10 +412,14 @@ end
 
 %%  STATS -- rois
 
-plot_bands = { [4, 8], [15, 30], [35, 60] };
+DO_SAVE = true;
+
+plot_bands = { [4, 8], [15, 25], [30, 50] };
 band_names = { 'theta', 'beta', 'gamma' };
 
-mean_within_band = proanti.keep( ~bad_site_ind );
+% mean_within_band = proanti.only_not( {'day__02142017'} );
+mean_within_band = proanti;
+% mean_within_band = proanti.keep( ~bad_site_ind );
 mean_within_band = mean_within_band.require_fields( 'bands' );
 all_bands = Container();
 for i = 1:numel(band_names)
@@ -412,21 +428,32 @@ for i = 1:numel(band_names)
   all_bands = append( all_bands, one_mean );
 end
 
-plt = all_bands.rm( 'unspecified' );
-plt = plt.only( {'post'} );
-plt = plt.only( 'permuted__false' ) - plt.only( 'permuted__true' );
+drug_only = all_bands.rm( 'unspecified' );
+% plt = plt.only( {'post'} );
+plt = drug_only.only( 'permuted__false' ) - drug_only.only( 'permuted__true' );
+plt = plt.each1d({'drugs','bands','trialtypes','administration','regions','outcomes'},@rowops.nanmean);
+plt = plt({'oxytocin'}) - plt({'saline'});
+
+null_orig = drug_only.only( 'permuted__true' );
+null_orig = null_orig.each1d({'drugs','bands','trialtypes','administration','regions','outcomes'},@rowops.mean);
+null_orig = null_orig({'oxytocin'}) - null_orig({'saline'});
+plt = append( plt, null_orig );
 
 figure(1); clf(); colormap( 'default' );
 set( figure(1), 'units', 'normalized' );
 set( figure(1), 'position', [0, 0, 1, 1] );
 
 pl = ContainerPlotter();
-pl.y_lim = [-.03, .03];
+pl.y_lim = [];
 pl.x_tick_rotation = 0;
 pl.shape = [3, 2];
 pl.order_by = { 'theta_alpha', 'beta', 'gamma' };
+pl.order_groups_by = { 'permuted__false_minus_permuted__true', 'permuted__true' };
 
-plt.bar( pl, 'outcomes', {'trialtypes', 'drugs'}, {'bands', 'regions', 'administration'} );
+plt.bar( pl, 'outcomes', {'trialtypes', 'drugs', 'permuted'}, {'bands', 'regions', 'administration'} );
+
+f = FigureEdits( gcf );
+f.one_legend();
 
 if ( DO_SAVE )
   base_fname = dsp2.util.general.append_uniques( plt, 'rescaled', {'epochs', 'drugs', 'administration'} );

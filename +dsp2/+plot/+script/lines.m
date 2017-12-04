@@ -2,12 +2,16 @@
 
 conf = dsp2.config.load();
 
+% conf.PATHS.database = 'H:\SIGNALS\database';
+% conf.DATABASES.h5_file = 'high_res_measures.h5';
+
 date = dsp2.process.format.get_date_dir();
-kinds = { 'nanmedian' };
+% date = [ date, 'high_res' ];
+kinds = { 'nanmedian_2' };
 sfuncs = { @nanmean };
-measures = { 'coherence' };
-epochs = { 'reward', 'targon', 'targacq' };
-manipulations = { 'pro_v_anti_drug' };
+measures = { 'normalized_power', 'coherence' };
+epochs = { 'targon', 'reward' };
+manipulations = { 'pro_v_anti', 'pro_minus_anti' };
 to_collapse = { {'trials', 'monkeys'} };
 
 plotby = 'frequency';
@@ -18,7 +22,7 @@ plotby = 'frequency';
 % rois = extend( roi1, roi2, roi3 );
 
 rois = Container( ...
-    {[-200, 0]; [50, 250]; [50, 300]} ...
+    {[-250, 0]; [50, 250]; [50, 300]} ...
   , 'epochs', {'targacq'; 'targon'; 'reward'} ...
 );
 
