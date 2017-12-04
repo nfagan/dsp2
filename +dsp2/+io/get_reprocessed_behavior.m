@@ -1,4 +1,4 @@
-function [behavioral_data, all_data_fields] = get_behavior(varargin)
+function [behavioral_data, all_data_fields] = get_reprocessed_behavior(map)
 
 %   GET_BEHAVIOR -- Obtain a Structure of objects whose data are Trials x
 %     Behavior Measure matrices, according to the options defined in 
@@ -13,47 +13,60 @@ function [behavioral_data, all_data_fields] = get_behavior(varargin)
 %         `all_data_fields`(i) corresponds to each column of data in
 %         `behavioral_data`.
 
-defaults = struct();
-defaults.sessions = 'all';
-defaults.INCLUDE_GAZE = false;
-defaults.config = dsp2.config.load();
-defaults.session_table = 'signals';
 
-params = dsp2.util.general.parsestruct( defaults, varargin );
+behavioral_data = Structure.create( {'trial_info', 'gaze_data', 'events'}, Container() );
 
-DATA_FIELDS.meta = { 'session', 'actor', 'recipient', 'drug' };
-DATA_FIELDS.gaze = { 'x', 'y', 't' };
-DATA_FIELDS.events = { 'fixOn', 'cueOn', 'targOn', 'targAcq', 'rwdOn' };
-EXCLUDE_FIELDS.trial_info = { 'session' };
+SESSIONS = unique( map.subdirs );
 
-INCLUDE_GAZE = params.INCLUDE_GAZE;
+data_ext = '.data.txt';
+evt_ext = '.e.txt';
+t_ext = '.t.txt';
+x_ext = '.x.txt';
+y_ext = '.y.txt';
+pt_ext = '.pt.txt';
+px_ext = '.px.txt';
+py_ext = '.py.txt';
 
-%   DATABASE
+exts = { data_ext, evt_ext, t_ext, x_ext, y_ext, pt_ext, px_ext, py_ext };
 
-db = dsp2.database.get_sqlite_db( 'config', params.config );
-
-if ( isequal(params.sessions, 'all') )
-  SESSIONS = db.get_sessions( params.session_table );
-else
-  SESSIONS = dsp2.util.general.ensure_cell( params.sessions );
-end
-
-if ( INCLUDE_GAZE )
-  behavioral_data = Structure.create( {'trial_info', 'gaze_data', 'events'}, Container() );
-else
-  behavioral_data = Structure.create( {'trial_info', 'events'}, Container() );
-end
+percell = @(varargin) cellfun(varargin{:}, 'un', false);
+find_func = @(arr, y) cellfun( @(x) ~isempty(strfind(x, y)), arr );
+find_all_func = @(arr) percell(@(x) arr(find_func(arr, x)), exts);
 
 for i = 1:numel(SESSIONS)
-  session = sprintf( '"%s"', SESSIONS{i} );
-  fprintf( '\n - Processing Session %s (%d of %d)', session, i, numel(SESSIONS) );
   
-  trial_info =  db.get_fields_where_session( '*', 'trial_info', session );
-  meta =        db.get_fields_where_session( DATA_FIELDS.meta, 'meta', session );
-  gaze =        db.get_fields_where_session( DATA_FIELDS.gaze, 'gaze', session );
-  events =      db.get_fields_where_session( DATA_FIELDS.events, 'events', session );
+  session_index = strcmp( map.subdirs, SESSIONS{i} );
+  split_files = find_all_func( map.full_paths(session_index) );
+  file_names = map.file_names( session_index );
   
-  events = cell2mat( events );
+  assert( numel(unique(cellfun(@numel, split_files))) == 1 ...
+    , 'Session ''%s'' has unequal numbers of txt files.', SESSIONS{i} );
+  
+  event_files = split_files{ strcmp(exts, evt_ext) };  
+  empty_files = false( size(event_files) );
+  
+  for j = 1:numel(event_files)
+    evt = fileread( event_files{j} );
+    if ( isempty(evt) )
+      fprintf( '\nWARING: File ''%s'' was empty', event_files{j} );
+      empty_files(j) = true;
+    end
+  end
+  
+  split_files = percell( @(x) x(~empty_files), split_files );
+  split_files = percell( @sort, split_files );
+  
+  event_files = split_files{ strcmp(exts, evt_ext) };
+  data_files = split_files{ strcmp(exts, data_ext) };
+  
+  event_files = percell( @dlmread, event_files );
+  data_files = percell( @dlmread, data_files );
+  
+  events = cell2mat( event_files(:) );
+  trial_info = cell2mat( data_files(:) );
+  
+  assert( size(events, 1) == size(trial_info, 1) ...
+    , 'Size mismatch between events and trial info.' );
   
   labels = build_labels( db, trial_info, meta, DATA_FIELDS.meta );
   [trial_data, fields] = get_trial_data( db, trial_info, EXCLUDE_FIELDS.trial_info );
@@ -65,16 +78,14 @@ for i = 1:numel(SESSIONS)
   fix_on = events(:, strcmp(DATA_FIELDS.events, 'fixOn'));
   targ_on = events(:, strcmp(DATA_FIELDS.events, 'targOn'));
   targ_on_time = diff( [fix_on, targ_on], 1, 2 );
-  
-  if ( INCLUDE_GAZE )
-    [gd, rt] = get_gaze_data( gaze, DATA_FIELDS.gaze, targ_on_time );
-    trial_data(:, end+1) = rt;
-    fields{end+1} = 'reaction_time';
-    behavioral_data.gaze_data = behavioral_data.gaze_data.append( ...
-      build_gaze_data_containers(gd, labels) ...
-    );
-  end
+%   [gd, rt] = get_gaze_data( gaze, DATA_FIELDS.gaze, targ_on_time );
+%   trial_data(:, end+1) = rt;
+%   fields{end+1} = 'reaction_time';
+%   behavioral_data.gaze_data = behavioral_data.gaze_data.append( ...
+%     build_gaze_data_containers(gd, labels) ...
+%   );
   behavioral_data.events = behavioral_data.events.append( Container(events, labels) );
+%   end
   
   cont = Container( trial_data, labels );
   behavioral_data.trial_info = behavioral_data.trial_info.append( cont );

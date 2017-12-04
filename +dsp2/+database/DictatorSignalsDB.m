@@ -95,6 +95,8 @@ classdef DictatorSignalsDB < dsp2.database.DBManager
   
     REQUIRED_GAZE_FILES = struct( 't', '.t.txt', 'x', '.x.txt', 'y', '.y.txt' );
     
+    INCLUDE_NEURAL_DATA = true;
+    
   end
   
   methods
@@ -232,14 +234,15 @@ classdef DictatorSignalsDB < dsp2.database.DBManager
       data = get_fields_where( obj, field_names, table_name, {'session', session} );      
     end
     
-    function sessions = get_sessions(obj)
+    function sessions = get_sessions(obj, table_name)
       
       %   GET_SESSIONS -- Get the session names currently in the database.
       %
       %     OUT:
       %       - `sessions` (cell array of strings)
       
-      sessions = unique( obj.get_fields('session', 'signals') );
+      if ( nargin < 2 ), table_name = 'signals'; end
+      sessions = unique( obj.get_fields('session', table_name) );
     end
     
     function sessions_by_day = get_sessions_by_day(obj)
@@ -302,13 +305,15 @@ classdef DictatorSignalsDB < dsp2.database.DBManager
       csv_file = dirstruct( folder_path, '.csv' );
 
       assert( numel(behav_data) == 1, msg__wrong_n_files, 'sub-subfolder', subfolder );
-      assert( numel(pl2) == 1, msg__wrong_n_files, 'pl2 file', subfolder );
-      if ( numel(sqlite_file) == 0 )
-        assert( numel(csv_file) == 1, msg__wrong_n_files, 'csv file', subfolder );
-        use_csv_to_align = true;
-      else
-        assert( numel(sqlite_file) == 1, msg__wrong_n_files, 'sqlite file', subfolder );
-        use_csv_to_align = false;
+      if ( obj.INCLUDE_NEURAL_DATA )
+        assert( numel(pl2) == 1, msg__wrong_n_files, 'pl2 file', subfolder );
+        if ( numel(sqlite_file) == 0 )
+          assert( numel(csv_file) == 1, msg__wrong_n_files, 'csv file', subfolder );
+          use_csv_to_align = true;
+        else
+          assert( numel(sqlite_file) == 1, msg__wrong_n_files, 'sqlite file', subfolder );
+          use_csv_to_align = false;
+        end
       end
 
       behav_subfolders = dirstruct( ...
@@ -390,51 +395,55 @@ classdef DictatorSignalsDB < dsp2.database.DBManager
       end
 
       %   SIGNALS -- pl2 file
+      
+      if ( obj.INCLUDE_NEURAL_DATA )
 
-      pl2_path = fullfile( folder_path, pl2(1).name );
+        pl2_path = fullfile( folder_path, pl2(1).name );
 
-      %   parse channels specified as e.g., 'FP01-FP09', OR 'FP01'
+        %   parse channels specified as e.g., 'FP01-FP09', OR 'FP01'
 
-      regions = fieldnames(channels);
-      for k = 1:numel(regions)
-        current_channels = channels.(regions{k});
-        dash_index = strfind(current_channels, '-');
-        if ( ~isempty(dash_index) )
-          assert( numel(dash_index) == 1, 'Too many dashes in ''%s''', current_channels );
-          start_index = find( isstrprop(current_channels, 'alpha'), 1, 'last' );
-          generic_dash_msg = sprintf( ['Specifying multiple channels as ''%s''' ...
-            , ' is invalid'], current_channels ); 
-          assert( start_index + 1 < dash_index, generic_dash_msg );
-          channel_identifier = current_channels(1:start_index);
-          pre_dash = current_channels( start_index+1:dash_index-1 );
-          post_dash = current_channels( dash_index+1:end );
-          assert( all(isstrprop(pre_dash, 'digit')), generic_dash_msg );
-          assert( all(isstrprop(post_dash, 'digit')), generic_dash_msg );
-          channel_range_start = str2double( pre_dash );
-          channel_range_end = str2double( post_dash );
-          assert( channel_range_start < channel_range_end, generic_dash_msg );
-          channel_range = arrayfun(@(x) [channel_identifier num2str(x)], ...
-            channel_range_start:channel_range_end, 'UniformOutput', false);
-          channels.(regions{k}) = channel_range;
-        else
-          channels.(regions{k}) = { current_channels };
-        end
-      end
-
-      for k = 1:numel(regions)
-        current_channels = channels.(regions{k});
-        for j = 1:numel(current_channels)
-          [fs, ~, ~, ~, ad] = plx_ad_v( pl2_path, current_channels{j} );
-          if ( all(ad == -1) )
-            error( 'No data found for the channel ''%s'' in sub-subfolder ''%s''' ...
-              , current_channels{j}, subfolder );
+        regions = fieldnames(channels);
+        for k = 1:numel(regions)
+          current_channels = channels.(regions{k});
+          dash_index = strfind(current_channels, '-');
+          if ( ~isempty(dash_index) )
+            assert( numel(dash_index) == 1, 'Too many dashes in ''%s''', current_channels );
+            start_index = find( isstrprop(current_channels, 'alpha'), 1, 'last' );
+            generic_dash_msg = sprintf( ['Specifying multiple channels as ''%s''' ...
+              , ' is invalid'], current_channels ); 
+            assert( start_index + 1 < dash_index, generic_dash_msg );
+            channel_identifier = current_channels(1:start_index);
+            pre_dash = current_channels( start_index+1:dash_index-1 );
+            post_dash = current_channels( dash_index+1:end );
+            assert( all(isstrprop(pre_dash, 'digit')), generic_dash_msg );
+            assert( all(isstrprop(post_dash, 'digit')), generic_dash_msg );
+            channel_range_start = str2double( pre_dash );
+            channel_range_end = str2double( post_dash );
+            assert( channel_range_start < channel_range_end, generic_dash_msg );
+            channel_range = arrayfun(@(x) [channel_identifier num2str(x)], ...
+              channel_range_start:channel_range_end, 'UniformOutput', false);
+            channels.(regions{k}) = channel_range;
+          else
+            channels.(regions{k}) = { current_channels };
           end
-          row = get_n_rows( obj, 'signals' );
-          query = sprintf( ['INSERT INTO signals (id, file, session, channel, region, fs)' ...
-            , ' VALUES (%d, "%s", "%s", "%s", "%s", %d);'], ...
-            row, pl2_path, meta_data.session, current_channels{j}, regions{k}, fs );
-          obj = exec( obj, query );
         end
+
+        for k = 1:numel(regions)
+          current_channels = channels.(regions{k});
+          for j = 1:numel(current_channels)
+            [fs, ~, ~, ~, ad] = plx_ad_v( pl2_path, current_channels{j} );
+            if ( all(ad == -1) )
+              error( 'No data found for the channel ''%s'' in sub-subfolder ''%s''' ...
+                , current_channels{j}, subfolder );
+            end
+            row = get_n_rows( obj, 'signals' );
+            query = sprintf( ['INSERT INTO signals (id, file, session, channel, region, fs)' ...
+              , ' VALUES (%d, "%s", "%s", "%s", "%s", %d);'], ...
+              row, pl2_path, meta_data.session, current_channels{j}, regions{k}, fs );
+            obj = exec( obj, query );
+          end
+        end
+        
       end
 
       %   TRIAL_INFO -- .txt files
@@ -557,40 +566,44 @@ classdef DictatorSignalsDB < dsp2.database.DBManager
       %   ALIGNMENT
       
       fprintf( '\n\t - Processing Align Tables' );
+      
+      if ( obj.INCLUDE_NEURAL_DATA )
 
-      if ( ~use_csv_to_align )
-        sqlite_manager = DBManager( folder_path, sqlite_file(1).name );
-        sqlite_manager = connect( sqlite_manager );
-        align_data = exec_and_gather( sqlite_manager, ...
-          'SELECT neuraltime,behavioralTime FROM alignevents' );
-        sqlite_manager = close( sqlite_manager );
-        if ( isequal(align_data{1}, 'No Data') )
-          error( 'No valid alignment data found in the database file in ''%s''', ...
-            subfolder );
+        if ( ~use_csv_to_align )
+          sqlite_manager = DBManager( folder_path, sqlite_file(1).name );
+          sqlite_manager = connect( sqlite_manager );
+          align_data = exec_and_gather( sqlite_manager, ...
+            'SELECT neuraltime,behavioralTime FROM alignevents' );
+          sqlite_manager = close( sqlite_manager );
+          if ( isequal(align_data{1}, 'No Data') )
+            error( 'No valid alignment data found in the database file in ''%s''', ...
+              subfolder );
+          end
+        else
+          mat_align_data = csvread( fullfile(folder_path, csv_file(1).name) );
+          mat_align_data = mat_align_data( :, 1:2 );
+          align_data = cell( size(mat_align_data) );
+          for k = 1:numel(align_data)
+            align_data{k} = mat_align_data(k);
+          end
         end
-      else
-        mat_align_data = csvread( fullfile(folder_path, csv_file(1).name) );
-        mat_align_data = mat_align_data( :, 1:2 );
-        align_data = cell( size(mat_align_data) );
-        for k = 1:numel(align_data)
-          align_data{k} = mat_align_data(k);
+
+        align_fields = get_field_names( obj, 'align' );
+
+        for k = 1:size(align_data, 1)
+          row = get_n_rows( obj, 'align' );
+          complete_row = cell( 1, numel(align_fields) );
+          complete_row( strcmp(align_fields, 'session') ) = ...
+            { sprintf('"%s"', meta_data.session) };
+          complete_row( strcmp(align_fields, 'id') ) = ...
+            { num2str(row) };
+          complete_row( strcmp(align_fields, 'plex') ) = ...
+            { num2str(align_data{k,1}) };
+          complete_row( strcmp(align_fields, 'picto') ) = ...
+            { num2str(align_data{k,2}) };
+          obj = insert_row( obj, 'align', complete_row );
         end
-      end
-
-      align_fields = get_field_names( obj, 'align' );
-
-      for k = 1:size(align_data, 1)
-        row = get_n_rows( obj, 'align' );
-        complete_row = cell( 1, numel(align_fields) );
-        complete_row( strcmp(align_fields, 'session') ) = ...
-          { sprintf('"%s"', meta_data.session) };
-        complete_row( strcmp(align_fields, 'id') ) = ...
-          { num2str(row) };
-        complete_row( strcmp(align_fields, 'plex') ) = ...
-          { num2str(align_data{k,1}) };
-        complete_row( strcmp(align_fields, 'picto') ) = ...
-          { num2str(align_data{k,2}) };
-        obj = insert_row( obj, 'align', complete_row );
+      
       end
       
       %   GAZE

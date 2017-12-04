@@ -17,8 +17,6 @@ function pathstr = get_path( path_type, varargin )
 dsp2.util.assertions.assert__isa( path_type, 'char', 'the path type' );
 path_type = lower( path_type );
 
-io = dsp2.io.get_dsp_h5();
-
 conf_ind = strcmp( varargin, 'config' );
 if ( any(conf_ind) )
   to_parse = varargin( find(conf_ind):end );
@@ -32,6 +30,8 @@ defaults.config = dsp2.config.load();
 params = dsp2.util.general.parsestruct( defaults, to_parse );
 
 conf = params.config;
+
+io = dsp2.io.get_dsp_h5( 'config', conf );
 
 switch ( path_type )
   case 'signals'
