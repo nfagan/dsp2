@@ -15,6 +15,8 @@ collapse_after_load = C{3};
 
 defaults.config = dsp2.config.load();
 defaults.load_required = true;
+defaults.data = [];
+defaults.key = [];
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
@@ -30,6 +32,8 @@ load_required = ...
   isequal( read_measure, [] ) || ...
   isequal( prev, [] ) || ...
   ~strcmp( meas_type, prev.meas_type );
+
+load_required = load_required && (isempty(params.data) || isempty(params.key));
 
 io = dsp2.io.get_dsp_h5( 'config', conf );
 
@@ -52,6 +56,11 @@ if ( load_required )
 else
   fprintf( '\n\t Using loaded measure for {''%s''}' ...
     , meas_type );
+end
+
+if ( ~isempty(params.data) && ~isempty(params.key) )
+  read_measure = params.data;
+  key = params.key;
 end
 
 measure = read_measure.collapse( collapse_after_load );
