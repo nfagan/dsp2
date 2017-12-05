@@ -45,7 +45,8 @@ for ii = 1:numel(all_days)
   if ( ~IS_DRUG )
     [injection, rest] = signals.pop( 'unspecified' );
     if ( ~isempty(injection) )
-      injection = dsp2.process.format.keep_350( injection, 350 );
+      injection = injection.each1d( 'days', @dsp2.process.format.keep_350, 350 );
+%       injection = dsp2.process.format.keep_350( injection, 350 );
       signals = append( injection, rest );
     end
     signals = dsp2.process.manipulations.non_drug_effect( signals );
