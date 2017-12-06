@@ -36,7 +36,7 @@ end
 
 assert__isa( conf, 'struct', 'the config file' );
 
-if ( ~conf.CLUSTER.use_cluster )
+if ( ~conf.CLUSTER.use_cluster || ~conf.CLUSTER.tmp_write_output )
   %   if we're not on the cluster, print the string to standard output
   %   instead of writing to a file, but if the string is '-clear', just
   %   return without printing anything
