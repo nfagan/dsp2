@@ -35,6 +35,7 @@ PATHS.H5.behavior_measures = 'Measures/Behavior';
 
 % - CLUSTER - %
 CLUSTER.use_cluster = false;
+CLUSTER.tmp_write_output = false;
 CLUSTER.analysis_status_filename = '.analysis_status.txt';
 CLUSTER.user_name = 'naf3';
 CLUSTER.host_name = 'chang1.milgram.hpc.yale.internal';
