@@ -1,9 +1,9 @@
 conf = dsp2.config.load();
 
 meas = 'coherence';
-epoch = 'targon';
+epoch = 'reward';
 manip = 'standard';
-clpse = { 'trials', 'monkeys' };
+clpse = { 'trials', };
 kind = 'nanmedian_2';
 
 coh = dsp2.io.get_processed_measure( {meas, epoch, manip, clpse}, kind );
@@ -17,6 +17,7 @@ save_p = fullfile( conf.PATHS.plots, 'gamma_beta_ratio', date_dir, manip );
 %%  ratio
 % time_roi = [ -250, 0 ];
 time_roi = [ 50, 250 ];
+
 freq_rois = { [15, 30], [45, 60] };
 % freq_rois = { [15, 25], [30, 45] };
 band_names = { 'beta', 'gamma' };
@@ -50,13 +51,14 @@ pl.x_tick_rotation = 0;
 pl.y_lim = [];
 pl.order_by = { 'self', 'both', 'other', 'none' };
 
-h = ratio.bar( pl, 'outcomes', {'administration'}, {'epochs', 'drugs', 'bands'} );
+h = ratio.bar( pl, 'outcomes', {'administration'}, {'epochs', 'drugs', 'bands', 'monkeys'} );
 
 set( h, 'YScale','log' );
-set( h, 'ylim', [.94, .96] );
+set( h, 'ylim', [.92, .99] );
 
 if ( DO_SAVE )
   fname = sprintf( 'coherence_ratio_%s', epoch );
+  fname = dsp2.util.general.append_uniques( ratio, fname, {'monkeys'} );
   dsp2.util.general.require_dir( save_p );
   dsp2.util.general.save_fig( gcf(), fullfile(save_p, fname), {'epsc', 'fig', 'png'} );
 end

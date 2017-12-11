@@ -17,6 +17,7 @@ defaults.days = { 'all' };
 defaults.N = 100;
 defaults.meas_type = 'coherence';
 defaults.date_dir = dsp2.process.format.get_date_dir();
+defaults.is_drug = false;
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
@@ -35,6 +36,7 @@ end
 
 m_within = conf.SIGNALS.meaned.mean_within;
 summary_func = conf.SIGNALS.meaned.summary_function;
+is_drug = params.is_drug;
 
 tmp_write( '-clear' );
 
@@ -49,7 +51,13 @@ for i = 1:numel(epochs)
   tmp_write( {'\nProcessing %s (%d of %d) ...', epochs{i}, i, numel(epochs)} );
   
   full_p = io.fullfile( base_p, epochs{i} );
-  full_save_p = fullfile( base_save_p, epochs{i}, 'pro_v_anti' );
+  if ( is_drug )
+    full_save_p = fullfile( base_save_p, epochs{i}, 'drug', 'pro_v_anti' );
+    fprintf( '\n Is drug' );
+  else
+    full_save_p = fullfile( base_save_p, epochs{i}, 'nondrug', 'pro_v_anti' );
+    fprintf( '\n Not drug' );
+  end
   dsp2.util.general.require_dir( full_save_p );
   
   if ( strcmp(params.days, 'all') )
@@ -76,7 +84,14 @@ for i = 1:numel(epochs)
     end
     num_coh = dsp2.process.format.fix_block_number( num_coh );
     num_coh = dsp2.process.format.fix_administration( num_coh );
-    num_coh = dsp2.process.manipulations.non_drug_effect( num_coh );
+    if ( ~is_drug )
+      num_coh = dsp2.process.manipulations.non_drug_effect( num_coh );
+    else
+      num_coh = num_coh.rm( 'unspecified' );
+    end
+    
+    %   for drug days, if 'unspecified'
+    if ( isempty(num_coh) ), continue; end;
     
     if ( ~isempty(strfind(meas_type, 'coherence')) )
       %   match labels to baseline coherence
@@ -84,7 +99,12 @@ for i = 1:numel(epochs)
     end
     
     %   do z-scoring
-    num_coh = do_zscore_pro_v_anti( num_coh, params.N, m_within, summary_func );
+    if ( is_drug )
+      m_within = setdiff( m_within, {'sessions', 'blocks'} );
+      m_within{end+1} = 'administration';
+    end
+    
+    num_coh = do_zscore_pro_v_anti( num_coh, params.N, m_within, summary_func, is_drug );
     
     save( fullfile(full_save_p, sprintf('%s.mat', all_days{j})), 'num_coh' );
   end
@@ -92,9 +112,9 @@ end
 
 end
 
-function cohs = do_zscore_pro_v_anti(coh, N, m_within, sfunc)
+function cohs = do_zscore_pro_v_anti(coh, N, m_within, sfunc, is_drug)
 
-s_within = setdiff( m_within, 'outcomes' );
+s_within = setdiff( m_within, {'outcomes', 'administration'} );
 coh = coh.rm( 'errors' );
 [inds, cmbs] = coh.get_indices( s_within );
 coh = coh.require_fields( 'contexts' );
@@ -106,6 +126,9 @@ coh = coh.collapse( to_clpse );
 
 matched = coh.each1d( m_within, sfunc );
 matched = dsp2.process.manipulations.pro_v_anti( matched );
+if ( is_drug )
+  matched = dsp2.process.manipulations.post_minus_pre( matched );
+end
 
 cohs = cell( 1, numel(inds) );
 
@@ -114,18 +137,21 @@ for i = 1:numel(inds)
   conts = cell( 1, N );
   parfor j = 1:N
     shuffed = extr.shuffle_each( 'contexts' );
-    shuffed = shuffed.each1d( 'outcomes', @rowops.nanmean );
+    shuffed = shuffed.each1d( {'outcomes', 'administration'}, @rowops.nanmean );
     conts{j} = shuffed;
   end
   conts = dsp2.util.general.concat( conts );
   conts = dsp2.process.manipulations.pro_v_anti( conts );
-  outs = conts.pcombs( {'outcomes'} );
+  if ( is_drug )
+    conts = dsp2.process.manipulations.post_minus_pre( conts );
+  end
+  outs = conts.pcombs( {'outcomes', 'administration'} );
   
   cont = Container();
   
   for j = 1:size(outs, 1)
-    ind = conts.where( outs{j} );
-    matching_ind = matched.where( [outs{j}, cmbs(i, :)] );
+    ind = conts.where( outs(j, :) );
+    matching_ind = matched.where( [outs(j, :), cmbs(i, :)] );
     distribution = conts.data(ind, :, :);
     test_vals = matched.data(matching_ind, :, :);
     means = mean( distribution, 1 );

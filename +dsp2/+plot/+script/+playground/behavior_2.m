@@ -14,8 +14,10 @@ behav = dsp2.process.format.fix_administration( behav );
 
 %%
 
-meas_type = 'rt';
+meas_type = 'preference_index';
 drug_type = 'none';
+%error_denom_is = 'within_context';
+error_denom_is = 'good_trials';
 
 is_within_mag_cue = false;
 is_drug = false;
@@ -23,8 +25,8 @@ is_post_only = false;
 is_post_minus_pre = false;
 is_post_v_pre = false;
 is_pref_proportion = false;
-is_rt = true;
-is_pref_index = false;
+is_rt = false;
+is_pref_index = true;
 is_errors = false;
 
 %%
@@ -59,7 +61,7 @@ end
 if ( ~is_errors )
   processed_behav = processed_behav.rm( {'errors', 'cued'} );
 else
-  percs = processed_behav.for_each( w_in, @dsp2.analysis.behavior.get_error_percentages );
+  percs = processed_behav.for_each( w_in, @dsp2.analysis.behavior.get_error_percentages, error_denom_is );
 end
 
 targ_field = 'outcomes';
@@ -149,10 +151,13 @@ cutoffed = percs.keep( good_data );
 %% BAR
 
 DO_SAVE = true;
+add_points = true;
 
 cutoffed = percs.rm( {'day__05172016', 'day__05192016', 'day__02142017' });
 
 plt = cutoffed;
+points = plt;
+plt = plt.collapse('monkeys');
 
 pl = ContainerPlotter();
 pl.y_label = meas_type;
@@ -163,13 +168,16 @@ figure(2); clf(); colormap( 'default' );
 if ( ~is_drug )
   if ( is_errors )
     plt.data = plt.data * 100;
-    pl.x_tick_rotation = 0;
+    pl.x_tick_rotation = 60;
     pl.order_by = { 'context__self', 'context__both', 'context__other', 'context__none' };
     pl.per_panel_labels = true;
-    plt.bar( pl, 'contexts', 'magnitudes', {'trialtypes', 'administration'} );
+    plt.bar( pl, 'contexts', 'magnitudes', {'trialtypes', 'administration', 'monkeys'} );
   else
-    pl.order_by = { 'low', 'medium', 'high' };
-    plt.bar( pl, 'magnitudes',  {'outcomes', 'trialtypes'} );
+%     pl.order_by = { 'low', 'medium', 'high' };
+    
+%     bar( plt.collapse({}), pl, 'magnitudes',  {'outcomes', 'trialtypes'}, 'monkeys' );
+    pl.order_by = {'other_none', 'self_both'};
+    bar( plt.collapse({}), pl, 'outcomes', {'trialtypes', 'monkeys', 'magnitudes'} );
   end
 else
   pl.order_by = { 'self', 'both', 'other', 'none' };
@@ -179,12 +187,101 @@ end
 f = FigureEdits( gcf );
 % f.one_legend();
 
-fname = dsp2.util.general.append_uniques( plt, 'proportions', {'drugs', 'outcomes', 'magnitudes', 'trialtypes'} );
-full_plt_save_path = fullfile( plt_save_path, meas_type, drug_type );
+fname = dsp2.util.general.append_uniques( plt, 'proportions', {'monkeys', 'drugs', 'outcomes', 'magnitudes', 'trialtypes'} );
+
+if ( is_errors )
+  save_meas_type = [ meas_type, error_denom_is ];
+else
+  save_meas_type = meas_type;
+end
+
+if ( add_points )
+  %   add points
+
+  xs_labs = { 'other_none', 'both_self' };
+  g_labs = { 'all__images' };
+  p_labs = { 'monk_group__up' };
+
+  C = allcomb( {xs_labs, g_labs, p_labs} );
+  axs = findobj( gcf, 'type', 'axes' );
+  set( axs, 'NextPlot', 'add' );
+
+  colors = struct( 'hitch', 'r', 'kuro', 'b' );
+
+  for i = 1:size(C, 1)
+
+    x_lab = C{i, 1};
+%     g_lab = C{i, 2};
+%     p_lab = C{i, 3};
+
+%     ax_ind = numel(axs) - find(strcmp(p_labs, p_lab)) + 1;
+    ax_ind = 1;
+
+    x_coord = find( strcmp(xs_labs, x_lab) );
+%     subset = points.only( C(i, :) );
+    subset = points.only( x_lab );
+    x = x_coord;
+
+    data = subset.data;
+
+    for k = 1:numel(data)
+      color = colors.(char(subset('monkeys', k)));
+      plot( axs(ax_ind), x, data(k), sprintf('%s*', color) );
+    end
+
+  end
+  
+  ylim( [min(points.data), max(points.data)] );
+end
+
+
+full_plt_save_path = fullfile( plt_save_path, save_meas_type, drug_type );
 if ( DO_SAVE )
   dsp2.util.general.require_dir( full_plt_save_path );
-  dsp2.util.general.save_fig( gcf, fullfile(full_plt_save_path, fname), {'epsc', 'png', 'fig'} );
+  dsp2.util.general.save_fig( gcf, fullfile(full_plt_save_path, fname), {'epsc', 'fig'} );
 end
+
+%%
+
+xs_labs = { 'saline', 'low', 'high' };
+g_labs = { 'all__images' };
+p_labs = { 'monk_group__up', 'monk_group__down' };
+
+C = allcomb( {xs_labs, g_labs, p_labs} );
+
+axs = findobj( figure(1), 'type', 'axes' );
+set( axs, 'NextPlot', 'add' );
+
+colors = hww.plot.util.get_monkey_colors();
+
+for i = 1:size(C, 1)
+  
+  x_lab = C{i, 1};
+  g_lab = C{i, 2};
+  p_lab = C{i, 3};
+  
+  ax_ind = numel(axs) - find(strcmp(p_labs, p_lab)) + 1;
+  
+  x_coord = find( strcmp(xs_labs, x_lab) );
+  subset = up_down.only( C(i, :) );
+  subset = subset.for_each_1d( {'monkeys', 'images'}, mean_func );
+  
+%   offsets = -1/numel(g_labs):1/numel(g_labs):1/numel(g_labs);
+  
+%   g_offset = find( strcmp(g_labs, g_lab) );
+  
+%   x = x_coord + offsets( g_offset );
+  x = x_coord;
+  
+  data = subset.data;
+  
+  for k = 1:numel(data)
+    color = colors.(char(subset('monkeys', k)));
+    plot( axs(ax_ind), x, data(k), sprintf('%s*', color) );
+  end
+  
+end
+
 
 %%  STATS -- PREF proportion
 
