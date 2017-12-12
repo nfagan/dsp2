@@ -12,6 +12,7 @@ defaults.manipulations = { 'standard', 'pro_v_anti' };
 defaults.to_collapse = { {'trials'}, {'trials', 'monkeys'} };
 defaults.use_custom_limits = true;
 defaults.formats = { 'png', 'epsc', 'fig' };
+defaults.tlims = [];
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
@@ -184,6 +185,10 @@ for i = 1:size(C, 1)
       assert( strcmp(epoch, 'targon'), 'Unrecognized epoch %s.', epoch );
 %       tlims = [ -50, 350 ];
       tlims = [ -300, 500 ];
+    end
+    
+    if ( ~isempty(params.tlims) )
+      tlims = params.tlims;
     end
     
     measure_ = measure.only( c(k, :) );

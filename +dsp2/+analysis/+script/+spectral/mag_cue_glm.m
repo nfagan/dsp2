@@ -52,14 +52,15 @@ m_within = union( m_within, 'magnitudes' );
 match_for = { 'outcomes', 'trialtypes', 'magnitudes' };
 
 rois = dsp2.process.format.get_roi_combinations( {[-200, 0]}, {[15, 30], [45, 60]} );
+band_roi_names = { 'beta', 'gamma' };
 
-glm_combs = behav.pcombs( {'looks_to', 'outcomes'} );
+glm_combs = freq.pcombs( {'looks_to', 'outcomes'} );
 
 all_combs = {};
 stp = 1;
 for i = 1:size(glm_combs, 1)
   for h = 1:numel(rois)
-    all_combs(stp, :) = [glm_combs(i, :), rois(h)];
+    all_combs(stp, :) = [glm_combs(i, :), rois(h), band_roi_names{h}];
     stp = stp + 1;
   end
 end
@@ -163,6 +164,8 @@ end
 
 %%
 
+save_p = fullfile( conf.PATHS.analyses, 'spectral_glm', '120817', meas_type, kind, manip, epoch );
+
 dists = dsp2.util.general.concat( dsp2.util.general.load_mats(save_p) );
 [I, C] = dists.get_indices( 'glm_id' );
 
@@ -175,6 +178,7 @@ for i = 1:numel(I)
   
   behav = dists( I{i} & dists.where(behav_type) );
   meas = dists( I{i} & dists.where(meas_type) );
+  id = str2double( C{i, 1}(numel('glm_id__')+1:end) );
   
   assert( shapes_match(behav, meas) );
   
@@ -191,7 +195,11 @@ for i = 1:numel(I)
   
   mdl = fitglm( [factor_magnitude, factor_looks], meas.data, 'interactions' );
   
-  mdls = mdls.append( set_data(one(meas), {mdl}) );
+  meas = one( meas );
+  meas = meas.require_fields( 'band' );
+  meas( 'band' ) = all_combs{id, end};
+  
+  mdls = mdls.append( set_data(meas, {mdl}) );
 end
 
 %%
@@ -210,14 +218,49 @@ for i = 1:numel(betas)
   cont = extend( cont, cont, cont, cont );
   cont = set_data( cont, [beta, p] );
   cont = cont.rm_fields( 'meas_type' );
-  cont( 'term' ) = { 'intercept', 'reward_size', 'coherence', 'interaction' };
+  cont( 'term' ) = { 'intercept', 'reward_size', 'looking_probability', 'interaction' };
   conts = append( conts, cont );
   
 end
 
 %%
 
+% sig_perc = conts.for_each( {'term', 'out
 
+sig = conts( conts.data(:, 2) < .05 );
+sig = sig.rm( 'intercept' );
+
+plt = set_data( sig, sig.data(:, 1) );
+
+pl = ContainerPlotter();
+pl.one_legend = false;
+pl.match_y_lim = false;
+% pl.order_by = { 'reward_size', 'looking_probability', 'interaction' };
+pl.order_by = { 'self', 'both', 'other', 'none' };
+
+figure(1); clf();
+
+pl.bar( plt, 'outcomes', 'band', {'trialtypes', 'looks_to', 'term'} );
+
+%%
+
+to_tbl = conts;
+
+monk_ind = to_tbl.where( 'monkey' );
+assert( all(~monk_ind == to_tbl.where('bottle')) );
+to_tbl( 'looks_to', monk_ind ) = 'bottle';
+to_tbl( 'looks_to', ~monk_ind ) = 'monkey';
+
+to_tbl = to_tbl.require_fields( {'p', 'significant'} );
+to_tbl( 'p' ) = arrayfun( @(x) ['p__', num2str(x)], to_tbl.data(:, 2), 'un', false );
+to_tbl = to_tbl.rm( 'intercept' );
+sig_ind = to_tbl.data(:, 2) < .05;
+to_tbl( 'significant', sig_ind ) = 'S';
+to_tbl( 'significant', ~sig_ind ) = 'NS';
+to_tbl = set_data( to_tbl, to_tbl.data(:, 1) );
+to_tbl.data( ~sig_ind ) = NaN;
+
+to_tbl.table( {'outcomes', 'band', 'looks_to'}, 'term' )
 
 
 
