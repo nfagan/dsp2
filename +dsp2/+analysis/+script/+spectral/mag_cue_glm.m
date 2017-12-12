@@ -36,7 +36,7 @@ conf = dsp2.config.load();
 meas_type = 'coherence';
 kind = 'complete';
 manip = 'standard';
-epoch = 'targacq';
+epoch = 'reward';
 
 p = dsp2.io.get_path( 'measures', meas_type, kind, epoch );
 days = io.get_days( p );
@@ -241,6 +241,63 @@ pl.order_by = { 'self', 'both', 'other', 'none' };
 figure(1); clf();
 
 pl.bar( plt, 'outcomes', 'band', {'trialtypes', 'looks_to', 'term'} );
+
+%%
+
+do_save = true;
+
+fixed_monk_labs = conts;
+bottle_ind = fixed_monk_labs.where( 'bottle' );
+fixed_monk_labs( 'looks_to', bottle_ind ) = 'monkey';
+fixed_monk_labs( 'looks_to', ~bottle_ind ) = 'bottle';
+
+plt = fixed_monk_labs({'interaction'});
+% plt = fixed_monk_labs;
+plt = set_data( plt, plt.data(:, 1) );
+
+figure(1); clf();
+
+pl = ContainerPlotter();
+pl.one_legend = true;
+
+x_is = 'band';
+bars_are = { 'outcomes' };
+panels_are = { 'looks_to', 'term' };
+
+axs = pl.bar( plt, x_is, bars_are, panels_are );
+h = findobj( gcf, 'type', 'bar' );
+set( axs, 'nextplot', 'add' );
+y_amt = .5e-4;
+
+for i = 1:numel(h)
+  
+  obj = h(i).UserData;
+  xs = h(i).XData;
+  ys = h(i).YData;
+  signs = sign( ys );
+  offsets = h(i).XOffset;
+  
+  plt_ax = h(i).Parent;
+  
+  for j = 1:numel(obj)
+    labs = obj{j}.flat_uniques( [x_is, bars_are, panels_are] );
+    matching = fixed_monk_labs( labs );
+    assert( matching.shape(1) == 1 );
+    x = xs(j) + offsets;
+    y = ys(j) + y_amt * signs(j);
+    if ( matching.data(2) < .05 )
+      plot( plt_ax, [x, x], [y, y], 'k*' );
+    end
+  end
+  
+end
+
+if ( do_save )
+  save_p = fullfile( conf.PATHS.plots, 'mag_cue_glm', dsp2.process.format.get_date_dir(), 'bar' );
+  dsp2.util.general.require_dir( save_p );
+  fname = fullfile( save_p, 'bar' );
+  dsp2.util.general.save_fig( gcf, fname, {'epsc', 'png', 'fig'} );  
+end
 
 %%
 

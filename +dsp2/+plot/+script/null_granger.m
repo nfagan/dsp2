@@ -7,19 +7,20 @@ import dsp2.util.general.load_mats;
 m_within = { 'outcomes', 'trialtypes', 'regions', 'permuted', 'channels' ...
   , 'epochs', 'days', 'administration' };
 
-COLLAPSE_DRUGS = false;
+COLLAPSE_DRUGS = true;
 
 DO_SAVE = false;
 
 if ( COLLAPSE_DRUGS )
-  subdir = 'null';
+%   subdir = 'null';
+  subdir = fullfile( '121117', 'non_drug_null' );
 else
   subdir = 'drug_effect_null';
 end
 conf = dsp2.config.load();
 load_p = fullfile( conf.PATHS.analyses, 'granger', subdir );
 % epochs = dsp2.util.general.dirnames( load_p, 'folders' );
-epochs = { 'targacq' };
+epochs = { 'reward' };
 per_epoch = cell( 1, numel(epochs) );
 names = cell( 1, numel(epochs) );
 for i = 1:numel( epochs )
