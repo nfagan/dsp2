@@ -1,8 +1,8 @@
 conf = dsp2.config.load();
-date_dir = '102417';
+date_dir = '121217';
 loadp = fullfile( conf.PATHS.analyses, 'lda', date_dir );
 
-DO_SAVE = false;
+DO_SAVE = true;
 IS_DRUG = false;
 
 if ( IS_DRUG )
