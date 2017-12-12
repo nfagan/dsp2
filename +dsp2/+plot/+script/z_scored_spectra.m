@@ -4,7 +4,7 @@ save_date_dir = dsp2.process.format.get_date_dir();
 
 is_drug = true;
 % epochs = { 'reward', 'targacq' };
-epochs = { 'reward' };
+epochs = { 'targon' };
 kinds = { 'pro_v_anti' };
 meas_types = { 'coherence' };
 withins = { {'outcomes','trialtypes','regions','drugs','monkeys'}, {'outcomes','trialtypes','drugs','regions'} };

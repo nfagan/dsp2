@@ -48,6 +48,11 @@ for i = 1:numel(epochs)
   measure = dsp2.process.format.fix_channels( measure );
   measure = dsp2.process.format.only_pairs( measure );
   if ( ~is_drug )
+    [injection, rest] = measure.pop( 'unspecified' );
+    if ( ~isempty(injection) )
+      injection = injection.parfor_each( 'days', @dsp2.process.format.keep_350, 350 );
+      measure = append( injection, rest );
+    end
     measure = dsp2.process.manipulations.non_drug_effect( measure );
   else
     measure = measure.rm( {'unspecified', 'pre'} );
