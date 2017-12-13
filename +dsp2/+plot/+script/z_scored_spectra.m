@@ -1,12 +1,12 @@
 conf = dsp2.config.load();
-load_date_dir = '121117';
+load_date_dir = '121217';
 save_date_dir = dsp2.process.format.get_date_dir();
 
 is_drug = true;
-% epochs = { 'reward', 'targacq' };
-epochs = { 'targon' };
+epochs = { 'reward', 'targacq', 'targon' };
+% epochs = { 'targon' };
 kinds = { 'pro_v_anti' };
-meas_types = { 'coherence' };
+meas_types = { 'normalized_power' };
 withins = { {'outcomes','trialtypes','regions','drugs','monkeys'}, {'outcomes','trialtypes','drugs','regions'} };
 
 C = allcomb( {epochs, kinds, meas_types, withins} );

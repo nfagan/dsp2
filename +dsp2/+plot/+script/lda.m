@@ -1,11 +1,11 @@
 conf = dsp2.config.load();
-date_dir = '121217';
+date_dir = '121317';
 loadp = fullfile( conf.PATHS.analyses, 'lda', date_dir );
 
-DO_SAVE = true;
+DO_SAVE = false;
 IS_DRUG = false;
 
-if ( true || IS_DRUG )
+if ( IS_DRUG )
   fname = 'lda_all_contexts_with_ci_per_drug.mat';
 else
   fname = 'lda_all_contexts_with_ci.mat';
@@ -14,8 +14,10 @@ end
 lda = dsp2.util.general.fload( fullfile(loadp, fname) );
 lda = lda.require_fields( 'contexts' );
 
-save_dir = fullfile( conf.PATHS.plots, 'lda', dsp2.process.format.get_date_dir() );
-dsp2.util.general.require_dir( save_dir );
+if ( DO_SAVE )
+  save_dir = fullfile( conf.PATHS.plots, 'lda', dsp2.process.format.get_date_dir() );
+  dsp2.util.general.require_dir( save_dir );
+end
 
 %%
 
@@ -46,12 +48,16 @@ transformed.data = transformed.data * 100;
 
 % subset = transformed.only( {'choice'} );
 % subset = transformed.only( {'choice', 'targAcq', 'real_mean', 'real_confidence_low', 'real_confidence_high'} );
-subset = transformed.only( {'choice', 'targAcq'} );
+% subset = transformed.only( {'choice', 'targAcq'} );
+
+DO_SAVE = true;
 
 t_series = -500:50:500;
 start_t = -500;
 end_t = 500;
 time_ind = t_series >= start_t & t_series <= end_t;
+
+subset = transformed;
 
 C = subset.pcombs( {'epochs', 'trialtypes'} );
 
@@ -79,9 +85,9 @@ for i = 1:size(C, 1)
   f.one_legend();
   
   full_save_dir = fullfile( save_dir, char(plt('epochs')) );
-  dsp2.util.general.require_dir( full_save_dir );
 
   if ( DO_SAVE )
+    dsp2.util.general.require_dir( full_save_dir );
     plt_save_name = dsp2.util.general.append_uniques( plt, [fname,'vertical'], w_in );
     dsp2.util.general.save_fig( gcf, fullfile(full_save_dir, plt_save_name), {'epsc', 'png', 'fig'} );
   end

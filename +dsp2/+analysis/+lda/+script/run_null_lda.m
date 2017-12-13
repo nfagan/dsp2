@@ -52,6 +52,7 @@ for i = 1:numel(epochs)
   measure = dsp2.process.format.fix_administration( measure );
   measure = dsp2.process.format.fix_channels( measure );
   measure = dsp2.process.format.only_pairs( measure );
+  measure = dsp2.process.format.rm_bad_days( measure );
   if ( ~is_drug )
     [injection, rest] = measure.pop( 'unspecified' );
     if ( ~isempty(injection) )
