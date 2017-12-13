@@ -105,6 +105,7 @@ for idx = 1:size(all_combs, 1)
   
   glm_c = all_combs(idx, 1:2);
   roi = all_combs{idx, 3};
+  band_name = all_combs{idx, 4};
 
   for i = 1:numel(I)
     subset = measure(I{i});
@@ -152,6 +153,8 @@ for idx = 1:size(all_combs, 1)
       
       combined = append( matched_subset, matched_behav_subset );
       combined( 'glm_id' ) = glm_id_str;
+      combined = combined.require_fields( 'band' );
+      combined( 'band' ) = band_name;
       
       distributions = append( distributions, combined );
     end

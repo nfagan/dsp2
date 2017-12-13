@@ -1,11 +1,13 @@
 conf = dsp2.config.load();
-load_date_dir = '120417';
+% load_date_dir = '120417';
+% targacq, reward coh: 1128; targon coh: 1129; allepochs np: 1204
+load_date_dir = '112817';
 save_date_dir = dsp2.process.format.get_date_dir();
 
 % epochs = { 'reward', 'targacq' };
-epochs = { 'targon' };
+epochs = { 'reward' };
 kinds = { 'pro_v_anti' };
-meas_types = { 'normalized_power' };
+meas_types = { 'coherence' };
 withins = { {'outcomes','trialtypes','regions','monkeys', 'days', 'sites'} ...
   , {'outcomes','trialtypes','regions', 'days', 'sites'} };
 
@@ -17,6 +19,7 @@ rois = Container( ...
 );
 
 do_save = true;
+do_smooth = true;
 
 for idx = 1:size(C, 1)
 
@@ -41,7 +44,7 @@ for idx = 1:size(C, 1)
     tlims = [ -350, 300 ];
   else
     assert( strcmp(epoch, 'targon'), 'Unrecognized epoch %s.', epoch );
-    tlims = [ -300, 500 ];
+    tlims = [ -100, 300 ];
   end
 
   figure(1); clf();
@@ -58,22 +61,37 @@ for idx = 1:size(C, 1)
     
     for j = 1:shape(matching_roi, 1)
       
+      figure(1); clf();
+      
       roi_ = matching_roi.data{j};
       plt_meaned = plt_.time_mean( roi_ );
       plt_meaned = plt_meaned.keep_within_freqs( [0, 100] );
       
       pl = ContainerPlotter();
       pl.add_ribbon = true;
-      pl.compare_series = true;
+      pl.compare_series = ~do_smooth;
       pl.x = plt_meaned.frequencies;
+      
+      if ( do_smooth )
+        dat = plt_meaned.data;
+        for h = 1:size(dat, 1)
+          dat(h, :) = smooth( dat(h, :), 3 );
+        end
+        plt_meaned.data = dat;
+      end
       
       pl.plot( plt_meaned, 'outcomes', {'trialtypes', 'regions', 'monkeys'} );
 
       fname = dsp2.util.general.append_uniques( plt_, base_fname, {'trialtypes', 'regions', 'monkeys'} );   
 
       if ( do_save )
-        dsp2.util.general.require_dir( base_save_p );
-        dsp2.util.general.save_fig( gcf, fullfile(base_save_p, fname), {'epsc', 'png', 'fig'} );
+        if ( do_smooth )
+          full_save_p = fullfile( base_save_p, 'smoothed' );
+        else
+          full_save_p = fullfile( base_save_p, 'nonsmoothed' );
+        end
+        dsp2.util.general.require_dir( full_save_p );
+        dsp2.util.general.save_fig( gcf, fullfile(full_save_p, fname), {'epsc', 'png', 'fig'} );
       end
     end
   end

@@ -27,7 +27,7 @@ perc_training = .75;
 lda_group = 'outcomes';
 shuff_within = { 'trialtypes', 'administration' };
 per_context = false;
-is_drug = true;
+is_drug = false;
 
 if ( per_context )
   shuff_within{end+1} = 'contexts';
