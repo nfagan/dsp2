@@ -14,6 +14,7 @@ if ( ~is_drug )
 %   subdir = 'null';
 %   subdir = fullfile( '121117', 'non_drug_null' );
   subdir = fullfile( '120717', 'non_drug_null' );
+  subdir = fullfile( '12
 else
   subdir = 'drug_effect_null';
 end
