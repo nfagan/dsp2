@@ -30,6 +30,7 @@ calc_within = { 'days', 'looks_to', 'look_period', 'outcomes', 'trialtypes', 'ma
 freq = calc({'count'});
 quantity = calc({'quantity'});
 freq = dsp2.analysis.behavior.get_gaze_frequency( freq, calc_within );
+freq = freq.rm( 'errors' );
 
 %%
 
@@ -90,6 +91,7 @@ fprintf( 'Done' );
 
 coh = dsp2.process.format.fix_block_number( coh );
 coh = dsp2.process.format.fix_administration( coh );
+coh = coh.rm( 'errors' );
 
 if ( strcmp(meas_type, 'coherence') )
   coh = dsp2.process.format.fix_channels( coh );

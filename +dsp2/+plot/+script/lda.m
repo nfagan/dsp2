@@ -1,6 +1,7 @@
 conf = dsp2.config.load();
 date_dir = '121317';
 loadp = fullfile( conf.PATHS.analyses, 'lda', date_dir );
+loadp = fullfile( loadp, 'with_bad_days' );
 
 DO_SAVE = false;
 IS_DRUG = false;
