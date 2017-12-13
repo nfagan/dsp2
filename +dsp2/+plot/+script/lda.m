@@ -5,7 +5,7 @@ loadp = fullfile( conf.PATHS.analyses, 'lda', date_dir );
 DO_SAVE = true;
 IS_DRUG = false;
 
-if ( IS_DRUG )
+if ( true || IS_DRUG )
   fname = 'lda_all_contexts_with_ci_per_drug.mat';
 else
   fname = 'lda_all_contexts_with_ci.mat';
