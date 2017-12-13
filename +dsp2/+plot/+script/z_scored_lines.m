@@ -1,15 +1,18 @@
 conf = dsp2.config.load();
 % load_date_dir = '120417';
 % targacq, reward coh: 1128; targon coh: 1129; allepochs np: 1204
-load_date_dir = '112817';
+% load_date_dir = '112817';
+load_date_dir = '121217';
 save_date_dir = dsp2.process.format.get_date_dir();
 
 % epochs = { 'reward', 'targacq' };
-epochs = { 'reward' };
+epochs = { 'reward', 'targon', 'targacq' };
 kinds = { 'pro_v_anti' };
-meas_types = { 'coherence' };
+meas_types = { 'normalized_power' };
 withins = { {'outcomes','trialtypes','regions','monkeys', 'days', 'sites'} ...
   , {'outcomes','trialtypes','regions', 'days', 'sites'} };
+
+is_drug = true;
 
 C = allcomb( {epochs, kinds, meas_types, withins} );
 
@@ -19,21 +22,29 @@ rois = Container( ...
 );
 
 do_save = true;
-do_smooth = true;
+do_smooth = false;
+
+FIG = figure(1);
 
 for idx = 1:size(C, 1)
+  
+  fprintf( '\n Processing combination %d of %d', idx, size(C, 1) );
 
   epoch = C{idx, 1};
   kind = C{idx, 2};
   meas_type = C{idx, 3};
   within = C{idx, 4};
   
-  p = fullfile( conf.PATHS.analyses, 'z_scored_spectra', load_date_dir, meas_type, epoch, kind );
+  if ( ~is_drug )
+    p = fullfile( conf.PATHS.analyses, 'z_scored_spectra', load_date_dir, meas_type, epoch, kind );
+  else
+    p = fullfile( conf.PATHS.analyses, 'z_scored_spectra', load_date_dir, meas_type, epoch, 'drug', kind );
+  end
 
   base_save_p = fullfile( conf.PATHS.plots, 'z_scored_lines', save_date_dir, meas_type, epoch, kind );
   base_fname = 'pro_v_anti';
 
-  coh = dsp2.util.general.load_mats( p, true );
+  coh = dsp2.util.general.load_mats( p, false );
   coh = dsp2.util.general.concat( coh );
 
   meaned = coh.each1d( within, @rowops.nanmean );
@@ -47,7 +58,7 @@ for idx = 1:size(C, 1)
     tlims = [ -100, 300 ];
   end
 
-  figure(1); clf();
+  clf( FIG );
 
   plt = meaned;
   plt = plt.collapse( setdiff(plt.categories(), within) );
@@ -61,7 +72,7 @@ for idx = 1:size(C, 1)
     
     for j = 1:shape(matching_roi, 1)
       
-      figure(1); clf();
+%       figure(1); clf();
       
       roi_ = matching_roi.data{j};
       plt_meaned = plt_.time_mean( roi_ );

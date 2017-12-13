@@ -13,15 +13,15 @@ DO_SAVE = false;
 if ( ~is_drug )
 %   subdir = 'null';
 %   subdir = fullfile( '121117', 'non_drug_null' );
-  subdir = fullfile( '120717', 'non_drug_null' );
-  subdir = fullfile( '12
+%   subdir = fullfile( '120717', 'non_drug_null' );
+  subdir = fullfile( '121217', 'non_drug_null' ); % targon
 else
   subdir = 'drug_effect_null';
 end
 conf = dsp2.config.load();
 load_p = fullfile( conf.PATHS.analyses, 'granger', subdir );
 % epochs = dsp2.util.general.dirnames( load_p, 'folders' );
-epochs = { 'targacq' };
+epochs = { 'targon' };
 per_epoch = cell( 1, numel(epochs) );
 names = cell( 1, numel(epochs) );
 for i = 1:numel( epochs )
