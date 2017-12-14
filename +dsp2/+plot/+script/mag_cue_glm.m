@@ -1,12 +1,17 @@
 %%
 
-load_p = fullfile( conf.PATHS.analyses, 'spectral_glm', '120817', meas_type, kind, manip, epoch );
+meas_type = 'coherence';
+behav_type = 'looks';
+
+% date_dir = '120817';
+date_dir = '121317';
+epoch = 'reward';
+kind = 'complete';
+
+load_p = fullfile( conf.PATHS.analyses, 'spectral_glm', date_dir, meas_type, kind, manip, epoch );
 
 dists = dsp2.util.general.concat( dsp2.util.general.load_mats(load_p) );
 [I, C] = dists.get_indices( 'glm_id' );
-
-meas_type = 'coherence';
-behav_type = 'looks';
 
 mdls = Container();
 
@@ -130,6 +135,7 @@ end
 
 if ( do_save )
   save_p = fullfile( conf.PATHS.plots, 'mag_cue_glm', dsp2.process.format.get_date_dir(), 'bar' );
+  save_p = fullfile( save_p, epoch );
   dsp2.util.general.require_dir( save_p );
   fname = fullfile( save_p, 'bar' );
   dsp2.util.general.save_fig( gcf, fname, {'epsc', 'png', 'fig'} );  

@@ -65,7 +65,7 @@ m_within = union( m_within, 'magnitudes' );
 
 match_for = { 'outcomes', 'trialtypes', 'magnitudes' };
 
-rois = dsp2.process.format.get_roi_combinations( {[-200, 0]}, {[15, 30], [45, 60]} );
+rois = dsp2.process.format.get_roi_combinations( {[0, 200]}, {[15, 30], [45, 60]} );
 band_roi_names = { 'beta', 'gamma' };
 
 glm_combs = freq.pcombs( {'looks_to', 'outcomes'} );
