@@ -86,7 +86,7 @@ tmp_write( {'\n Processing %d of %d', d, numel(days)}, tfname );
 distributions = Container();
   
 tmp_write( '\n Loading ... ', tfname );
-coh = io.read( p, 'only', days{d}, 'frequencies', [0, 100], 'time', [-200, 0] );
+coh = io.read( p, 'only', days{d}, 'frequencies', [0, 100], 'time', [0, 200] );
 fprintf( 'Done' );
 
 coh = dsp2.process.format.fix_block_number( coh );

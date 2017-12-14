@@ -43,7 +43,7 @@ for idx = 1:size(C, 1)
     tlims = [ -350, 300 ];
   else
     assert( strcmp(epoch, 'targon'), 'Unrecognized epoch %s.', epoch );
-    tlims = [ -100, 300 ];
+    tlims = [ 0, 300 ];
   end
 
   figure(1); clf();
