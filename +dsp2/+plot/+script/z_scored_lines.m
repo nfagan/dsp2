@@ -2,19 +2,21 @@ conf = dsp2.config.load();
 % load_date_dir = '120417';
 % targacq, reward coh: 1128; targon coh: 1129; allepochs np: 1204
 % load_date_dir = '112817';
-load_date_dir = '121217';
+% load_date_dir = '121217'; % drug norm power
+load_date_dir = '121117'; % drug coherence
 save_date_dir = dsp2.process.format.get_date_dir();
 
 % epochs = { 'reward', 'targacq' };
 epochs = { 'reward', 'targon', 'targacq' };
 kinds = { 'pro_v_anti' };
-meas_types = { 'normalized_power' };
-withins = { {'outcomes','trialtypes','regions','monkeys', 'days', 'sites'} ...
-  , {'outcomes','trialtypes','regions', 'days', 'sites'} };
+meas_types = { 'coherence' };
+withins = { {'outcomes','trialtypes','regions','monkeys', 'days', 'sites', 'drugs'} ...
+  , {'outcomes','trialtypes','regions', 'days', 'sites', 'drugs'} };
+smoothings = { true };
 
 is_drug = true;
 
-C = allcomb( {epochs, kinds, meas_types, withins} );
+C = allcomb( {epochs, kinds, meas_types, withins, smoothings} );
 
 rois = Container( ...
     {[-250, 0]; [50, 250]; [50, 300]} ...
@@ -22,7 +24,6 @@ rois = Container( ...
 );
 
 do_save = true;
-do_smooth = false;
 
 FIG = figure(1);
 
@@ -34,6 +35,7 @@ for idx = 1:size(C, 1)
   kind = C{idx, 2};
   meas_type = C{idx, 3};
   within = C{idx, 4};
+  do_smooth = C{idx, 5};
   
   if ( ~is_drug )
     p = fullfile( conf.PATHS.analyses, 'z_scored_spectra', load_date_dir, meas_type, epoch, kind );
@@ -63,7 +65,8 @@ for idx = 1:size(C, 1)
   plt = meaned;
   plt = plt.collapse( setdiff(plt.categories(), within) );
 
-  [I, ~] = plt.get_indices( {'trialtypes', 'regions', 'monkeys'} );
+  figs_are = { 'trialtypes', 'regions', 'monkeys', 'drugs' };
+  [I, ~] = plt.get_indices( figs_are );
   
   matching_roi = rois.only( epoch );
 
@@ -91,9 +94,9 @@ for idx = 1:size(C, 1)
         plt_meaned.data = dat;
       end
       
-      pl.plot( plt_meaned, 'outcomes', {'trialtypes', 'regions', 'monkeys'} );
+      pl.plot( plt_meaned, 'outcomes', figs_are );
 
-      fname = dsp2.util.general.append_uniques( plt_, base_fname, {'trialtypes', 'regions', 'monkeys'} );   
+      fname = dsp2.util.general.append_uniques( plt_, base_fname, figs_are );   
 
       if ( do_save )
         if ( do_smooth )
