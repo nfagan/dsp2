@@ -180,6 +180,9 @@ save( fullfile(save_p, days{d}), 'distributions' );
 
 end
 
+dsp2.util.general.require_dir( fullfile(save_p, 'all_combs') );
+save( fullfile(save_p, 'all_combs', 'all_combs.mat'), 'all_combs' );
+
 end
 
 

@@ -98,7 +98,8 @@ measure = measure.remove_nans_and_infs();
 
 % measure = measure.rm( {'day__05172016', 'day__05192016' 'day__02142017', 'day__06022017'} );
 measure = measure.rm( {'day__05172016', 'day__05192016' 'day__02142017'} );
-measure = measure.rm( 'cued' );
+% measure = measure.rm( 'cued' );
+% measure = measure.rm( 'choice' );
 
 if ( ~isempty(strfind(meas_type, 'coherence')) )
   if ( strcmp(meas_type, 'sfcoherence') )

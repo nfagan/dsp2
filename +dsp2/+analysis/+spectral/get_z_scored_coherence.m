@@ -18,6 +18,7 @@ defaults.N = 100;
 defaults.meas_type = 'coherence';
 defaults.date_dir = dsp2.process.format.get_date_dir();
 defaults.is_drug = false;
+defaults.is_pro_minus_anti = false;
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
@@ -104,11 +105,93 @@ for i = 1:numel(epochs)
       m_within{end+1} = 'administration';
     end
     
-    num_coh = do_zscore_pro_v_anti( num_coh, params.N, m_within, summary_func, is_drug );
+    if ( params.is_pro_minus_anti )
+      [num_coh, dists] = do_zscore_pro_minus_anti( num_coh, params.N, m_within, summary_func, is_drug );
+    else
+      num_coh = do_zscore_pro_v_anti( num_coh, params.N, m_within, summary_func, is_drug );
+    end
     
     save( fullfile(full_save_p, sprintf('%s.mat', all_days{j})), 'num_coh' );
+    
+    if ( params.is_pro_minus_anti )
+      dsp2.util.general.require_dir( fullfile(full_save_p, 'distributions') );
+      save( fullfile(full_save_p, 'distributions', sprintf('%s.mat', all_days{j})), 'dists' );
+    end
   end
 end
+
+end
+
+function [cohs, dists] = do_zscore_pro_minus_anti(coh, N, m_within, sfunc, is_drug)
+
+s_within = setdiff( m_within, {'outcomes', 'administration'} );
+coh = coh.rm( 'errors' );
+[inds, cmbs] = coh.get_indices( s_within );
+coh = coh.require_fields( 'contexts' );
+coh( 'contexts', coh.where({'self','both'}) ) = 'selfBoth';
+coh( 'contexts', coh.where({'other','none'}) ) = 'otherNone';
+
+to_clpse = { 'magnitudes', 'trials', 'recipients' };
+coh = coh.collapse( to_clpse );
+
+matched = coh.each1d( m_within, sfunc );
+matched = dsp2.process.manipulations.pro_v_anti( matched );
+matched = dsp2.process.manipulations.pro_minus_anti( matched );
+if ( is_drug )
+  matched = dsp2.process.manipulations.post_minus_pre( matched );
+end
+
+cohs = cell( 1, numel(inds) );
+dists = cell( 1, numel(inds) );
+
+for i = 1:numel(inds)
+  extr = coh( inds{i} );
+  conts = cell( 1, N );
+  parfor j = 1:N
+    shuffed = extr.shuffle_each( 'contexts' );
+    shuffed = shuffed.each1d( {'outcomes', 'administration'}, @rowops.nanmean );
+    conts{j} = shuffed;
+  end
+  conts = dsp2.util.general.concat( conts );
+  conts = dsp2.process.manipulations.pro_v_anti( conts );
+  conts = dsp2.process.manipulations.pro_minus_anti( conts );
+  if ( is_drug )
+    conts = dsp2.process.manipulations.post_minus_pre( conts );
+  end
+  outs = conts.pcombs( {'outcomes', 'administration'} );
+  
+  cont = Container();
+  descriptives = Container();
+  
+  for j = 1:size(outs, 1)
+    ind = conts.where( outs(j, :) );
+    matching_ind = matched.where( [outs(j, :), cmbs(i, :)] );
+    distribution = conts.data(ind, :, :);
+    test_vals = matched.data(matching_ind, :, :);
+    means = mean( distribution, 1 );
+    stds = std( distribution, [], 1 );
+    sems = rowops.sem( distribution );
+    zs = (test_vals - means) ./ stds;
+    
+    extr = one( matched(matching_ind) );
+    extr.data = zs;
+    cont = cont.append( extr );
+    
+    extr = extr.require_fields( {'descriptives'} );
+    labs = extr.labels.repeat( 3 );
+    dat = [ means; stds; sems ];
+    extr = Container( dat, labs );
+    extr( 'descriptives' ) = { 'means', 'devs', 'std_errors' };
+    
+    descriptives = descriptives.append( extr );    
+  end
+  
+  dists{i} = descriptives;
+  cohs{i} = cont;
+end
+
+cohs = dsp2.util.general.concat( cohs );
+dists = dsp2.util.general.concat( dists );
 
 end
 

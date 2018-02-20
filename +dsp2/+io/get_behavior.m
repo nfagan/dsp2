@@ -81,6 +81,7 @@ for i = 1:numel(SESSIONS)
   
   if ( i == numel(SESSIONS) )
     all_data_fields.trial_info = fields;
+    all_data_fields.events = DATA_FIELDS.events;
   end
 end
 

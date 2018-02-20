@@ -9,9 +9,9 @@ date = dsp2.process.format.get_date_dir();
 % date = [ date, 'high_res' ];
 kinds = { 'nanmedian_2' };
 sfuncs = { @nanmean };
-measures = { 'normalized_power', 'coherence' };
-epochs = { 'targon', 'reward' };
-manipulations = { 'pro_v_anti', 'pro_minus_anti' };
+measures = { 'coherence' };
+epochs = { 'reward', 'targacq' };
+manipulations = { 'pro_minus_anti' };
 to_collapse = { {'trials', 'monkeys'} };
 
 plotby = 'frequency';

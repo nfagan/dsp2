@@ -81,6 +81,14 @@ for i = 1:size(C, 1)
   
   fig_filenames = {};
   
+  
+  %%%
+  panels_are = { 'monkeys', 'outcomes', 'trialtypes' };
+  lines_are = { 'regions' };
+%   lines_are = { 'outcomes' };
+%   panels_are = { 'monkeys', 'regions', 'trialtypes' };
+  %%%
+  
   for k = 1:size(c, 1)
     for kk = 1:shape( roi, 1 )
       clf( F );
@@ -94,6 +102,8 @@ for i = 1:size(C, 1)
       pl.error_function = conf.PLOT.error_function;
       pl.compare_series = compare_series;
       pl.p_correct_type = params.p_correct_type;
+      
+      pl.y_lim = [-.1, .1];
 
       measure_ = measure.only( c(k, :) );
 
@@ -120,7 +130,7 @@ for i = 1:size(C, 1)
 
       pl.y_label = strrep( meas_type, '_', ' ' );
 
-      pl.plot( measure_, lines_are, {'monkeys', 'regions', 'trialtypes'} );
+      pl.plot( measure_, lines_are, panels_are );
       
       %%
       

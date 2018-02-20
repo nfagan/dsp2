@@ -4,7 +4,8 @@ import dsp2.process.format.*;
 
 dsp2.cluster.init();
 conf = dsp2.config.load();
-save_path = fullfile( conf.PATHS.analyses, 'pupil' );
+date_dir = dsp2.process.format.get_date_dir();
+save_path = fullfile( conf.PATHS.analyses, 'pupil', date_dir );
 dsp2.util.general.require_dir( save_path );
 
 epoch = 'targOn';
@@ -21,8 +22,12 @@ assert( any(strcmp(key, epoch)), 'Non-existent epoch ''%s''.', epoch );
 
 %%  get psth
 
+% look_back = -.15;
+% look_amt = 0.6;
+
 look_back = -.15;
-look_amt = .6;
+look_amt = 0.6;
+
 stp = .004;
 x = look_back:stp:look_amt-abs(look_back);
 
@@ -58,6 +63,6 @@ tseries.x = x;
 tseries.stp = stp;
 
 save( fullfile(save_path, pfname), 'psth' );
-save( fullfile(save_path, nfname), 'nmn' );
+% save( fullfile(save_path, nfname), 'nmn' );
 save( fullfile(save_path, tfname), 'tseries' );
 
