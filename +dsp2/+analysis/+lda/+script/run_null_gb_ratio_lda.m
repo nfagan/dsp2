@@ -10,8 +10,6 @@ freq_rois = containers.Map();
 freq_rois('beta') = [ 15, 30 ];
 freq_rois('gamma') = [ 45, 60 ];
 
-assert( numel(freq_rois) == numel(band_names) );
-
 io = dsp2.io.get_dsp_h5();
 base_p = dsp2.io.get_path( 'Measures', 'coherence', 'complete' );
 save_p = fullfile( conf.PATHS.analyses, 'gamma_beta_ratio_lda', dsp2.process.format.get_date_dir() );
