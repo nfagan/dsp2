@@ -7,6 +7,7 @@ clpses = { {'trials', 'monkeys'} };
 kind = 'nanmedian_2';
 is_pro_v_antis = { false, true };
 is_post_minus_pres = { true };
+is_new_data_sets = { false, true };
 
 C = allcomb( {epochs, clpses, manips, is_pro_v_antis, is_post_minus_pres} );
 

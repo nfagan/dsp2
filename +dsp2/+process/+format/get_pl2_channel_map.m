@@ -57,7 +57,7 @@ for i = 1:numel(pl2_fullfiles)
     end
   end
   
-  map_key = sprintf( '%s.%s', pl2_filename, pl2_ext );
+  map_key = sprintf( '%s%s', pl2_filename, pl2_ext );
   
   map( map_key ) = reg_struct;
 end
