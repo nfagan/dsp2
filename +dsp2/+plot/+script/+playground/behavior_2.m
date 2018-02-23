@@ -3,7 +3,8 @@ conf = dsp2.config.load();
 io = dsp2.io.get_dsp_h5();
 p = dsp2.io.get_path( 'behavior' );
 % behav = io.read( p );
-behav = dsp2.util.general.fload( fullfile(conf.PATHS.analyses, 'behavior', 'trial_info', '112817', 'behavior.mat') );
+behav = dsp2.util.general.fload( fullfile(conf.PATHS.analyses ...
+  , 'behavior', 'trial_info', '112817', 'behavior.mat') );
 key = io.read( io.fullfile(p, 'Key') );
 
 plt_save_path = fullfile( conf.PATHS.plots, 'behavior', dsp2.process.format.get_date_dir() );
@@ -15,15 +16,15 @@ behav = dsp2.process.format.fix_administration( behav );
 %%
 
 meas_type = 'preference_index';
-drug_type = 'none';
+drug_type = 'drug';
 %error_denom_is = 'within_context';
 error_denom_is = 'good_trials';
 
 is_within_mag_cue = false;
-is_drug = false;
+is_drug = true;
 is_post_only = false;
 is_post_minus_pre = false;
-is_post_v_pre = false;
+is_post_v_pre = true;
 is_pref_proportion = false;
 is_rt = false;
 is_pref_index = true;
@@ -81,6 +82,7 @@ if ( is_drug && is_post_only )
 elseif ( is_drug )
   percs = percs.collapse( {'blocks', 'recipients', 'sessions'} );
   if ( is_post_minus_pre )
+    if ( is_errors ), percs = percs.collapse('error_types'); end
     percs = dsp2.process.manipulations.post_minus_pre( percs );
   end
 end
@@ -151,13 +153,13 @@ cutoffed = percs.keep( good_data );
 %% BAR
 
 DO_SAVE = true;
-add_points = true;
+add_points = false;
 
 cutoffed = percs.rm( {'day__05172016', 'day__05192016', 'day__02142017' });
 
 plt = cutoffed;
 points = plt;
-plt = plt.collapse('monkeys');
+% plt = plt.collapse('monkeys');
 
 pl = ContainerPlotter();
 pl.y_label = meas_type;
@@ -180,14 +182,23 @@ if ( ~is_drug )
     bar( plt.collapse({}), pl, 'outcomes', {'trialtypes', 'monkeys', 'magnitudes'} );
   end
 else
-  pl.order_by = { 'self', 'both', 'other', 'none' };
-  plt.bar( pl, 'drugs', 'administration', {'outcomes', 'trialtypes'} );
+  if ( is_errors )
+    plt.data = plt.data * 100;
+    pl.x_tick_rotation = 60;
+    pl.order_by = { 'context__self', 'context__both', 'context__other', 'context__none' };
+    pl.per_panel_labels = true;
+    plt.bar( pl, 'contexts', 'administration', {'trialtypes', 'drugs', 'magnitudes', 'monkeys'} );
+  else
+    pl.order_by = { 'self', 'both', 'other', 'none' };
+    plt.bar( pl, 'drugs', 'administration', {'outcomes', 'trialtypes', 'monkeys'} );
+  end
 end
 
 f = FigureEdits( gcf );
-% f.one_legend();
+f.one_legend();
 
-fname = dsp2.util.general.append_uniques( plt, 'proportions', {'monkeys', 'drugs', 'outcomes', 'magnitudes', 'trialtypes'} );
+fname = dsp2.util.general.append_uniques( plt, 'proportions' ...
+  , {'monkeys', 'administration', 'drugs', 'outcomes', 'magnitudes', 'trialtypes'} );
 
 if ( is_errors )
   save_meas_type = [ meas_type, error_denom_is ];
@@ -238,7 +249,7 @@ end
 full_plt_save_path = fullfile( plt_save_path, save_meas_type, drug_type );
 if ( DO_SAVE )
   dsp2.util.general.require_dir( full_plt_save_path );
-  dsp2.util.general.save_fig( gcf, fullfile(full_plt_save_path, fname), {'epsc', 'fig'} );
+  dsp2.util.general.save_fig( gcf, fullfile(full_plt_save_path, fname), {'epsc', 'fig', 'png'} );
 end
 
 %%

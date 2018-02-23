@@ -6,16 +6,15 @@ conf = dsp2.config.load();
 
 epochs = { 'targacq', 'reward', 'targon' };
 
-freq_rois = { [4, 12], [15, 30], [35, 50] };
-band_names = { 'theta_alpha', 'beta', 'gamma' };
-% freq_rois = { [4, 12] };
-% band_names = { 'theta_alpha' };
+freq_rois = containers.Map();
+freq_rois('beta') = [ 15, 30 ];
+freq_rois('gamma') = [ 45, 60 ];
 
 assert( numel(freq_rois) == numel(band_names) );
 
 io = dsp2.io.get_dsp_h5();
 base_p = dsp2.io.get_path( 'Measures', 'coherence', 'complete' );
-save_p = fullfile( conf.PATHS.analyses, 'lda', dsp2.process.format.get_date_dir() );
+save_p = fullfile( conf.PATHS.analyses, 'gamma_beta_ratio_lda', dsp2.process.format.get_date_dir() );
 dsp2.util.general.require_dir( save_p );
 
 tmp_fname = 'lda.txt';
@@ -74,59 +73,61 @@ for i = 1:numel(epochs)
   end
   measure = measure.remove_nans_and_infs();  
   
-  for j = 1:numel(freq_rois)
-    tmp_write( {'\n\tProcessing roi %d of %d', j, numel(freq_rois)}, tmp_fname );
-    meaned = measure.freq_mean( freq_rois{j} );
-    meaned.data = squeeze( meaned.data );
-    
-    C = meaned.pcombs( shuff_within );
-    
-    for ii = 1:size(C, 1)
-      subset = meaned.only( C(ii, :) );
-    
-      real_perc_correct = zeros( 1, size(subset.data, 2) );
-      real_perc_std = zeros( 1, size(subset.data, 2) );
-      shuf_perc_correct = zeros( 1, size(subset.data, 2) );
-      shuf_perc_std = zeros( 1, size(subset.data, 2) );
+  gamma = measure.freq_mean( freq_rois('gamma') );
+  beta = measure.freq_mean( freq_rois('beta') );
+  
+  gamma.data = squeeze( gamma.data );
+  beta.data = squeeze( beta.data );
+  
+  meaned = gamma ./ beta;
 
-      for k = 1:size( subset.data, 2 );
-        current = subset;
+  C = meaned.pcombs( shuff_within );
+
+  for ii = 1:size(C, 1)
+    subset = meaned.only( C(ii, :) );
+
+    real_perc_correct = zeros( 1, size(subset.data, 2) );
+    real_perc_std = zeros( 1, size(subset.data, 2) );
+    shuf_perc_correct = zeros( 1, size(subset.data, 2) );
+    shuf_perc_std = zeros( 1, size(subset.data, 2) );
+
+    for k = 1:size( subset.data, 2 );
+      current = subset;
+      current.data = current.data(:, k);
+      shuf_percs = zeros( 1, n_perms );
+      real_percs = zeros( 1, n_perms );
+
+      parfor h = 1:n_perms
+        [~, real_perc] = dsp2.analysis.lda.lda( current, lda_group, perc_training );
+        real_percs(h) = real_perc;
+      end
+      parfor h = 1:n_perms
+        current = subset.shuffle();
         current.data = current.data(:, k);
-        shuf_percs = zeros( 1, n_perms );
-        real_percs = zeros( 1, n_perms );
-        
-        parfor h = 1:n_perms
-          [~, real_perc] = dsp2.analysis.lda.lda( current, lda_group, perc_training );
-          real_percs(h) = real_perc;
-        end
-        parfor h = 1:n_perms
-          current = subset.shuffle();
-          current.data = current.data(:, k);
-          [~, shuffed_perc_correct] = ...
-            dsp2.analysis.lda.lda( current, lda_group, perc_training );
-          shuf_percs(h) = shuffed_perc_correct;
-        end
-
-        real_perc_correct(k) = mean( real_percs );
-        real_perc_std(k) = std( real_percs );
-        shuf_perc_correct(k) = mean( shuf_percs );
-        shuf_perc_std(k) = std( shuf_percs );
+        [~, shuffed_perc_correct] = ...
+          dsp2.analysis.lda.lda( current, lda_group, perc_training );
+        shuf_percs(h) = shuffed_perc_correct;
       end
 
-      clpsed = subset.one();
-      clpsed = clpsed.require_fields( {'band', 'measure'} );
-      clpsed( 'band' ) = band_names{j};
-
-      clpsed = extend( clpsed, clpsed, clpsed, clpsed );
-      clpsed( 'measure', 1 ) = 'real_percent';
-      clpsed( 'measure', 2 ) = 'real_std';
-      clpsed( 'measure', 3 ) = 'shuffled_percent';
-      clpsed( 'measure', 4 ) = 'shuffled_std';
-
-      clpsed.data = [ real_perc_correct; real_perc_std; shuf_perc_correct; shuf_perc_std ];
-
-      all_lda_results = all_lda_results.append( clpsed );
+      real_perc_correct(k) = mean( real_percs );
+      real_perc_std(k) = std( real_percs );
+      shuf_perc_correct(k) = mean( shuf_percs );
+      shuf_perc_std(k) = std( shuf_percs );
     end
+
+    clpsed = subset.one();
+    clpsed = clpsed.require_fields( {'band', 'measure'} );
+    clpsed( 'band' ) = 'gamma_rdivide_beta';
+
+    clpsed = extend( clpsed, clpsed, clpsed, clpsed );
+    clpsed( 'measure', 1 ) = 'real_percent';
+    clpsed( 'measure', 2 ) = 'real_std';
+    clpsed( 'measure', 3 ) = 'shuffled_percent';
+    clpsed( 'measure', 4 ) = 'shuffled_std';
+
+    clpsed.data = [ real_perc_correct; real_perc_std; shuf_perc_correct; shuf_perc_std ];
+
+    all_lda_results = all_lda_results.append( clpsed );
   end
 end
 

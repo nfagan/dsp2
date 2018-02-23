@@ -5,14 +5,21 @@ import dsp2.process.format.*;
 epoch = 'rwdOn';
 
 conf = dsp2.config.load();
-pathstr = fullfile( conf.PATHS.analyses, 'pupil' );
 
-nmn = fload( fullfile(pathstr, sprintf('n_minus_one_size_%s.mat', epoch)) );
+target_load_dir = '011018';
+
+pathstr = fullfile( conf.PATHS.analyses, 'pupil', target_load_dir );
+pathstr_baseline = fullfile( conf.PATHS.analyses, 'pupil' );
+
+% nmn = fload( fullfile(pathstr, sprintf('n_minus_one_size_%s.mat', epoch)) );
 psth = fload( fullfile(pathstr, sprintf('psth_%s.mat', epoch)) );
 tseries = fload( fullfile(pathstr, sprintf('time_series_%s.mat', epoch)) );
-baseline = fload( fullfile(pathstr, 'psth_cueOn.mat') );
-baseline_nmn = fload( fullfile(pathstr, 'n_minus_one_size_cueOn.mat') );
-baselinet = fload( fullfile(pathstr, 'time_series_cueOn.mat') );
+baseline = fload( fullfile(pathstr_baseline, 'psth_cueOn.mat') );
+% baseline_nmn = fload( fullfile(pathstr, 'n_minus_one_size_cueOn.mat') );
+baselinet = fload( fullfile(pathstr_baseline, 'time_series_cueOn.mat') );
+
+orig_psth = psth;
+orig_baseline = baseline;
 
 x = tseries.x;
 look_back = tseries.look_back;
@@ -40,17 +47,37 @@ in_bounds_target = false( size(psth.data) );
 in_bounds_baseline = false( size(baseline.data) );
 for i = 1:size(in_bounds_target, 2)
   in_bounds_target(:, i) = psth.data(:, i) > -12e3 & psth.data(:, i) < -1e3;
-  in_bounds_baseline(:, i) = baseline.data(:, i) > -12e3 & baseline.data(:, i) < -1e3; 
+%   in_bounds_baseline(:, i) = baseline.data(:, i) > -12e3 & baseline.data(:, i) < -1e3; 
 %   in_bounds_target(:, i) = psth.data(:, i) > global_target_mean-global_target_dev*ndevs & ...
 %     psth.data(:, i) < global_target_mean+global_target_dev*ndevs;
 %   in_bounds_baseline(:, i) = baseline.data(:, i) > (global_baseline_mean-global_baseline_dev*ndevs) & ...
 %   	baseline.data(:, i) < (global_baseline_mean+global_baseline_dev*ndevs);
 end
 
+for i = 1:size(in_bounds_baseline, 2)
+  in_bounds_baseline(:, i) = baseline.data(:, i) > -12e3 & baseline.data(:, i) < -1e3; 
+end
+
+in_bounds_baseline = all( in_bounds_baseline, 2 );
+in_bounds_target = all( in_bounds_target, 2 );
+
 in_bounds = all( in_bounds_target & in_bounds_baseline, 2 );
 
 psth = psth.keep( in_bounds );
 baseline = baseline.keep( in_bounds );
+
+%%
+
+psth = orig_psth;
+baseline = orig_baseline;
+
+%%
+
+ind_target = pupil.std_threshold( orig_psth.data, 1 );
+ind_baseline = pupil.std_threshold( orig_baseline.data, 1 );
+
+psth = orig_psth.keep( ind_target & ind_baseline );
+baseline = orig_baseline.keep( ind_target & ind_baseline );
 
 %%  normalize
 
@@ -62,7 +89,8 @@ normalizer = baseline.keep( ~errs );
 % normed = nmn;
 % normalizer = baseline_nmn;
 
-norm_ind = ( x >= base_look_back & x <= 0 );
+% norm_ind = ( x >= base_look_back & x <= 0 );
+norm_ind = ( base_x >= base_look_back & base_x <= 0 );
 meaned = mean( normalizer.data(:, norm_ind), 2 );
 dat = normed.data;
 
@@ -129,7 +157,7 @@ plt = dsp2.process.format.fix_administration( plt );
 % plt = plt1.append( plt2 );
 % plt = plt.collapse( 'administration' );
 plt = plt.rm( {'unspecified', 'errors'} );
-plt = plt.parfor_each( {'outcomes', 'trialtypes', 'days', 'administration'}, @mean );
+plt = plt.each1d( {'outcomes', 'sessions', 'blocks', 'trialtypes', 'days', 'administration'}, @rowops.nanmean );
 
 % plt = plt.parfor_each( {'outcomes', 'trialtypes', 'days', 'sessions', 'blocks'}, @mean );
 % plt = plt.parfor_each( {'previous_outcome', 'current_outcome', 'sessions', 'blocks', 'days'}, @mean );
@@ -146,11 +174,15 @@ pl.vertical_lines_at = [0, .15];
 pl.shape = [1, 2];
 pl.y_label = 'Pupil size';
 pl.x_label = sprintf( 'Time (ms) from %s', epoch );
+pl.x_lim = [];
 
 % plt.plot( pl, {'outcomes'}, {'trialtypes'} );
 
-% trace_level = plt.collapse('drugs');
+trace_level = plt;
+
+trace_level = trace_level({'cued'});
 trace_level = plt.rm( 'oxytocin' );
+trace_level = trace_level.collapse( 'administration' );
 trace_level = trace_level.collapse( 'drugs' );
 trace_level = trace_level.collapse_except( {'outcomes', 'trialtypes', 'days', 'drugs', 'administration'} );
 % trace_level = trace_level.only('post') - trace_level.only('pre');

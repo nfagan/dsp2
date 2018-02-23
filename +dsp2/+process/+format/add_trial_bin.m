@@ -1,4 +1,4 @@
-function obj = add_trial_bin(obj, N, start_from, step_size, allow_truncated_final_bin)
+function [obj, num_trial_bins] = add_trial_bin(obj, N, start_from, step_size, allow_truncated_final_bin)
 
 %   ADD_TRIAL_BIN
 
@@ -17,6 +17,7 @@ else
   bin_n = start_from;
 end
 trial_bins = cell( shape(obj, 1), 1 );
+num_trial_bins = zeros( size(trial_bins) );
 end_ind = 0;
 
 to_rm = obj.logic( false );
@@ -34,6 +35,7 @@ while ( end_ind ~= shape(obj, 1) )
   end;
   ind = stp:end_ind;
   trial_bins(ind) = { sprintf('trial_bin__%d', bin_n) };
+  num_trial_bins(ind) = bin_n;
   stp = stp + step_size;
   bin_n = bin_n + 1;
 end

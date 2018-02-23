@@ -4,13 +4,16 @@ meas_type = 'coherence';
 behav_type = 'looks';
 
 % date_dir = '120817';
-date_dir = '121317';
-epoch = 'reward';
+date_dir = '121417';
+epoch = 'targon';
 kind = 'complete';
+manip = 'standard';
 
 load_p = fullfile( conf.PATHS.analyses, 'spectral_glm', date_dir, meas_type, kind, manip, epoch );
 
 dists = dsp2.util.general.concat( dsp2.util.general.load_mats(load_p) );
+all_combs = dsp2.util.general.fload( fullfile(load_p, 'all_combs', 'all_combs.mat') );
+
 [I, C] = dists.get_indices( 'glm_id' );
 
 mdls = Container();
