@@ -22,7 +22,7 @@ n_perms = 100;
 perc_training = 0.75;
 lda_group = 'outcomes';
 shuff_within = { 'trialtypes', 'administration' };
-per_context = false;
+per_context = true;
 is_drug = false;
 
 if ( is_drug )
