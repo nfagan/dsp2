@@ -70,7 +70,7 @@ for i = 1:numel(epochs)
     measure = dsp2.process.manipulations.non_drug_effect( measure );
   else
 %     measure = measure.rm( {'unspecified', 'pre'} );
-    measure = measure.rm( {'unspecified', 'pre'} );
+    measure = measure.rm( {'unspecified'} );
   end
   measure = measure.rm( 'errors' );
   if ( ~per_context )
