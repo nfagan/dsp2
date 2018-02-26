@@ -1,3 +1,5 @@
+function run_null_gb_ratio_lda( per_context, is_drug )
+
 dsp2.cluster.init();
 
 import dsp2.util.cluster.tmp_write;
@@ -22,8 +24,14 @@ n_perms = 100;
 perc_training = 0.75;
 lda_group = 'outcomes';
 shuff_within = { 'trialtypes', 'administration' };
-per_context = true;
-is_drug = false;
+
+if ( nargin < 2 )
+  is_drug = false;
+end
+
+if ( nargin < 1 )
+  per_context = true;
+end
 
 if ( is_drug )
   fname = 'lda_all_contexts_with_ci_per_drug.mat';
