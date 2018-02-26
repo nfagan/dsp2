@@ -2,8 +2,8 @@ conf = dsp2.config.load();
 % load_date_dir = '120417';   % np, non-drug, all epochs
 % targacq, reward coh: 1128; targon coh: 1129; allepochs np: 1204
 % load_date_dir = '112817';
-% load_date_dir = '121217'; % drug norm power
-load_date_dir = '121117'; % drug coherence
+load_date_dir = '121217'; % drug norm power
+% load_date_dir = '121117'; % drug coherence
 % load_date_dir = '121917'; %  non-drug coherence, with dist, pro-m-a
 % load_date_dir = '122017'; % non-drug norm-power, with dist, pro-m-a
 save_date_dir = dsp2.process.format.get_date_dir();
@@ -11,7 +11,7 @@ save_date_dir = dsp2.process.format.get_date_dir();
 % epochs = { 'reward', 'targacq' };
 epochs = { 'reward', 'targon', 'targacq' };
 kinds = { 'pro_v_anti' };
-meas_types = { 'coherence' };
+meas_types = { 'normalized_power' };
 % withins = { {'outcomes','trialtypes','regions','monkeys', 'days', 'sites', 'drugs'} ...
 %   , {'outcomes','trialtypes','regions', 'days', 'sites', 'drugs'} };
 withins = { {'outcomes','trialtypes','regions', 'days', 'sites', 'drugs'} };

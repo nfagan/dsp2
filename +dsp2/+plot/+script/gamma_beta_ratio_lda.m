@@ -5,11 +5,20 @@ loadp = fullfile( conf.PATHS.dsp2_analyses, lda_dir, date_dir );
 
 DO_SAVE = true;
 IS_DRUG = true;
+is_old = false;
+is_per_context = true;
 
-if ( IS_DRUG )
-  fname = 'lda_all_contexts_with_ci_per_drug.mat';
+if ( is_old )
+  if ( IS_DRUG )
+    fname = 'lda_all_contexts_with_ci_per_drug.mat';
+  else
+    fname = 'lda_all_contexts_with_ci.mat';
+  end
 else
-  fname = 'lda_all_contexts_with_ci.mat';
+  fname = 'gb_lda';
+  if ( IS_DRUG ), fname = sprintf( '%s_per_drug', fname ); end
+  if ( is_per_context ), fname = sprintf( '%s_within_context', fname ); end
+  fname = sprintf( '%s.mat', fname );
 end
 
 lda = dsp2.util.general.fload( fullfile(loadp, fname) );
@@ -23,7 +32,7 @@ end
 %%
 
 N = 100;
-w_in = { 'band', 'epochs', 'contexts', 'trialtypes', 'drugs' };
+w_in = { 'band', 'epochs', 'contexts', 'trialtypes', 'drugs', 'administration' };
 C = lda.pcombs( w_in );
 alpha = .05;
 
@@ -60,7 +69,7 @@ time_ind = t_series >= start_t & t_series <= end_t;
 
 subset = transformed;
 
-C = subset.pcombs( {'epochs', 'trialtypes', 'drugs'} );
+C = subset.pcombs( {'epochs', 'trialtypes', 'drugs', 'administration'} );
 
 for i = 1:size(C, 1)
 
@@ -76,7 +85,7 @@ for i = 1:size(C, 1)
   pl = ContainerPlotter();
   pl.x = t_series( time_ind );
   pl.main_line_width = 1;
-  pl.y_lim = [];
+  pl.y_lim = [48, 53];
   pl.x_lim = [ pl.x(1), pl.x(end) ];
 %   pl.shape = [1, 3];
   pl.shape = [];
@@ -92,7 +101,8 @@ for i = 1:size(C, 1)
   if ( DO_SAVE )
     dsp2.util.general.require_dir( full_save_dir );
     plt_save_name = dsp2.util.general.append_uniques( plt, [fname,'vertical'], w_in );
-    dsp2.util.general.save_fig( gcf, fullfile(full_save_dir, plt_save_name), {'epsc', 'png', 'fig'} );
+    separate_folders = true;
+    shared_utils.plot.save_fig( gcf, fullfile(full_save_dir, plt_save_name), {'epsc', 'png', 'fig'}, separate_folders );
   end
   
 end
