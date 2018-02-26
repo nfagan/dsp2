@@ -33,18 +33,21 @@ if ( nargin < 1 )
   per_context = true;
 end
 
+fname = 'gb_lda';
+
 if ( is_drug )
-  fname = 'lda_all_contexts_with_ci_per_drug.mat';
-else
-  fname = 'lda_all_contexts_with_ci.mat';
+  fname = sprintf( '%s_per_drug', fname );
 end
 
 if ( per_context )
   shuff_within{end+1} = 'contexts';
+  fname = sprintf( '%s_within_context', fname );
 end
 if ( is_drug )
   shuff_within{end+1} = 'drugs';
 end
+
+fname = sprintf( '%s.mat', fname );
 
 all_lda_results = Container();
 
