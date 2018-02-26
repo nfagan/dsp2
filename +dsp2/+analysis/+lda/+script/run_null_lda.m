@@ -25,8 +25,8 @@ n_perms = 100;
 perc_training = 0.75;
 lda_group = 'outcomes';
 shuff_within = { 'trialtypes', 'administration' };
-per_context = false;
-is_drug = false;
+per_context = true;
+is_drug = true;
 
 if ( is_drug )
   fname = 'lda_all_contexts_with_ci_per_drug.mat';
