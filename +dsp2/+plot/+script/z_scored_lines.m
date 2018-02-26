@@ -3,9 +3,8 @@ conf = dsp2.config.load();
 % targacq, reward coh: 1128; targon coh: 1129; allepochs np: 1204
 % load_date_dir = '112817';
 % load_date_dir = '121217'; % drug norm power
-% load_date_dir = '121117'; % drug coherence
-% load_date_dir = '121117'; % drug coherence
-load_date_dir = '121917'; %  non-drug coherence, with dist, pro-m-a
+load_date_dir = '121117'; % drug coherence
+% load_date_dir = '121917'; %  non-drug coherence, with dist, pro-m-a
 % load_date_dir = '122017'; % non-drug norm-power, with dist, pro-m-a
 save_date_dir = dsp2.process.format.get_date_dir();
 
@@ -18,8 +17,10 @@ meas_types = { 'coherence' };
 withins = { {'outcomes','trialtypes','regions', 'days', 'sites', 'drugs'} };
 smoothings = { false, true };
 
-is_drug = false;
+is_drug = true;
 has_dist = false;
+is_minus_sal = true;
+h_line_at_zero = true;
 
 adtl = '';
 
@@ -73,6 +74,12 @@ for idx = 1:size(C, 1)
     if ( ~is_drug )
       dists = dists.collapse( 'drugs' );
     end
+  end
+  
+  if ( is_minus_sal )
+    sub_within = setdiff( within, {'days', 'sites'} );
+    meaned = meaned.each1d( sub_within, @rowops.nanmean );
+    meaned = dsp2.process.manipulations.oxy_minus_sal( meaned );
   end
 
   if ( strcmp(epoch, 'reward') )
@@ -128,7 +135,7 @@ for idx = 1:size(C, 1)
       pl.add_ribbon = true;
       pl.compare_series = ~do_smooth;
       pl.x = plt_meaned.frequencies;
-      pl.y_lim = [ -0.2, 0.2 ];
+      pl.y_lim = [ -0.35, 0.35 ];
         
       if ( do_smooth )
         dat = plt_meaned.data;
@@ -139,6 +146,12 @@ for idx = 1:size(C, 1)
       end
       
       pl.plot( plt_meaned, lines_are, figs_are );
+      
+      if ( h_line_at_zero )
+        hold on;
+        xlims = get( gca, 'xlim' );
+        plot( xlims(:), [0; 0], 'k--' );
+      end
 
       fname = dsp2.util.general.append_uniques( plt_, base_fname, figs_are );   
 

@@ -11,7 +11,7 @@ kinds = { 'nanmedian_2' };
 sfuncs = { @nanmean };
 measures = { 'coherence' };
 epochs = { 'reward', 'targacq' };
-manipulations = { 'pro_minus_anti' };
+manipulations = { 'pro_v_anti_oxy_minus_sal' };
 to_collapse = { {'trials', 'monkeys'} };
 
 plotby = 'frequency';

@@ -96,6 +96,8 @@ measure = read_measure.collapse( collapse_after_load );
 
 measure = measure.remove_nans_and_infs();
 
+measure = dsp2.process.format.rm_bad_days( measure );
+
 % measure = measure.rm( {'day__05172016', 'day__05192016' 'day__02142017'} );
 
 if ( ~isempty(strfind(meas_type, 'coherence')) )

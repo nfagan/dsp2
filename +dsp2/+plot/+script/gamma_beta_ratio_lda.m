@@ -1,10 +1,10 @@
 conf = dsp3.config.load();
-date_dir = '022318';
+date_dir = '022618';
 lda_dir = 'gamma_beta_ratio_lda';
 loadp = fullfile( conf.PATHS.dsp2_analyses, lda_dir, date_dir );
 
 DO_SAVE = true;
-IS_DRUG = false;
+IS_DRUG = true;
 
 if ( IS_DRUG )
   fname = 'lda_all_contexts_with_ci_per_drug.mat';
@@ -60,7 +60,7 @@ time_ind = t_series >= start_t & t_series <= end_t;
 
 subset = transformed;
 
-C = subset.pcombs( {'epochs', 'trialtypes'} );
+C = subset.pcombs( {'epochs', 'trialtypes', 'drugs'} );
 
 for i = 1:size(C, 1)
 
@@ -76,7 +76,7 @@ for i = 1:size(C, 1)
   pl = ContainerPlotter();
   pl.x = t_series( time_ind );
   pl.main_line_width = 1;
-  pl.y_lim = [48, 53];
+  pl.y_lim = [];
   pl.x_lim = [ pl.x(1), pl.x(end) ];
 %   pl.shape = [1, 3];
   pl.shape = [];
