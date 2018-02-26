@@ -85,13 +85,13 @@ for i = 1:size(C, 1)
   pl = ContainerPlotter();
   pl.x = t_series( time_ind );
   pl.main_line_width = 1;
-  pl.y_lim = [48, 53];
+  pl.y_lim = [48, 57];
   pl.x_lim = [ pl.x(1), pl.x(end) ];
 %   pl.shape = [1, 3];
   pl.shape = [];
   pl.y_label = '% Accurate';
 
-  plt.plot( pl, {'measure', 'drugs'}, {'band', 'epochs', 'trialtypes', 'contexts'} );
+  plt.plot( pl, {'measure', 'drugs'}, {'band', 'trialtypes', 'contexts'} );
 
   f = FigureEdits( gcf );
   f.one_legend();
@@ -100,7 +100,8 @@ for i = 1:size(C, 1)
 
   if ( DO_SAVE )
     dsp2.util.general.require_dir( full_save_dir );
-    plt_save_name = dsp2.util.general.append_uniques( plt, [fname,'vertical'], w_in );
+    fname = '';
+    plt_save_name = dsp2.util.general.append_uniques( plt, fname, w_in );
     separate_folders = true;
     shared_utils.plot.save_fig( gcf, fullfile(full_save_dir, plt_save_name), {'epsc', 'png', 'fig'}, separate_folders );
   end
