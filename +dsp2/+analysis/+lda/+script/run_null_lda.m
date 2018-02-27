@@ -35,6 +35,11 @@ else
   fname = 'lda_all_contexts_with_ci.mat';
 end
 
+band_str = cellfun( @(x) sprintf('%d_%d', x(1), x(2)), freq_rois, 'un', false );
+band_str = strjoin( band_str, '_' );
+
+fname = sprintf( '%s_%s', band_str, fname );
+
 if ( per_context )
   shuff_within{end+1} = 'contexts';
 end
