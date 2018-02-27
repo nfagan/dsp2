@@ -1,11 +1,12 @@
 conf = dsp3.config.load();
 date_dir = '022618';
-lda_dir = 'gamma_beta_ratio_lda';
+% lda_dir = 'gamma_beta_ratio_lda';
+lda_dir = 'lda';
 loadp = fullfile( conf.PATHS.dsp2_analyses, lda_dir, date_dir );
 
 DO_SAVE = true;
 IS_DRUG = true;
-is_old = false;
+is_old = true;
 is_per_context = true;
 
 if ( is_old )
@@ -69,7 +70,9 @@ time_ind = t_series >= start_t & t_series <= end_t;
 
 subset = transformed;
 
-C = subset.pcombs( {'epochs', 'trialtypes', 'drugs', 'administration'} );
+subset = subset.rm( 'theta_alpha' );
+
+C = subset.pcombs( {'epochs', 'trialtypes', 'drugs', 'administration', 'band'} );
 
 for i = 1:size(C, 1)
 
@@ -85,7 +88,7 @@ for i = 1:size(C, 1)
   pl = ContainerPlotter();
   pl.x = t_series( time_ind );
   pl.main_line_width = 1;
-  pl.y_lim = [48, 57];
+  pl.y_lim = [47, 57];
   pl.x_lim = [ pl.x(1), pl.x(end) ];
 %   pl.shape = [1, 3];
   pl.shape = [];

@@ -6,10 +6,11 @@ conf = dsp2.config.load();
 
 epochs = { 'targacq', 'reward', 'targon' };
 
-freq_rois = { [4, 12], [15, 30], [35, 50] };
-band_names = { 'theta_alpha', 'beta', 'gamma' };
-% freq_rois = { [4, 12] };
-% band_names = { 'theta_alpha' };
+% freq_rois = { [4, 12], [15, 30], [35, 50] };
+% freq_rois = { [4, 12], [15, 30], [45, 60] };
+% band_names = { 'theta_alpha', 'beta', 'gamma' };
+freq_rois = { [15, 30], [45, 60] };
+band_names = { 'beta', 'gamma' };
 
 assert( numel(freq_rois) == numel(band_names) );
 
@@ -61,7 +62,8 @@ for i = 1:numel(epochs)
     end
     measure = dsp2.process.manipulations.non_drug_effect( measure );
   else
-    measure = measure.rm( {'unspecified', 'pre'} );
+%     measure = measure.rm( {'unspecified', 'pre'} );
+    measure = measure.rm( 'unspecified' );
   end
   measure = measure.rm( 'errors' );
   if ( ~per_context )
