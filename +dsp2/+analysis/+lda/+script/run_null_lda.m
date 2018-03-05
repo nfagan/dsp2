@@ -56,6 +56,8 @@ for i = 1:numel(epochs)
   p = io.fullfile( base_p, epochs{i} );
   measure = io.read( p, 'frequencies', [0, 100], 'time', [-500, 500] );
   
+  measure = measure.rm_nans_and_infs();
+  
   measure = dsp2.process.format.fix_block_number( measure );
   measure = dsp2.process.format.fix_administration( measure );
   
