@@ -22,6 +22,8 @@ else
   fname = sprintf( '%s.mat', fname );
 end
 
+fname = '15_30_35_50_lda_all_contexts_with_ci_per_drug.mat'; 
+
 lda = dsp2.util.general.fload( fullfile(loadp, fname) );
 lda = lda.require_fields( 'contexts' );
 
@@ -63,7 +65,7 @@ transformed.data = transformed.data * 100;
 
 DO_SAVE = true;
 
-t_series = -500:50:500;
+t_series = -500:50:300;
 start_t = -500;
 end_t = 500;
 time_ind = t_series >= start_t & t_series <= end_t;
@@ -99,7 +101,7 @@ for i = 1:size(C, 1)
   f = FigureEdits( gcf );
   f.one_legend();
   
-  full_save_dir = fullfile( save_dir, char(plt('epochs')) );
+  full_save_dir = fullfile( save_dir, 'lines', char(plt('epochs')) );
 
   if ( DO_SAVE )
     dsp2.util.general.require_dir( full_save_dir );
@@ -113,20 +115,40 @@ end
 
 %% BAR MINUS NULL
 
-subset = transformed.only( {'choice', 'targAcq'} );
+subset_plt = transformed;
+
+F = figure(1);
+
+time_rois = containers.Map();
+time_rois('targacq') = [ -250, 0 ];
+time_rois('rwdon') = [ 0, 200 ];
+time_rois('targon') = [ 50, 250 ];
 
 t_series = -500:50:500;
-start_t = -250;
-end_t = 0;
-time_ind = t_series >= start_t & t_series <= end_t;
+
+figs_are = { 'administration', 'epochs', 'trialtypes' };
+
+[fig_i, fig_combs] = subset_plt.get_indices( figs_are );
+
+for idx = 1:numel(fig_i)
+  
+epoch_ind = find( strcmp(figs_are, 'epochs') );
+epoch = fig_combs{idx, epoch_ind};
+
+time_roi = time_rois(lower(epoch));
+  
+time_ind = t_series >= time_roi(1) & t_series <= time_roi(2);
+  
+subset = subset_plt(fig_i{idx});
+  
 subset.data = mean( subset.data(:, time_ind), 2 );
 
 meaned = subset.only( {'shuffled_confidence_low', 'shuffled_confidence_high', 'shuffled_mean'} );
-meaned = meaned.each1d( {'band', 'drugs'}, @rowops.mean );
+meaned = meaned.each1d( {'band', 'drugs', 'contexts'}, @rowops.mean );
 
-[I, C] = subset.get_indices( {'drugs', 'band', 'measure'} );
+[I, C] = subset.get_indices( {'drugs', 'band', 'contexts', 'measure'} );
 for i = 1:numel(I)
-  matching = meaned.only( C(i, 1:2) );
+  matching = meaned.only( C(i, 1:3) );
   assert( shape(matching, 1) == 1 );
   subset.data(I{i}, :) = subset.data(I{i}, :) - matching.data;
 end
@@ -134,10 +156,23 @@ end
 subset = subset.only( {'real_confidence_high', 'real_mean', 'real_confidence_low'} );
 
 pl = ContainerPlotter();
-figure(1); clf();
-pl.y_lim = [-1, 1.5];
+pl.y_lim = [-4 5];
+pl.order_panels_by = { 'otherNone', 'selfBoth' };
+clf( F );
 
-pl.bar( subset, 'drugs', 'trialtypes', 'band' );
+pl.bar( subset, 'drugs', 'trialtypes', {'contexts', 'band', 'administration'} );
+
+full_save_dir = fullfile( save_dir, 'bar_minus_null', char(subset('epochs')) );
+
+if ( DO_SAVE )
+  dsp2.util.general.require_dir( full_save_dir );
+  fname = '';
+  plt_save_name = dsp2.util.general.append_uniques( subset, fname, w_in );
+  separate_folders = true;
+  shared_utils.plot.save_fig( gcf, fullfile(full_save_dir, plt_save_name), {'epsc', 'png', 'fig'}, separate_folders );
+end
+
+end
 
 %%
 

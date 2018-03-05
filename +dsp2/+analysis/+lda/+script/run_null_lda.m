@@ -14,8 +14,10 @@ band_names = { 'beta', 'gamma' };
 
 assert( numel(freq_rois) == numel(band_names) );
 
+meas_type = 'normalized_power';
+
 io = dsp2.io.get_dsp_h5();
-base_p = dsp2.io.get_path( 'Measures', 'coherence', 'complete' );
+base_p = dsp2.io.get_path( 'Measures', meas_type, 'complete' );
 save_p = fullfile( conf.PATHS.analyses, 'lda', dsp2.process.format.get_date_dir() );
 dsp2.util.general.require_dir( save_p );
 
@@ -25,7 +27,7 @@ tmp_write( '-clear', tmp_fname );
 n_perms = 100;
 perc_training = 0.75;
 lda_group = 'outcomes';
-shuff_within = { 'trialtypes', 'administration' };
+shuff_within = { 'trialtypes', 'administration', 'regions' };
 per_context = true;
 is_drug = true;
 
