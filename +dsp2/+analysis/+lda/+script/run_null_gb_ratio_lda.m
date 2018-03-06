@@ -13,7 +13,8 @@ freq_rois('beta') = [ 15, 30 ];
 freq_rois('gamma') = [ 45, 60 ];
 
 io = dsp2.io.get_dsp_h5();
-base_p = dsp2.io.get_path( 'Measures', 'coherence', 'complete' );
+meas_type = 'normalized_power';
+base_p = dsp2.io.get_path( 'Measures', meas_type, 'complete' );
 save_p = fullfile( conf.PATHS.analyses, 'gamma_beta_ratio_lda', dsp2.process.format.get_date_dir() );
 dsp2.util.general.require_dir( save_p );
 
@@ -23,7 +24,7 @@ tmp_write( '-clear', tmp_fname );
 n_perms = 100;
 perc_training = 0.75;
 lda_group = 'outcomes';
-shuff_within = { 'trialtypes', 'administration' };
+shuff_within = { 'trialtypes', 'administration', 'regions' };
 
 if ( nargin < 2 )
   is_drug = false;
@@ -58,9 +59,14 @@ for i = 1:numel(epochs)
   
   measure = dsp2.process.format.fix_block_number( measure );
   measure = dsp2.process.format.fix_administration( measure );
-  measure = dsp2.process.format.fix_channels( measure );
-  measure = dsp2.process.format.only_pairs( measure );
+  
+  if ( strcmp(meas_type, 'coherence') )
+    measure = dsp2.process.format.fix_channels( measure );
+    measure = dsp2.process.format.only_pairs( measure );
+  end
+  
   measure = dsp2.process.format.rm_bad_days( measure );
+  
   if ( ~is_drug )
     [injection, rest] = measure.pop( 'unspecified' );
     if ( ~isempty(injection) )
@@ -82,6 +88,10 @@ for i = 1:numel(epochs)
     measure( 'contexts', measure.where({'other', 'none'}) ) = 'otherNone';
   end
   measure = measure.remove_nans_and_infs();  
+  
+  if ( strcmp(epochs{i}, 'targacq') )
+    measure = measure.rm( 'cued' );
+  end
   
   gamma = measure.freq_mean( freq_rois('gamma') );
   beta = measure.freq_mean( freq_rois('beta') );
