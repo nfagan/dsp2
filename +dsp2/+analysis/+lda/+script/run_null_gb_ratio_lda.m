@@ -99,7 +99,7 @@ for i = 1:numel(epochs)
   gamma.data = squeeze( gamma.data );
   beta.data = squeeze( beta.data );
   
-  meaned = gamma ./ beta;
+  meaned = remove_nans_and_infs( gamma ./ beta );
 
   C = meaned.pcombs( shuff_within );
 
