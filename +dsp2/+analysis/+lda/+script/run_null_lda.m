@@ -56,8 +56,6 @@ for i = 1:numel(epochs)
   p = io.fullfile( base_p, epochs{i} );
   measure = io.read( p, 'frequencies', [0, 100], 'time', [-500, 500] );
   
-  measure = measure.rm_nans_and_infs();
-  
   measure = dsp2.process.format.fix_block_number( measure );
   measure = dsp2.process.format.fix_administration( measure );
   
@@ -89,6 +87,10 @@ for i = 1:numel(epochs)
     measure( 'contexts', measure.where({'other', 'none'}) ) = 'otherNone';
   end
   measure = measure.remove_nans_and_infs();  
+  
+  if ( strcmp(epoch, 'targacq') )
+    measure = measure.rm( 'cued' );
+  end
   
   for j = 1:numel(freq_rois)
     tmp_write( {'\n\tProcessing roi %d of %d', j, numel(freq_rois)}, tmp_fname );
