@@ -88,7 +88,7 @@ for i = 1:numel(epochs)
   end
   measure = measure.remove_nans_and_infs();  
   
-  if ( strcmp(epoch, 'targacq') )
+  if ( strcmp(epochs{i}, 'targacq') )
     measure = measure.rm( 'cued' );
   end
   
