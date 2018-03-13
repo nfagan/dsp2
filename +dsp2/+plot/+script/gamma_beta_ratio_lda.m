@@ -1,12 +1,13 @@
 conf = dsp3.config.load();
-date_dir = '022618';
-% lda_dir = 'gamma_beta_ratio_lda';
-lda_dir = 'lda';
+% date_dir = '022618';
+date_dir = '030618';
+lda_dir = 'gamma_beta_ratio_lda';
+% lda_dir = 'lda';
 loadp = fullfile( conf.PATHS.dsp2_analyses, lda_dir, date_dir );
 
 DO_SAVE = true;
 IS_DRUG = true;
-is_old = true;
+is_old = false;
 is_per_context = true;
 
 if ( is_old )
@@ -35,7 +36,7 @@ end
 %%
 
 N = 100;
-w_in = { 'band', 'epochs', 'contexts', 'trialtypes', 'drugs', 'administration' };
+w_in = { 'regions', 'band', 'epochs', 'contexts', 'trialtypes', 'drugs', 'administration' };
 C = lda.pcombs( w_in );
 alpha = .05;
 
@@ -74,7 +75,7 @@ subset = transformed;
 
 subset = subset.rm( 'theta_alpha' );
 
-C = subset.pcombs( {'epochs', 'trialtypes', 'drugs', 'administration', 'band'} );
+C = subset.pcombs( {'regions', 'epochs', 'trialtypes', 'drugs', 'administration', 'band'} );
 
 for i = 1:size(C, 1)
 
@@ -90,13 +91,13 @@ for i = 1:size(C, 1)
   pl = ContainerPlotter();
   pl.x = t_series( time_ind );
   pl.main_line_width = 1;
-  pl.y_lim = [47, 57];
+  pl.y_lim = [30, 66];
   pl.x_lim = [ pl.x(1), pl.x(end) ];
 %   pl.shape = [1, 3];
   pl.shape = [];
   pl.y_label = '% Accurate';
 
-  plt.plot( pl, {'measure', 'drugs'}, {'band', 'trialtypes', 'contexts'} );
+  plt.plot( pl, {'measure', 'drugs'}, {'band', 'regions', 'trialtypes', 'contexts'} );
 
   f = FigureEdits( gcf );
   f.one_legend();
