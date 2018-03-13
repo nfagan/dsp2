@@ -107,7 +107,15 @@ for i = 1:numel(epochs)
   
   for j = 1:numel(freq_rois)
     tmp_write( {'\n\tProcessing roi %d of %d', j, numel(freq_rois)}, tmp_fname );
-    meaned = measure.freq_mean( freq_rois{j} );
+    
+    if ( ~is_per_freq )
+      meaned = measure.freq_mean( freq_rois{j} );
+    else
+      freq_ind = abs( measure.frequencies - freq_rois{j}(1) ) < .001;
+      assert( sum(freq_ind) == 1 );
+      meaned = measure;
+      meaned.data = meaned.data(:, freq_ind, :);
+    end
     meaned.data = squeeze( meaned.data );
     
     C = meaned.pcombs( shuff_within );
