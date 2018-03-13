@@ -6,15 +6,19 @@ conf = dsp2.config.load();
 
 epochs = { 'targacq', 'reward', 'targon' };
 
+is_per_freq = true;
+
 % freq_rois = { [4, 12], [15, 30], [35, 50] };
 % freq_rois = { [4, 12], [15, 30], [45, 60] };
 % band_names = { 'theta_alpha', 'beta', 'gamma' };
-freq_rois = { [15, 30], [35, 50] };
-band_names = { 'beta', 'gamma' };
+% freq_rois = { [15, 30], [35, 50] };
+% band_names = { 'beta', 'gamma' };
 
-assert( numel(freq_rois) == numel(band_names) );
+if ( ~is_per_freq )
+  assert( numel(freq_rois) == numel(band_names) );
+end
 
-meas_type = 'normalized_power';
+meas_type = 'coherence';
 
 io = dsp2.io.get_dsp_h5();
 base_p = dsp2.io.get_path( 'Measures', meas_type, 'complete' );
@@ -37,8 +41,17 @@ else
   fname = 'lda_all_contexts_with_ci.mat';
 end
 
-band_str = cellfun( @(x) sprintf('%d_%d', x(1), x(2)), freq_rois, 'un', false );
-band_str = strjoin( band_str, '_' );
+if ( ~is_per_freq )
+  band_str = cellfun( @(x) sprintf('%d_%d', x(1), x(2)), freq_rois, 'un', false );
+else
+  freqs = io.read( io.fullfile(base_p, epochs{1}, 'props', 'frequencies') );
+  freqs = freqs( freqs <= 100 );
+  freq_rois = arrayfun( @(x) [x, x], freqs, 'un', false );
+  band_names = cellfun(@(x) sprintf('%0.3f_%0.3f', x(1), x(2)), freq_rois, 'un', false );
+  band_str = band_names;  
+end
+
+band_str = strjoin( band_str(1:min(3, numel(band_str))), '_' );
 
 fname = sprintf( '%s_%s', band_str, fname );
 
