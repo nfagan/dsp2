@@ -33,7 +33,7 @@ perc_training = 0.75;
 lda_group = 'outcomes';
 shuff_within = { 'trialtypes', 'administration', 'regions' };
 per_context = true;
-is_drug = true;
+is_drug = false;
 
 if ( is_drug )
   fname = 'lda_all_contexts_with_ci_per_drug.mat';
