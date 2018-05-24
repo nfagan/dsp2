@@ -86,7 +86,7 @@ for i = 1:numel(epochs)
 
   n_freqs = size( measure.data, 2 );
 
-  C = meaned.pcombs( shuff_within );
+  C = measure.pcombs( shuff_within );
   
   for j = 1:n_freqs
     meaned = measure;
