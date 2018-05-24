@@ -1,7 +1,8 @@
 conf = dsp3.config.load();
 % date_dir = '022618';
 % date_dir = '030618';
-date_dir = '031318';
+% date_dir = '031318';
+date_dir = '031418';
 % lda_dir = 'gamma_beta_ratio_lda';
 lda_dir = 'lda';
 loadp = fullfile( conf.PATHS.dsp2_analyses, lda_dir, date_dir );
@@ -267,12 +268,12 @@ end
 across_band = Container( new_dat, new_labs );
 
 freqs = subset.frequencies;
-%%
+%% and plot
 
 pl = ContainerPlotter();
 
-figs_are = { 'epochs', 'contexts' };
-panels_are = [ {'drugs', 'administration'}, figs_are ];
+figs_are = { 'epochs' };
+panels_are = [ {'drugs', 'administration', 'contexts'}, figs_are ];
 lines_are = { 'measure' };
 fnames_are = unique( [figs_are, panels_are] );
 
