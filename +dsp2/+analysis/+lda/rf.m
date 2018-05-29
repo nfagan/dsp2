@@ -1,4 +1,4 @@
-function [cls, p_corr] = rf(obj, group_field, n_trees)
+function [cls, p_corr, Y] = rf(obj, group_field, n_trees)
 
 validate_input( obj, group_field );
 

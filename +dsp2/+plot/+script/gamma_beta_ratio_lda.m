@@ -67,7 +67,7 @@ transformed.data = transformed.data * 100;
 % subset = transformed.only( {'choice', 'targAcq', 'real_mean', 'real_confidence_low', 'real_confidence_high'} );
 % subset = transformed.only( {'choice', 'targAcq'} );
 
-DO_SAVE = true;
+DO_SAVE = false;
 
 t_series = -500:50:300;
 start_t = -500;
@@ -234,7 +234,7 @@ end
 
 %%  LINE FOR ONE TIME WINDOW
 
-DO_SAVE = true;
+DO_SAVE = false;
 
 t_series = lda.get_time_series();
 t_start = [-250, 0];
@@ -309,8 +309,11 @@ for i = 1:numel(I)
   fname = '';
   plt_save_name = strjoin( flat_uniques(subset_plt, fnames_are), '_' );
   separate_folders = true;
-  shared_utils.plot.save_fig( gcf, fullfile(full_save_dir, plt_save_name) ...
-    , {'epsc', 'png', 'fig'}, separate_folders );
+  
+  if ( DO_SAVE )
+    shared_utils.plot.save_fig( gcf, fullfile(full_save_dir, plt_save_name) ...
+      , {'epsc', 'png', 'fig'}, separate_folders );
+  end
   
 end
 

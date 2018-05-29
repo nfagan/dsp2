@@ -2,11 +2,9 @@ function run_null_rf()
 
 dsp2.cluster.init();
 
-import dsp2.util.cluster.tmp_write;
-
 conf = dsp2.config.load();
 
-epochs = { 'targacq', 'reward', 'targon' };
+epoch = 'targacq';
 
 is_per_freq = true;
 n_trees = 50;
@@ -45,9 +43,14 @@ end
 
 all_lda_results = Container();
 
-for i = 1:numel(epochs)
-  p = io.fullfile( base_p, epochs{i} );
-  measure = io.read( p, 'frequencies', [0, 100], 'time', [-500, 500] );
+p = io.fullfile( base_p, epoch );
+days = io.get_days( p );
+
+for i = 1:numel(days)
+  fprintf( '\n %d of %d', i, numel(days) );
+  
+%   p = io.fullfile( base_p, epochs{i} );
+  measure = io.read( p, 'frequencies', [0, 100], 'time', [-500, 500], 'only', days{i} );
   
   measure = dsp2.process.format.fix_block_number( measure );
   measure = dsp2.process.format.fix_administration( measure );
@@ -58,6 +61,8 @@ for i = 1:numel(epochs)
   end
   
   measure = dsp2.process.format.rm_bad_days( measure );
+  
+  if ( isempty(measure) ), continue; end
   
   if ( ~is_drug )
     [injection, rest] = measure.pop( 'unspecified' );
@@ -80,19 +85,30 @@ for i = 1:numel(epochs)
   end
   measure = measure.remove_nans_and_infs();  
   
-  if ( strcmp(epochs{i}, 'targacq') )
+  if ( strcmp(epoch, 'targacq') )
     measure = measure.rm( 'cued' );
+  end
+  
+  if ( isempty(measure) ), continue; end
+  
+  if ( ~is_drug )
+    measure = collapse( measure, 'administration' );
   end
 
   n_freqs = size( measure.data, 2 );
+  frequencies = measure.frequencies;
 
   C = measure.pcombs( shuff_within );
   
   for j = 1:n_freqs
+    fprintf( '\n\t %d of %d', j, n_freqs );
+    
     meaned = measure;
     meaned.data = squeeze( measure.data(:, j, :) );
     
     for ii = 1:size(C, 1)
+      fprintf( '\n\t\t %d of %d', ii, size(C, 1) );
+      
       subset = meaned.only( C(ii, :) );
 
       real_perc_correct = zeros( 1, size(subset.data, 2) );
@@ -100,14 +116,16 @@ for i = 1:numel(epochs)
       shuf_perc_correct = zeros( 1, size(subset.data, 2) );
       shuf_perc_std = zeros( 1, size(subset.data, 2) );
 
-      for k = 1:size( subset.data, 2 )
+      parfor k = 1:size( subset.data, 2 )
         current = subset;
         current.data = current.data(:, k);
         shuf_percs = zeros( 1, n_null_perms );
         
-        [~, real_percs] = dsp2.analysis.lda.rf( current, lda_group, n_trees );
+        [cls_labs, real_percs, real_labs] = dsp2.analysis.lda.rf( current, lda_group, n_trees );
+        
+%         [X, Y] = perfcurve( real_labs, cls_labs, 'both' );
 
-        parfor h = 1:n_null_perms
+        for h = 1:n_null_perms
           current = subset.shuffle();
           current.data = current.data(:, k);
           [~, shuffed_perc_correct] = ...
@@ -123,7 +141,7 @@ for i = 1:numel(epochs)
 
       clpsed = subset.one();
       clpsed = clpsed.require_fields( {'band', 'measure'} );
-      clpsed( 'band' ) = 'band__NaN';
+      clpsed( 'band' ) = sprintf( 'band__%0.3f', frequencies(j) );
 
       clpsed = extend( clpsed, clpsed, clpsed, clpsed );
       clpsed( 'measure', 1 ) = 'real_percent';
@@ -136,6 +154,12 @@ for i = 1:numel(epochs)
       all_lda_results = all_lda_results.append( clpsed );
     end
   end
+  
+  one_day = only( all_lda_results, days{i} );
+  one_day_fname = sprintf( '%s_%s', days{i}, fname );
+  save( fullfile(save_p, one_day_fname), 'one_day' );
 end
 
 save( fullfile(save_p, fname), 'all_lda_results' );
+
+end
