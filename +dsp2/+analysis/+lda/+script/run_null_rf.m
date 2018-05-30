@@ -17,8 +17,6 @@ meas_type = 'coherence';
 
 io = dsp2.io.get_dsp_h5();
 base_p = dsp2.io.get_path( 'Measures', meas_type, 'complete' );
-save_p = fullfile( conf.PATHS.analyses, 'rf', dsp2.process.format.get_date_dir() );
-dsp2.util.general.require_dir( save_p );
 
 n_real_perms = 1;
 n_null_perms = 1;
@@ -26,13 +24,18 @@ n_null_perms = 1;
 lda_group = 'outcomes';
 shuff_within = { 'trialtypes', 'administration', 'regions' };
 per_context = true;
-is_drug = true;
+is_drug = false;
 
 if ( is_drug )
   fname = 'rf_all_contexts_with_ci_per_drug.mat';
+  subdir = 'drug';
 else
   fname = 'rf_all_contexts_with_ci.mat';
+  subdir = 'nondrug';
 end
+
+save_p = fullfile( conf.PATHS.analyses, 'rf', subdir, dsp2.process.format.get_date_dir() );
+dsp2.util.general.require_dir( save_p );
 
 if ( per_context )
   shuff_within{end+1} = 'contexts';
@@ -74,6 +77,11 @@ for i = 1:numel(days)
   else
     measure = measure.rm( 'unspecified' );
   end
+  
+  if ( isempty(measure) )
+    continue;
+  end
+  
   measure = measure.rm( 'errors' );
   if ( ~per_context )
     measure = measure.replace( {'self', 'none'}, 'antisocial' );
