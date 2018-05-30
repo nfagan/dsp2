@@ -1,10 +1,12 @@
+function run_null_lda()
+
 dsp2.cluster.init();
 
 import dsp2.util.cluster.tmp_write;
 
 conf = dsp2.config.load();
 
-epochs = { 'targacq', 'reward', 'targon' };
+epochs = { 'targacq' };
 
 is_per_freq = true;
 
@@ -170,3 +172,5 @@ for i = 1:numel(epochs)
 end
 
 save( fullfile(save_p, fname), 'all_lda_results' );
+
+end
