@@ -22,9 +22,10 @@ n_real_perms = 1;
 n_null_perms = 1;
 
 lda_group = 'outcomes';
-shuff_within = { 'trialtypes', 'administration', 'regions' };
+shuff_within = { 'trialtypes', 'administration', 'regions', 'days' };
 per_context = true;
 is_drug = false;
+is_per_day = false;
 
 if ( is_drug )
   fname = 'rf_all_contexts_with_ci_per_drug.mat';
@@ -47,13 +48,25 @@ end
 all_lda_results = Container();
 
 p = io.fullfile( base_p, epoch );
+
 days = io.get_days( p );
 
-for i = 1:numel(days)
-  fprintf( '\n %d of %d', i, numel(days) );
+if ( is_per_day )
+  n_days = numel(days);
+else
+  n_days = 1;
+end
+
+for i = 1:n_days
+  fprintf( '\n %d of %d', i, n_days );
+
+  opts = { 'frequencies', [0, 100], 'time', [-500, 500] };
   
-%   p = io.fullfile( base_p, epochs{i} );
-  measure = io.read( p, 'frequencies', [0, 100], 'time', [-500, 500], 'only', days{i} );
+  if ( is_per_day )
+    opts = [ opts, {'only', days{i}} ];
+  end
+  
+  measure = io.read( p, opts{:} );
   
   measure = dsp2.process.format.fix_block_number( measure );
   measure = dsp2.process.format.fix_administration( measure );
