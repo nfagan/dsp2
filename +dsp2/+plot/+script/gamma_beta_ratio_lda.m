@@ -5,10 +5,13 @@ conf = dsp3.config.load();
 date_dir = '031418';
 % lda_dir = 'gamma_beta_ratio_lda';
 lda_dir = 'lda';
+
+% date_dir = '053018';
+
 loadp = fullfile( conf.PATHS.dsp2_analyses, lda_dir, date_dir );
 
-DO_SAVE = true;
-IS_DRUG = true;
+DO_SAVE = false;
+IS_DRUG = false;
 is_old = false;
 is_per_context = true;
 
@@ -39,13 +42,15 @@ end
 %%
 
 N = 100;
-w_in = { 'regions', 'band', 'epochs', 'contexts', 'trialtypes', 'drugs', 'administration' };
+w_in = { 'days', 'regions', 'band', 'epochs', 'contexts', 'trialtypes', 'drugs', 'administration' };
 C = lda.pcombs( w_in );
 alpha = .05;
 
 transformed = Container();
 
 for i = 1:size(C, 1)
+  fprintf( '\n %d of %d', i, size(C, 1) );
+  
   shuffed_mean = lda.only( [C(i, :), 'shuffled_percent'] );
   shuffed_dev = lda.only( [C(i, :), 'shuffled_std'] );
   real_mean = lda.only( [C(i, :), 'real_percent'] );
@@ -119,7 +124,9 @@ end
 
 %% BAR MINUS NULL
 
-subset_plt = transformed;
+DO_SAVE = false;
+
+subset_plt = transformed({'targAcq', 'choice'});
 
 F = figure(1);
 
@@ -251,6 +258,8 @@ new_dat = zeros( numel(I), n_band );
 new_labs = SparseLabels();
 
 for i = 1:numel(I)
+  fprintf( '\n %d of %d', i, numel(I) );
+  
   subset_band = subset(I{i});
   bands = subset_band( 'band' );
   
@@ -269,6 +278,8 @@ across_band = Container( new_dat, new_labs );
 
 freqs = subset.frequencies;
 %% and plot
+
+DO_SAVE = true;
 
 pl = ContainerPlotter();
 
@@ -316,5 +327,54 @@ for i = 1:numel(I)
   end
   
 end
+
+%%  new bar minus null
+
+banddat = across_band.data;
+bandlabs = fcat.from( across_band.labels );
+
+bands = { [15, 25], [45, 60] };
+bandnames = { 'beta', 'gamma' };
+
+sub_each = setdiff( categories(bandlabs), 'measure' );
+
+[newlabs, I] = keepeach( bandlabs', sub_each );
+
+newdat = nan( length(newlabs) * numel(bands), 1 );
+totlabs = fcat.like( newlabs );
+
+for i = 1:numel(bands)
+  
+  f_ind = freqs >= bands{i}(1) & freqs <= bands{i}(2);
+  f_dat = nanmean( banddat(:, f_ind), 2 );
+  
+  for j = 1:numel(I)
+    real_ind = intersect( I{j}, find(bandlabs, 'real_mean') );
+    null_ind = intersect( I{j}, find(bandlabs, 'shuffled_mean') );
+
+    assert( numel(real_ind) == numel(null_ind) && numel(null_ind) == 1 );
+
+    stp = (i-1) * numel(bands) + j;
+
+    newdat(stp) = banddat(real_ind) - banddat(null_ind);
+  end
+  
+  setcat( newlabs, 'band', bandnames{i} );
+  append( totlabs, newlabs );
+end
+
+setcat( totlabs, 'measure', 'real minus null' );
+
+%%
+
+pl = plotlabeled();
+
+x_is = 'band';
+groups_are = { 'contexts' };
+panels_are = { 'trialtypes', 'measure' };
+
+axs = pl.bar( labeled(newdat, totlabs), x_is, groups_are, panels_are );
+
+arrayfun( @(x) ylabel(x, '% Difference (real - null)'), axs );
 
 
