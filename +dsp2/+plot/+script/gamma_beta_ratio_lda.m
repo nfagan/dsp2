@@ -279,7 +279,7 @@ across_band = Container( new_dat, new_labs );
 freqs = subset.frequencies;
 %% and plot
 
-DO_SAVE = true;
+DO_SAVE = false;
 
 pl = ContainerPlotter();
 
@@ -292,7 +292,7 @@ plt = across_band;
 
 [I, C] = plt.get_indices( figs_are );
 
-f = figure(1);
+f = figure(2);
 
 for i = 1:numel(I)
   
@@ -333,8 +333,8 @@ end
 banddat = across_band.data;
 bandlabs = fcat.from( across_band.labels );
 
-bands = { [15, 25], [45, 60] };
-bandnames = { 'beta', 'gamma' };
+bands = { [4, 8], [15, 25], [45, 60] };
+bandnames = { 'theta', 'beta', 'gamma' };
 
 sub_each = setdiff( categories(bandlabs), 'measure' );
 
@@ -354,9 +354,9 @@ for i = 1:numel(bands)
 
     assert( numel(real_ind) == numel(null_ind) && numel(null_ind) == 1 );
 
-    stp = (i-1) * numel(bands) + j;
+    stp = (i-1) * numel(I) + j;
 
-    newdat(stp) = banddat(real_ind) - banddat(null_ind);
+    newdat(stp) = f_dat(real_ind) - f_dat(null_ind);
   end
   
   setcat( newlabs, 'band', bandnames{i} );
