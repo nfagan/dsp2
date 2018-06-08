@@ -107,6 +107,12 @@ for i = 1:numel(epochs)
     measure = measure.rm( 'cued' );
   end
   
+  C = measure.pcombs( shuff_within );
+  
+  store_real_percs = zeros( size(C, 1), numel(freq_rois), size(measure.data, 3), n_perms );
+  store_null_percs = zeros( size(store_real_percs) );
+  store_labs = SparseLabels();
+  
   for j = 1:numel(freq_rois)
     tmp_write( {'\n\tProcessing roi %d of %d', j, numel(freq_rois)}, tmp_fname );
     
@@ -119,8 +125,6 @@ for i = 1:numel(epochs)
       meaned.data = meaned.data(:, freq_ind, :);
     end
     meaned.data = squeeze( meaned.data );
-    
-    C = meaned.pcombs( shuff_within );
     
     for ii = 1:size(C, 1)
       subset = meaned.only( C(ii, :) );
@@ -152,6 +156,9 @@ for i = 1:numel(epochs)
         real_perc_std(k) = std( real_percs );
         shuf_perc_correct(k) = mean( shuf_percs );
         shuf_perc_std(k) = std( shuf_percs );
+        
+        store_real_percs(ii, j, k, :) = real_percs;
+        store_null_percs(ii, j, k, :) = shuf_percs;
       end
 
       clpsed = subset.one();
@@ -167,8 +174,28 @@ for i = 1:numel(epochs)
       clpsed.data = [ real_perc_correct; real_perc_std; shuf_perc_correct; shuf_perc_std ];
 
       all_lda_results = all_lda_results.append( clpsed );
+      
+      if ( j == 1 )
+        store_labs = append( store_labs, one(subset.labels) );
+      end
     end
   end
+  
+  all_real_percs = Container( store_real_percs, store_labs );
+  all_null_percs = Container( store_null_percs, store_labs );
+  all_real_percs = require_fields( all_real_percs, 'measure' );
+  all_null_percs = require_fields( all_null_percs, 'measure' );
+  all_real_percs('measure') = 'real_percent';
+  all_null_percs('measure') = 'shuffled_percent';
+  all_percs = append( all_real_percs, all_null_percs ); 
+  all_percs = SignalContainer( all_percs );
+  
+  if ( is_per_freq )
+    all_percs.frequencies = measure.frequencies;
+  end
+  
+  all_data_fname = sprintf( '%s_all_data', epochs{i} );
+  save( fullfile(save_p, fname), 'all_percs', '-v7.3' );  
 end
 
 save( fullfile(save_p, fname), 'all_lda_results' );

@@ -453,9 +453,14 @@ skip_missing = strcmp( handle_missing, 'skip' );
 is_zero = events(:,1) == 0;
 non_zero_events = events( ~is_zero, : );
 
+orig_wsize = w_size;
+
 amount_ms = (start_stop(2) - start_stop(1)) * (fs/1e3);
 start = start_stop(1)/1e3;
 w_size = w_size/1e3;
+
+t_series = start_stop(1):(fs/1e3):start_stop(2)-(fs/1e3);
+t_series = t_series - (orig_wsize/2);
 
 non_zero_events = non_zero_events + start;
 non_zero_events = non_zero_events - w_size/2; % properly center each window.
