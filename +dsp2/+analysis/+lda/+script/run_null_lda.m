@@ -181,7 +181,7 @@ for i = 1:numel(epochs)
 
       all_lda_results = all_lda_results.append( clpsed );
       
-      if ( j == 1 )
+      if ( j == start )
         store_labs = append( store_labs, one(subset.labels) );
       end
     end
@@ -201,9 +201,9 @@ for i = 1:numel(epochs)
   end
   
   all_data_fname = sprintf( '%s_%d_%d_all_data', epochs{i}, start, stop );
-  save( fullfile(save_p, fname), 'all_percs', '-v7.3' );  
+  save( fullfile(save_p, all_data_fname), 'all_percs', '-v7.3' );  
 end
 
-save( fullfile(save_p, sprintf('%s_%d_%d', fname, start, stop)), 'all_lda_results' );
+save( fullfile(save_p, sprintf('%d_%d_%s', start, stop, fname)), 'all_lda_results' );
 
 end
