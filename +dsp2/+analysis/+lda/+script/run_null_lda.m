@@ -1,4 +1,7 @@
-function run_null_lda()
+function run_null_lda(start, stop)
+
+if ( nargin < 1 ), start = 1; end
+if ( nargin < 2 ), stop = []; end
 
 dsp2.cluster.init();
 
@@ -113,7 +116,10 @@ for i = 1:numel(epochs)
   store_null_percs = zeros( size(store_real_percs) );
   store_labs = SparseLabels();
   
-  for j = 1:numel(freq_rois)
+  if ( isempty(start) ), start = 1; end
+  if ( isempty(stop) ), stop = numel( freq_rois ); end
+  
+  for j = start:stop
     tmp_write( {'\n\tProcessing roi %d of %d', j, numel(freq_rois)}, tmp_fname );
     
     if ( ~is_per_freq )
@@ -194,10 +200,10 @@ for i = 1:numel(epochs)
     all_percs.frequencies = measure.frequencies;
   end
   
-  all_data_fname = sprintf( '%s_all_data', epochs{i} );
+  all_data_fname = sprintf( '%s_%d_%d_all_data', epochs{i}, start, stop );
   save( fullfile(save_p, fname), 'all_percs', '-v7.3' );  
 end
 
-save( fullfile(save_p, fname), 'all_lda_results' );
+save( fullfile(save_p, sprintf('%s_%d_%d', fname, start, stop)), 'all_lda_results' );
 
 end
