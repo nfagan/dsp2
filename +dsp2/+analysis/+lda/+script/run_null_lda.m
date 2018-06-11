@@ -120,7 +120,7 @@ for i = 1:numel(epochs)
   if ( isempty(stop) ), stop = numel( freq_rois ); end
   
   for j = start:stop
-    tmp_write( {'\n\tProcessing roi %d of %d', j, stop, tmp_fname );
+    tmp_write( {'\n\tProcessing roi %d of %d', j, stop}, tmp_fname );
     
     if ( ~is_per_freq )
       meaned = measure.freq_mean( freq_rois{j} );
