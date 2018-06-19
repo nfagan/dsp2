@@ -24,13 +24,23 @@ if ( ~is_per_freq )
 end
 
 meas_type = 'coherence';
+analysis_type = 'svm';
+
+switch ( analysis_type )
+  case 'svm'
+    analysis_func = @dsp2.analysis.lda.svm;
+  case 'lda'
+    analysis_func = @dsp2.analysis.lda.lda;
+  otherwise
+    error( 'Unrecognized analysis type "%s".', analysis_type )
+end
 
 io = dsp2.io.get_dsp_h5();
 base_p = dsp2.io.get_path( 'Measures', meas_type, 'complete' );
-save_p = fullfile( conf.PATHS.analyses, 'lda', dsp2.process.format.get_date_dir() );
+save_p = fullfile( conf.PATHS.analyses, analysis_type, dsp2.process.format.get_date_dir() );
 dsp2.util.general.require_dir( save_p );
 
-tmp_fname = 'lda.txt';
+tmp_fname = sprintf( '%s.txt', analysis_type );
 tmp_write( '-clear', tmp_fname );
 
 n_perms = 100;
@@ -148,14 +158,16 @@ for i = 1:numel(epochs)
         real_percs = zeros( 1, n_perms );
         
         parfor h = 1:n_perms
-          [~, real_perc] = dsp2.analysis.lda.lda( current, lda_group, perc_training );
+          [~, real_perc] = analysis_func( current, lda_group, perc_training );
+          
           real_percs(h) = real_perc;
         end
         parfor h = 1:n_perms
           current = subset.shuffle();
           current.data = current.data(:, k);
-          [~, shuffed_perc_correct] = ...
-            dsp2.analysis.lda.lda( current, lda_group, perc_training );
+          
+          [~, shuffed_perc_correct] = analysis_func( current, lda_group, perc_training );
+          
           shuf_percs(h) = shuffed_perc_correct;
         end
 
