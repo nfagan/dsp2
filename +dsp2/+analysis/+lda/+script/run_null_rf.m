@@ -14,6 +14,7 @@ if ( ~is_per_freq )
 end
 
 meas_type = 'coherence';
+analysis_type = 'svm';
 
 io = dsp2.io.get_dsp_h5();
 base_p = dsp2.io.get_path( 'Measures', meas_type, 'complete' );
@@ -142,7 +143,14 @@ for i = 1:n_days
         current.data = current.data(:, k);
         shuf_percs = zeros( 1, n_null_perms );
         
-        [cls_labs, real_percs, real_labs] = dsp2.analysis.lda.rf( current, lda_group, n_trees );
+        switch ( analysis_type )
+          case 'rf'
+            [cls_labs, real_percs, real_labs] = dsp2.analysis.lda.rf( current, lda_group, n_trees );
+          case 'svm'
+            real_percs = dsp2.analysis.lda.svm( current, lda_group );
+          otherwise
+            error( 'Unrecognized analysis kind "%s".', analysis_kind );
+        end
         
 %         [X, Y] = perfcurve( real_labs, cls_labs, 'both' );
 
