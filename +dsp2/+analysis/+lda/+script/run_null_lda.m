@@ -46,8 +46,8 @@ tmp_write( '-clear', tmp_fname );
 n_perms = 100;
 perc_training = 0.75;
 lda_group = 'outcomes';
-% shuff_within = { 'trialtypes', 'administration', 'regions', 'days' };
-shuff_within = { 'trialtypes', 'administration', 'regions' };
+shuff_within = { 'trialtypes', 'administration', 'regions', 'days' };
+% shuff_within = { 'trialtypes', 'administration', 'regions' };
 per_context = true;
 is_drug = false;
 
