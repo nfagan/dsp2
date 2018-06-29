@@ -24,7 +24,7 @@ if ( ~is_per_freq )
 end
 
 meas_type = 'coherence';
-analysis_type = 'svm';
+analysis_type = 'lda';
 
 switch ( analysis_type )
   case 'svm'
