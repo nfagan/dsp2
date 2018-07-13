@@ -15,6 +15,7 @@ if ( ~is_drug )
 %   subdir = 'null';
 %   subdir = fullfile( '121117', 'non_drug_null' ); % reward
   subdir = fullfile( '120717', 'non_drug_null' ); % targacq
+%   subdir = fullfile( '071318', 'non_drug_null' ); % targacq, redux
 %   subdir = fullfile( '121217', 'non_drug_null' ); % targon
 %   subdir = 'null';
 else
@@ -45,6 +46,10 @@ for i = 1:numel( epochs )
     end
     current = current.for_each_1d( m_within, @Container.nanmean_1d );
     loaded{k} = current;
+    
+%     if ( ~contains(newer, current('days')) )
+%       loaded{k} = SignalContainer( Container() );
+%     end
   end
   per_epoch{i} = loaded;
 end
@@ -218,7 +223,7 @@ for i = 1:numel(I)
   sig_ind = sig_ind.append( sig_ind_ );
 end
 
-figure(1); clf();
+figure(2); clf();
 
 pl = ContainerPlotter();
 pl.compare_series = false;

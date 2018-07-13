@@ -3,6 +3,7 @@
 import dsp2.util.cluster.tmp_write;
 
 IS_DRUG = false;
+KEEP_FIRST_350 = true;
 
 dsp2.cluster.init();
 conf = dsp2.config.load();
@@ -45,7 +46,9 @@ for ii = 1:numel(all_days)
   if ( ~IS_DRUG )
     [injection, rest] = signals.pop( 'unspecified' );
     if ( ~isempty(injection) )
-      injection = injection.parfor_each( 'days', @dsp2.process.format.keep_350, 350 );
+      if ( KEEP_FIRST_350 )
+        injection = injection.parfor_each( 'days', @dsp2.process.format.keep_350, 350 );
+      end
 %       injection = dsp2.process.format.keep_350( injection, 350 );
       signals = append( injection, rest );
     end
