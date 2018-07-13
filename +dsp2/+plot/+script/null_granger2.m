@@ -7,8 +7,8 @@ import dsp2.util.general.load_mats;
 m_within = { 'outcomes', 'trialtypes', 'regions', 'permuted', 'channels' ...
   , 'epochs', 'days', 'administration' };
 
-is_drug = true;
-DO_SAVE = true;
+is_drug = false;
+DO_SAVE = false;
 use_sd_thresh = true;
 
 if ( ~is_drug )
@@ -224,7 +224,7 @@ pl = ContainerPlotter();
 pl.compare_series = false;
 pl.marker_size = 2;
 pl.add_ribbon = true;
-pl.add_legend = true;
+pl.add_legend = false;
 pl.main_line_width = 1;
 pl.x = non_permuted.frequencies;
 pl.shape = [1, 2];
