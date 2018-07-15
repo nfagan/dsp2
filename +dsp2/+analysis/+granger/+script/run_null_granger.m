@@ -11,7 +11,7 @@ conf = dsp2.config.load();
 run( fullfile(conf.PATHS.repositories, 'mvgc_v1.0', 'startup.m') );
 %   get signals
 io = dsp2.io.get_dsp_h5();
-epoch = 'reward';
+epoch = 'targacq';
 tmp_fname = sprintf( 'null_granger_%s.txt', epoch );
 tmp_write( '-clear', tmp_fname );
 P = io.fullfile( 'Signals/none/complete', epoch );
