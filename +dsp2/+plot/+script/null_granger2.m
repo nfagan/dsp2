@@ -224,13 +224,19 @@ for i = 1:numel(I)
   sig_ind = sig_ind.append( sig_ind_ );
 end
 
-figure(2); clf();
+%   only real data
+to_stats = only( to_stats, 'permuted__false' );
+
+fig = figure(2); clf();
+
+set( fig, 'defaultLegendAutoUpdate', 'off');
 
 pl = ContainerPlotter();
 pl.compare_series = false;
+pl.one_legend = true;
 pl.marker_size = 2;
 pl.add_ribbon = true;
-pl.add_legend = false;
+pl.add_legend = true;
 pl.main_line_width = 1;
 pl.x = non_permuted.frequencies;
 pl.shape = [1, 2];
