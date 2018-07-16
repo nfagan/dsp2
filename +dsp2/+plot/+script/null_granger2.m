@@ -15,6 +15,7 @@ if ( ~is_drug )
 %   subdir = 'null';
 %   subdir = fullfile( '121117', 'non_drug_null' ); % reward
   subdir = fullfile( '120717', 'non_drug_null' ); % targacq
+%   subdir = fullfile( '071518', 'non_drug_null' );
 %   subdir = fullfile( '071318', 'non_drug_null' ); % targacq, redux
 %   subdir = fullfile( '121217', 'non_drug_null' ); % targon
 %   subdir = 'null';
@@ -154,7 +155,7 @@ end
 
 %%  lines MINUS NULL
 
-DO_SAVE = true;
+DO_SAVE = false;
 subtract_null = false;
 base_fname = 'no_bad_days';
 
