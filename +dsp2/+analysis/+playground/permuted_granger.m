@@ -40,6 +40,7 @@ defaults.inv_func =     @norminv;
 defaults.n_dist_p =     2;  % n parameters in the distribution
 defaults.max_lags =     1e3;
 defaults.do_permute =   true;
+defaults.fs_divisor =   1;
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
 
@@ -49,8 +50,8 @@ fs =          signals.fs;
 n_vars =      size( X, 1 );
 n_obs =       size( X, 2 );
 n_trials =    size( X, 3 );
-% n_freqs =     fs;
-n_freqs =     fs/2;
+n_freqs =     fs / params.fs_divisor;
+% n_freqs =     fs/2;
 max_lags =    params.max_lags;
 regression_method = params.regression_method;
 model_order = params.model_order;

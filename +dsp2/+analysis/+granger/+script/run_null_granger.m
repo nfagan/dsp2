@@ -1,3 +1,5 @@
+function run_null_granger()
+
 %%  RUN_NULL_GRANGER -- initialize, setup paths, etc.
 
 import dsp2.util.cluster.tmp_write;
@@ -17,6 +19,10 @@ tmp_write( '-clear', tmp_fname );
 P = io.fullfile( 'Signals/none/complete', epoch );
 %   set up save paths
 date_dir = dsp2.process.format.get_date_dir();
+
+%   new
+date_dir = sprintf( '%s_fullfreqs', date_dir ); 
+
 if ( IS_DRUG )
   save_path = fullfile( conf.PATHS.analyses, 'granger', date_dir, 'drug_effect_null', epoch );
 else
@@ -104,6 +110,17 @@ for ii = 1:numel(all_days)
   max_lags = 5e3;
   dist_type = 'ev';
   estimate_model_order = false;
+  fs_divisor = 1;
+  
+  params.n_perms = n_perms;
+  params.n_perms_in_granger = n_perms_in_granger;
+  params.n_trials = n_trials;
+  params.max_lags = max_lags;
+  params.dist_type = dist_type;
+  params.estimate_model_order = estimate_model_order;
+  params.fs_divisor = fs_divisor;
+  params.is_drug = IS_DRUG;
+  params.kept_350 = KEEP_FIRST_350;
 
 %   shuffle_within = { 'context', 'trialtypes' };
   shuffle_within = { 'context', 'trialtypes', 'drugs', 'administration' };
@@ -118,7 +135,7 @@ for ii = 1:numel(all_days)
 
     try
       for j = 1:size(cmbs, 1)
-        iters = cell( 1, n_perms );
+        iters = cell( 1, n_perms+1 );
         parfor k = 1:n_perms+1
           warning( 'off', 'all' );
           ctx = one_day.only( cmbs(j, :) );
@@ -142,6 +159,7 @@ for ii = 1:numel(all_days)
               , 'max_lags', max_lags ...
               , 'do_permute', false ...
               , 'estimate_model_order', estimate_model_order ...
+              , 'fs_divisor', fs_divisor ...
             );
             G.labels = G.labels.set_field( 'iteration', sprintf('iteration__%d', k) );
             out_cont = out_cont.append( G );
@@ -168,7 +186,7 @@ for ii = 1:numel(all_days)
 
     fname = sprintf( [granger_fname, '%s.mat'], days{i} );
 
-    save( fullfile(save_path, fname), 'conts' );
+    save( fullfile(save_path, fname), 'conts', 'params' );
   end
   
 end
