@@ -104,7 +104,7 @@ for ii = 1:numel(all_days)
   signals_( 'context', signals_.where({'other', 'none'}) ) = 'context__othernone';
 
   days = signals_( 'days' );
-  n_perms = 0;
+  n_perms = 100;
   n_perms_in_granger = 1; % only calculate granger once
   n_trials = Inf; % use all trials for that distribution
   max_lags = 5e3;
