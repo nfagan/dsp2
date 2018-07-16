@@ -12,9 +12,9 @@ DO_SAVE = false;
 use_sd_thresh = true;
 
 if ( ~is_drug )
-%   subdir = 'null';
+  subdir = 'null';  % MAIN NON_DRUG RESULT 
 %   subdir = fullfile( '121117', 'non_drug_null' ); % reward
-  subdir = fullfile( '120717', 'non_drug_null' ); % targacq
+%   subdir = fullfile( '120717', 'non_drug_null' ); % targacq
 %   subdir = fullfile( '071518', 'non_drug_null' );
 %   subdir = fullfile( '071318', 'non_drug_null' ); % targacq, redux
 %   subdir = fullfile( '121217', 'non_drug_null' ); % targon
@@ -25,7 +25,7 @@ end
 
 conf = dsp2.config.load();
 load_p = fullfile( conf.PATHS.analyses, 'granger', subdir );
-% epochs = dsp2.util.general.dirnames( load_p, 'folders' );
+
 epochs = { 'targacq' };
 per_epoch = cell( 1, numel(epochs) );
 names = cell( 1, numel(epochs) );
@@ -227,7 +227,7 @@ end
 %   only real data
 to_stats = only( to_stats, 'permuted__false' );
 
-fig = figure(2); clf();
+fig = figure(1); clf();
 
 set( fig, 'defaultLegendAutoUpdate', 'off');
 

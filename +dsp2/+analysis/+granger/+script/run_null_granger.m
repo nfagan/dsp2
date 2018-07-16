@@ -3,7 +3,7 @@
 import dsp2.util.cluster.tmp_write;
 
 IS_DRUG = false;
-KEEP_FIRST_350 = false;
+KEEP_FIRST_350 = true;
 
 dsp2.cluster.init();
 conf = dsp2.config.load();
