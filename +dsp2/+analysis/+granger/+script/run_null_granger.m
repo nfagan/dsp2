@@ -1,4 +1,7 @@
-function run_null_granger()
+function run_null_granger(days_start, days_stop)
+
+if ( nargin < 2 ), days_stop = []; end
+if ( nargin < 1 ), days_start = 1; end
 
 %%  RUN_NULL_GRANGER -- initialize, setup paths, etc.
 
@@ -40,6 +43,16 @@ current_files = dsp2.util.general.dirnames( save_path, '.mat' );
 current_days = cellfun( @(x) x(numel(granger_fname)+1:end-4), current_files, 'un', false );
 all_days = io.get_days( P );
 all_days = setdiff( all_days, current_days );
+
+if ( isempty(days_stop) )
+  days_stop = numel( all_days );
+else
+  assert( days_stop <= numel(all_days), 'Day index (%d) is out of bounds (%d)' ...
+    , days_stop, numel(all_days) );
+end
+
+all_days = all_days(days_start:days_stop);
+
 %   load all at once for cluster, vs. load one at a time on local
 if ( conf.CLUSTER.use_cluster )
   all_days = { all_days };
