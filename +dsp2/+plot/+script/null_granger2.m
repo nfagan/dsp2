@@ -14,7 +14,8 @@ use_sd_thresh = true;
 if ( ~is_drug )
 %   subdir = 'null';  % MAIN NON_DRUG RESULT 
 %   subdir = fullfile( '121117', 'non_drug_null' ); % reward
-  subdir = fullfile( '120717', 'non_drug_null' ); % targacq
+%   subdir = fullfile( '120717', 'non_drug_null' ); % targacq
+  subdir = fullfile( '071618_fullfreqs', 'non_drug_null' );
 %   subdir = fullfile( '071518', 'non_drug_null' );
 %   subdir = fullfile( '071318', 'non_drug_null' ); % targacq, redux
 %   subdir = fullfile( '121217', 'non_drug_null' ); % targon
@@ -37,7 +38,11 @@ for i = 1:numel( epochs )
   parfor k = 1:numel(mats)
     warning( 'off', 'all' );
     fprintf( '\n\t - Processing %s (%d of %d)', mats{k}, k, numel(mats) );
-    current = dsp2.util.general.fload( fullfile(fullp, mats{k}) );
+    try
+      current = dsp2.util.general.fload( fullfile(fullp, mats{k}) );
+    catch err
+      current = shared_utils.io.fload( fullfile(fullp, mats{k}), 'conts' );
+    end
     current.data = real( current.data );
     %
     %   get rid of drug / administration

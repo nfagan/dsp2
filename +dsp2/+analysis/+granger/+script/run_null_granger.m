@@ -6,6 +6,11 @@ import dsp2.util.cluster.tmp_write;
 
 IS_DRUG = false;
 KEEP_FIRST_350 = true;
+IS_REPLICATION = true;
+
+rep_postfix = ternary( IS_REPLICATION, '_repl', '' );
+first_postfix = ternary( KEEP_FIRST_350, '_350', '' );
+subdir_postfix = sprintf( '%s%s', rep_postfix, first_postfix );
 
 dsp2.cluster.init();
 conf = dsp2.config.load();
@@ -21,7 +26,7 @@ P = io.fullfile( 'Signals/none/complete', epoch );
 date_dir = dsp2.process.format.get_date_dir();
 
 %   new
-date_dir = sprintf( '%s_fullfreqs', date_dir ); 
+date_dir = sprintf( '%s%s', date_dir, subdir_postfix );
 
 if ( IS_DRUG )
   save_path = fullfile( conf.PATHS.analyses, 'granger', date_dir, 'drug_effect_null', epoch );
@@ -49,7 +54,7 @@ for ii = 1:numel(all_days)
   signals = io.read( P, 'only', all_days{ii} );
   signals = dsp2.process.format.fix_block_number( signals );
   signals = dsp2.process.format.fix_administration( signals );
-  if ( ~IS_DRUG )
+  if ( ~IS_DRUG && ~IS_REPLICATION )
     [injection, rest] = signals.pop( 'unspecified' );
     if ( ~isempty(injection) )
       if ( KEEP_FIRST_350 )
@@ -59,6 +64,8 @@ for ii = 1:numel(all_days)
       signals = append( injection, rest );
     end
     signals = dsp2.process.manipulations.non_drug_effect( signals );
+    signals = signals.collapse( {'drugs', 'administration'} );
+  elseif ( IS_REPLICATION )
     signals = signals.collapse( {'drugs', 'administration'} );
   end
   tmp_write( 'Done\n', tmp_fname );
@@ -110,7 +117,7 @@ for ii = 1:numel(all_days)
   max_lags = 5e3;
   dist_type = 'ev';
   estimate_model_order = false;
-  fs_divisor = 1;
+  fs_divisor = 2;
   
   params.n_perms = n_perms;
   params.n_perms_in_granger = n_perms_in_granger;
@@ -121,6 +128,7 @@ for ii = 1:numel(all_days)
   params.fs_divisor = fs_divisor;
   params.is_drug = IS_DRUG;
   params.kept_350 = KEEP_FIRST_350;
+  params.is_replication = IS_REPLICATION;
 
 %   shuffle_within = { 'context', 'trialtypes' };
   shuffle_within = { 'context', 'trialtypes', 'drugs', 'administration' };
@@ -189,4 +197,14 @@ for ii = 1:numel(all_days)
     save( fullfile(save_path, fname), 'conts', 'params' );
   end
   
+end
+
+end
+
+function c = ternary(cond, a, b)
+if ( cond )
+  c = a;
+else
+  c = b;
+end
 end
