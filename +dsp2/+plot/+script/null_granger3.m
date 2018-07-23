@@ -10,8 +10,9 @@ if ( ~is_drug )
 %   subdir = 'null';  % MAIN NON_DRUG RESULT 
 %   subdir = fullfile( '121117', 'non_drug_null' ); % reward
 %   subdir = fullfile( '120717', 'non_drug_null' ); % targacq
-%   subdir = fullfile( '071718_repl_350', 'non_drug_null' );
-  subdir = fullfile( '071518', 'non_drug_null' );
+  subdir = fullfile( '071718_repl_350', 'non_drug_null' );
+%   subdir = fullfile( '071618_fullfreqs', 'non_drug_null' );
+%   subdir = fullfile( '071518', 'non_drug_null' );
 %   subdir = fullfile( '071318', 'non_drug_null' ); % targacq, redux
 %   subdir = fullfile( '121217', 'non_drug_null' ); % targon
 %   subdir = 'null';
@@ -65,6 +66,25 @@ pl.fig = figure(2);
 
 axs = pl.lines( rowref(dat, mask), labs(mask), lines, panels );
 shared_utils.plot.set_ylims( axs, lims );
+
+%%  bar -- minus null
+
+usedat = dat;
+uselabs = labs';
+
+bands = { [4, 8], [8, 13], [13, 30], [30, 60], [60, 100] };
+bandnames = { 'theta', 'alpha', 'beta', 'gamma', 'high_gamma' };
+
+[banddat, bandlabs] = dsp3.get_band_means( usedat, uselabs', freqs, bands, bandnames );
+
+subeach = { 'drugs', 'regions', 'epochs', 'trialtypes', 'outcomes', 'administration' };
+[sublabs, I] = keepeach( bandlabs', subeach );
+
+for i = 1:numel(I)
+  
+  
+  
+end
 
 %%  lines MINUS NULL
 
