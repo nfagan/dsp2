@@ -55,6 +55,8 @@ labs = fcat.from( kept_copy.labels );
 dat = kept_copy.data;
 freqs = kept_copy.frequencies;
 
+%%
+
 lines = { 'outcomes', 'administration', 'permuted' };
 panels = { 'drugs', 'regions', 'epochs', 'trialtypes' };
 lims = [ -0.03, 0.03 ];
@@ -67,7 +69,7 @@ pl.fig = figure(2);
 axs = pl.lines( rowref(dat, mask), labs(mask), lines, panels );
 shared_utils.plot.set_ylims( axs, lims );
 
-%%  bar -- minus null
+%%  minus null
 
 usedat = dat;
 uselabs = labs';
@@ -77,14 +79,27 @@ bandnames = { 'theta', 'alpha', 'beta', 'gamma', 'high_gamma' };
 
 [banddat, bandlabs] = dsp3.get_band_means( usedat, uselabs', freqs, bands, bandnames );
 
-subeach = { 'drugs', 'regions', 'epochs', 'trialtypes', 'outcomes', 'administration' };
-[sublabs, I] = keepeach( bandlabs', subeach );
+subeach = { 'bands', 'days', 'drugs', 'regions', 'epochs', 'trialtypes', 'outcomes', 'administration' };
+lab1 = 'permuted__false';
+lab2 = 'permuted__true';
 
-for i = 1:numel(I)
-  
-  
-  
-end
+[subdat, sublabs] = dsp3.a_summary_minus_b( banddat, bandlabs', subeach, lab1, lab2 );
+
+%%  bar minus null
+
+pltdat = subdat;
+pltlabs = sublabs';
+
+mask = fcat.mask( pltlabs );
+
+pl = plotlabeled.make_common();
+
+uncats = getcats( pltlabs, 'un' );
+xcats = cssetdiff( 'bands', uncats );
+gcats = cssetdiff( 'regions', uncats );
+pcats = cssetdiff( { 'outcomes', 'trialtypes', 'administration', 'drugs', 'epochs' }, uncats );
+
+pl.bar( pltdat(mask), pltlabs(mask), xcats, gcats, pcats );
 
 %%  lines MINUS NULL
 
