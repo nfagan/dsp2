@@ -90,14 +90,14 @@ lab2 = 'permuted__true';
 pltdat = subdat;
 pltlabs = sublabs';
 
-mask = fcat.mask( pltlabs );
+mask = find( pltlabs, {'theta', 'beta', 'gamma'} );
 
 pl = plotlabeled.make_common();
 
 uncats = getcats( pltlabs, 'un' );
-xcats = cssetdiff( 'bands', uncats );
+xcats = cssetdiff( 'outcomes', uncats );
 gcats = cssetdiff( 'regions', uncats );
-pcats = cssetdiff( { 'outcomes', 'trialtypes', 'administration', 'drugs', 'epochs' }, uncats );
+pcats = cssetdiff( { 'bands', 'trialtypes', 'administration', 'drugs', 'epochs' }, uncats );
 
 pl.bar( pltdat(mask), pltlabs(mask), xcats, gcats, pcats );
 

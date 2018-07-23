@@ -1,4 +1,4 @@
-function per_epoch = load_granger(load_p, epochs, is_drug, m_within)
+function [per_epoch, mats] = load_granger(load_p, epochs, is_drug, m_within)
 
 import dsp2.util.general.percell;
 import dsp2.util.general.flatten;
