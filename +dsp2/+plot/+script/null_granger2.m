@@ -15,8 +15,8 @@ if ( ~is_drug )
 %   subdir = 'null';  % MAIN NON_DRUG RESULT 
 %   subdir = fullfile( '121117', 'non_drug_null' ); % reward
 %   subdir = fullfile( '120717', 'non_drug_null' ); % targacq
-  subdir = fullfile( '071718_repl_350', 'non_drug_null' );
-%   subdir = fullfile( '071518', 'non_drug_null' );
+%   subdir = fullfile( '071718_repl_350', 'non_drug_null' );
+  subdir = fullfile( '071518', 'non_drug_null' );
 %   subdir = fullfile( '071318', 'non_drug_null' ); % targacq, redux
 %   subdir = fullfile( '121217', 'non_drug_null' ); % targon
 %   subdir = 'null';
@@ -52,10 +52,6 @@ for i = 1:numel( epochs )
     end
     current = current.for_each_1d( m_within, @Container.nanmean_1d );
     loaded{k} = current;
-    
-%     if ( ~contains(newer, current('days')) )
-%       loaded{k} = SignalContainer( Container() );
-%     end
   end
   per_epoch{i} = loaded;
 end
@@ -71,75 +67,7 @@ end
 %%
 
 if ( use_sd_thresh )
-
-  proanti = per_epoch;
-
-  ndevs = 1.5;
-
-  bands = { [4, 8], [8, 13], [13, 30], [30, 60], [60, 100] };
-  band_names = { 'theta', 'alpha', 'beta', 'gamma', 'high_gamma' };
-
-  band_means = Container();
-
-  for i = 1:numel(bands)
-    meaned = proanti.freq_mean( bands{i} );
-    meaned = meaned.add_field( 'band', band_names{i} );
-    band_means = band_means.append( meaned );
-  end
-
-  mean_func = @Container.nanmean_1d;
-  std_func = @Container.nanstd_1d;
-  band_mean_within = { 'band', 'outcomes', 'trialtypes', 'drugs', 'administration' };
-
-  means = band_means.each1d( band_mean_within, mean_func );
-  devs = band_means.each1d( band_mean_within, std_func );
-
-  devs.data = devs.data * ndevs;
-
-  up_thresh = means + devs;
-  down_thresh = means - devs;
-
-  to_keep = band_means.logic( false );
-
-  within = { 'band', 'outcomes', 'trialtypes', 'drugs', 'administration' };
-  cmbs = band_means.pcombs( within );
-
-  band_means_data = band_means.data;
-  d_thresh_data = down_thresh.data;
-  u_thresh_data = up_thresh.data;
-
-  for i = 1:size(cmbs, 1 )
-    current_band_data_index = band_means.where( cmbs(i, :) );
-    current_band_u_thresh_index = up_thresh.where( cmbs(i, :) );
-    current_band_l_thresh_index = down_thresh.where( cmbs(i, :) );
-    good_data = band_means_data(current_band_data_index) > d_thresh_data(current_band_l_thresh_index) & ...
-      band_means_data(current_band_data_index) < u_thresh_data(current_band_u_thresh_index);
-    to_keep(current_band_data_index) = good_data;
-  end
-
-  all_keep = true( size(to_keep, 1) / numel(bands), 1 );
-
-  for i = 1:numel(bands)
-    all_keep = all_keep & to_keep(band_means.where(band_names{i}));
-  end
-
-  kept = proanti.keep( all_keep );
-
-  check_sites_within = { 'outcomes', 'trialtypes', 'days', 'channels', 'regions', 'administration' };
-
-  kept_cmbs = kept.pcombs( check_sites_within );
-  orig_cmbs = proanti.pcombs( check_sites_within );
-
-  kept_cmbs = dsp2.util.general.array_join( kept_cmbs );
-  orig_cmbs = dsp2.util.general.array_join( orig_cmbs );
-
-  missing = setdiff( orig_cmbs, kept_cmbs );
-
-  require_per = { 'days', 'channels', 'regions', 'permuted' };
-  required_labs = proanti.pcombs( {'outcomes', 'trialtypes', 'administration'} );
-
-  kept_sd = dsp2.util.general.require_labels( kept, require_per, required_labs );
-  
+  kept_sd = dsp2.analysis.granger.granger_sd_threshold( per_epoch, 1.5 );
 end
 
 %%  MAKE PRO V ANTI
@@ -157,6 +85,25 @@ kept = kept.collapse( {'sessions','blocks','recipients','magnitudes'} );
 if ( is_drug )
   kept = dsp2.process.manipulations.post_minus_pre( kept );
 end
+
+%%  lines -- not minus null
+
+kept_copy = rm( kept, dsp2.process.format.get_bad_days() );
+
+labs = fcat.from( kept_copy.labels );
+dat = kept_copy.data;
+freqs = kept_copy.frequencies;
+
+lines = { 'outcomes', 'administration' };
+panels = { 'drugs', 'regions', 'epochs', 'trialtypes' };
+lims = [ -0.03, 0.03 ];
+mask = find( labs, {'permuted__false', 'choice'} );
+
+pl = plotlabeled.make_common( 'x', freqs );
+set_smoothing( pl, 5 );
+
+axs = pl.lines( rowref(dat, mask), labs(mask), lines, panels );
+shared_utils.plot.set_ylims( axs, lims );
 
 %%  lines MINUS NULL
 
