@@ -1,14 +1,9 @@
 %%  LOAD
 
-import dsp2.util.general.percell;
-import dsp2.util.general.flatten;
-import dsp2.util.general.load_mats;
-
 m_within = { 'outcomes', 'trialtypes', 'regions', 'permuted', 'channels' ...
   , 'epochs', 'days', 'administration' };
 
 is_drug = false;
-DO_SAVE = false;
 use_sd_thresh = true;
 
 if ( ~is_drug )
@@ -27,38 +22,7 @@ end
 conf = dsp2.config.load();
 load_p = fullfile( conf.PATHS.analyses, 'granger', subdir );
 
-epochs = { 'targacq' };
-per_epoch = cell( 1, numel(epochs) );
-names = cell( 1, numel(epochs) );
-for i = 1:numel( epochs )
-  fprintf( '\n - Processing %s (%d of %d)', epochs{i}, i, numel(epochs) );
-  fullp = fullfile( load_p, epochs{i} );
-  mats = dsp2.util.general.dirnames( fullp, '.mat' );
-  loaded = cell( 1, numel(mats) );
-  parfor k = 1:numel(mats)
-    warning( 'off', 'all' );
-    fprintf( '\n\t - Processing %s (%d of %d)', mats{k}, k, numel(mats) );
-    current = shared_utils.io.fload( fullfile(fullp, mats{k}), 'conts' );
-    current.data = real( current.data );
-    %
-    %   get rid of drug / administration
-    %
-    if ( ~is_drug )
-      current = current.collapse( {'drugs', 'administration'} );
-    end
-    current = current.for_each_1d( m_within, @Container.nanmean_1d );
-    loaded{k} = current;
-  end
-  per_epoch{i} = loaded;
-end
-
-per_epoch = flatten( per_epoch );
-
-per_epoch = per_epoch.add_field( 'max_lags', '5e3' );
-
-if ( is_drug )
-  per_epoch = per_epoch.rm( 'unspecified' );
-end
+per_epoch = dsp2.analysis.granger.load_granger( load_p, 'targacq', is_drug, m_within );
 
 %%
 
@@ -90,13 +54,14 @@ labs = fcat.from( kept_copy.labels );
 dat = kept_copy.data;
 freqs = kept_copy.frequencies;
 
-lines = { 'outcomes', 'administration' };
+lines = { 'outcomes', 'administration', 'permuted' };
 panels = { 'drugs', 'regions', 'epochs', 'trialtypes' };
 lims = [ -0.03, 0.03 ];
-mask = find( labs, {'permuted__false', 'choice'} );
+mask = find( labs, 'choice' );
 
 pl = plotlabeled.make_common( 'x', freqs );
-set_smoothing( pl, 5 );
+pl.fig = figure(2);
+% set_smoothing( pl, 5 );
 
 axs = pl.lines( rowref(dat, mask), labs(mask), lines, panels );
 shared_utils.plot.set_ylims( axs, lims );

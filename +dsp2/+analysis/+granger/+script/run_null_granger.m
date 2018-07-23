@@ -9,7 +9,7 @@ import dsp2.util.cluster.tmp_write;
 
 IS_DRUG = false;
 KEEP_FIRST_350 = true;
-IS_REPLICATION = true;
+IS_REPLICATION = false;
 
 rep_postfix = ternary( IS_REPLICATION, '_repl', '' );
 first_postfix = ternary( KEEP_FIRST_350, '_350', '' );
@@ -21,7 +21,7 @@ conf = dsp2.config.load();
 run( fullfile(conf.PATHS.repositories, 'mvgc_v1.0', 'startup.m') );
 %   get signals
 io = dsp2.io.get_dsp_h5();
-epoch = 'targacq';
+epoch = 'reward';
 tmp_fname = sprintf( 'null_granger_%s.txt', epoch );
 tmp_write( '-clear', tmp_fname );
 P = io.fullfile( 'Signals/none/complete', epoch );
