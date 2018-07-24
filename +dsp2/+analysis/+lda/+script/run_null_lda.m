@@ -13,6 +13,10 @@ epochs = { 'targacq' };
 
 is_per_freq = true;
 
+keep_select_days = true;
+days_to_keep = { '01052017', '05272017', '06012017', '06032017', '01262017' };
+days_to_keep = cellfun( @(x) ['day__', x], days_to_keep, 'un', 0 );
+
 % freq_rois = { [4, 12], [15, 30], [35, 50] };
 % freq_rois = { [4, 12], [15, 30], [45, 60] };
 % band_names = { 'theta_alpha', 'beta', 'gamma' };
@@ -46,7 +50,8 @@ tmp_write( '-clear', tmp_fname );
 n_perms = 100;
 perc_training = 0.75;
 lda_group = 'outcomes';
-shuff_within = { 'trialtypes', 'administration', 'regions', 'days' };
+shuff_within = { 'trialtypes', 'administration', 'regions', 'days', 'channels' };
+% shuff_within = { 'trialtypes', 'administration', 'regions', 'days' };
 % shuff_within = { 'trialtypes', 'administration', 'regions' };
 per_context = true;
 is_drug = false;
@@ -119,6 +124,10 @@ for i = 1:numel(epochs)
   
   if ( strcmp(epochs{i}, 'targacq') )
     measure = measure.rm( 'cued' );
+  end
+  
+  if ( keep_select_days )
+    measure = only( measure, days_to_keep );
   end
   
   C = measure.pcombs( shuff_within );
