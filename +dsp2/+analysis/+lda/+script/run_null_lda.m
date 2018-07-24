@@ -88,7 +88,12 @@ all_lda_results = Container();
 for i = 1:numel(epochs)
   tmp_write( {'\nProcessing %s (%d of %d)', epochs{i}, i, numel(epochs)}, tmp_fname );
   p = io.fullfile( base_p, epochs{i} );
-  measure = io.read( p, 'frequencies', [0, 100], 'time', [-500, 500] );
+  
+  if ( keep_select_days )
+    measure = io.read( p, 'frequencies', [0, 100], 'time', [-500, 500], 'only', days_to_keep );
+  else
+    measure = io.read( p, 'frequencies', [0, 100], 'time', [-500, 500] );
+  end
   
   measure = dsp2.process.format.fix_block_number( measure );
   measure = dsp2.process.format.fix_administration( measure );
