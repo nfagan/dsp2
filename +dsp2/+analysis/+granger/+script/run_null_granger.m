@@ -101,8 +101,10 @@ for ii = 1:numel(all_days)
   signals_ = signals_.rm( 'errors' );
 
   if ( strcmp(epoch, 'targacq') )
-    % [ -200, 0 ]
-    signals_.data = signals_.data(:, 301:500 );
+%     % [ -200, 0 ]
+%     signals_.data = signals_.data(:, 301:500 );
+    % [ 0, 200 ]
+    signals_.data = signals_.data(:, 501:700);
   elseif ( strcmp(epoch, 'reward') )
     % [ 50, 250 ]
     signals_.data = signals_.data(:, 1051:(1050+200));
@@ -144,6 +146,7 @@ for ii = 1:numel(all_days)
   params.is_drug = IS_DRUG;
   params.kept_350 = KEEP_FIRST_350;
   params.is_replication = IS_REPLICATION;
+  params.time = [0, 200];
 
 %   shuffle_within = { 'context', 'trialtypes' };
   shuffle_within = { 'context', 'trialtypes', 'drugs', 'administration' };
