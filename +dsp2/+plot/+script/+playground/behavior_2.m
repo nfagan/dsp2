@@ -15,20 +15,20 @@ behav = dsp2.process.format.fix_administration( behav );
 
 %%
 
-meas_type = 'preference_index';
-drug_type = 'drug';
+meas_type = 'p_correct';
+drug_type = 'nondrug';
 %error_denom_is = 'within_context';
 error_denom_is = 'good_trials';
 
-is_within_mag_cue = false;
-is_drug = true;
+is_within_mag_cue = true;
+is_drug = false;
 is_post_only = false;
 is_post_minus_pre = false;
-is_post_v_pre = true;
+is_post_v_pre = false;
 is_pref_proportion = false;
 is_rt = false;
-is_pref_index = true;
-is_errors = false;
+is_pref_index = false;
+is_errors = true;
 
 %%
 

@@ -21,7 +21,7 @@ conf = dsp2.config.load();
 run( fullfile(conf.PATHS.repositories, 'mvgc_v1.0', 'startup.m') );
 %   get signals
 io = dsp2.io.get_dsp_h5();
-epoch = 'reward';
+epoch = 'targacq';
 tmp_fname = sprintf( 'null_granger_%s.txt', epoch );
 tmp_write( '-clear', tmp_fname );
 P = io.fullfile( 'Signals/none/complete', epoch );
@@ -57,6 +57,8 @@ all_days = all_days(days_start:days_stop);
 if ( conf.CLUSTER.use_cluster )
   all_days = { all_days };
 end
+
+all_days = { 'day__05232017' };
 
 %% -- Main routine, for each group of days
 
@@ -157,7 +159,7 @@ for ii = 1:numel(all_days)
     try
       for j = 1:size(cmbs, 1)
         iters = cell( 1, n_perms+1 );
-        parfor k = 1:n_perms+1
+        for k = 1:n_perms+1
           warning( 'off', 'all' );
           ctx = one_day.only( cmbs(j, :) );
           chans = ctx.labels.flat_uniques( 'channels' );
