@@ -58,7 +58,7 @@ if ( conf.CLUSTER.use_cluster )
   all_days = { all_days };
 end
 
-all_days = { 'day__05232017' };
+% all_days = { 'day__05232017' };
 
 %% -- Main routine, for each group of days
 
