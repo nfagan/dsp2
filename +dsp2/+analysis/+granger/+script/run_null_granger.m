@@ -1,4 +1,9 @@
-function run_null_granger(days_start, days_stop)
+function run_null_granger(days_start, days_stop, varargin)
+
+defaults = struct();
+defaults.date_dir = dsp2.process.format.get_date_dir();
+
+run_params = dsp2.util.general.parsestruct( defaults, varargin );
 
 if ( nargin < 2 ), days_stop = []; end
 if ( nargin < 1 ), days_start = 1; end
@@ -26,8 +31,7 @@ tmp_fname = sprintf( 'null_granger_%s.txt', epoch );
 tmp_write( '-clear', tmp_fname );
 P = io.fullfile( 'Signals/none/complete', epoch );
 %   set up save paths
-date_dir = dsp2.process.format.get_date_dir();
-
+date_dir = run_params.date_dir;
 %   new
 date_dir = sprintf( '%s%s', date_dir, subdir_postfix );
 
