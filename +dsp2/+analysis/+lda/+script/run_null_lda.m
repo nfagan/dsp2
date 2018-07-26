@@ -13,7 +13,7 @@ epochs = { 'targacq' };
 
 is_per_freq = true;
 
-keep_select_days = true;
+keep_select_days = false;
 % days_to_keep = { '01052017', '05272017', '06012017', '06032017', '01262017' };
 days_to_keep = { '01052017' };
 days_to_keep = cellfun( @(x) ['day__', x], days_to_keep, 'un', 0 );
