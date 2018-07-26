@@ -18,6 +18,7 @@ defaults.N = 100;
 defaults.meas_type = 'coherence';
 defaults.date_dir = dsp2.process.format.get_date_dir();
 defaults.is_drug = false;
+defaults.remove_bad_days = true;
 defaults.is_pro_minus_anti = false;
 
 params = dsp2.util.general.parsestruct( defaults, varargin );
@@ -53,10 +54,12 @@ for i = 1:numel(epochs)
   
   full_p = io.fullfile( base_p, epochs{i} );
   if ( is_drug )
-    full_save_p = fullfile( base_save_p, epochs{i}, 'drug', 'pro_v_anti' );
+    drugdir = ternary( params.remove_bad_days, 'drug', 'drug_wbd' );
+    full_save_p = fullfile( base_save_p, epochs{i}, drugdir, 'pro_v_anti' );
     fprintf( '\n Is drug' );
   else
-    full_save_p = fullfile( base_save_p, epochs{i}, 'nondrug', 'pro_v_anti' );
+    drugdir = ternary( params.remove_bad_days, 'nondrug', 'nondrug_wbd' );
+    full_save_p = fullfile( base_save_p, epochs{i}, drugdir, 'pro_v_anti' );
     fprintf( '\n Not drug' );
   end
   dsp2.util.general.require_dir( full_save_p );
@@ -78,7 +81,10 @@ for i = 1:numel(epochs)
     num_coh = io.read( full_p, 'only', all_days{j} ); 
     num_coh = num_coh.keep_within_freqs( [0, 250] );
     
-    num_coh = num_coh.rm( {'day__05172016', 'day__05192016' 'day__02142017'} );
+    if ( params.remove_bad_days )
+      num_coh = num_coh.rm( {'day__05172016', 'day__05192016' 'day__02142017'} );
+    end
+    
     if ( isempty(num_coh) ), continue; end
     if ( num_coh.contains('unspecified') )
       num_coh = dsp2.process.format.keep_350( num_coh, 350 );
@@ -120,6 +126,10 @@ for i = 1:numel(epochs)
   end
 end
 
+end
+
+function a = ternary(cond, a, b)
+if ( ~cond ), a = b; end
 end
 
 function [cohs, dists] = do_zscore_pro_minus_anti(coh, N, m_within, sfunc, is_drug)
