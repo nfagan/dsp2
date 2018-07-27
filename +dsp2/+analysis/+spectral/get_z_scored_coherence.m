@@ -92,7 +92,7 @@ for i = 1:numel(epochs)
     end
     
     if ( params.remove_bad_days )
-      num_coh = num_coh.rm( {'day__05172016', 'day__05192016' 'day__02142017'} );
+      num_coh = num_coh.rm( dsp2.process.format.get_bad_days() );
     end
     
     if ( isempty(num_coh) ), continue; end
