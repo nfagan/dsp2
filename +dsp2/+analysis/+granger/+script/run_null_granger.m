@@ -1,12 +1,14 @@
-function run_null_granger(days_start, days_stop, varargin)
+function run_null_granger(varargin)
 
 defaults = struct();
 defaults.date_dir = dsp2.process.format.get_date_dir();
+defaults.days_stop = [];
+defaults.days_start = 1;
 
 run_params = dsp2.util.general.parsestruct( defaults, varargin );
 
-if ( nargin < 2 ), days_stop = []; end
-if ( nargin < 1 ), days_start = 1; end
+days_start = run_params.days_start;
+days_stop = run_params.days_stop;
 
 %%  RUN_NULL_GRANGER -- initialize, setup paths, etc.
 
@@ -61,6 +63,9 @@ all_days = all_days(days_start:days_stop);
 if ( conf.CLUSTER.use_cluster )
   all_days = { all_days };
 end
+
+[~, date_sorted] = sort( datenum(cellfun( @(x) x(numel('day__')+1:end), all_days, 'un', 0 ), 'mmddyyyy') );
+all_days = all_days(date_sorted);
 
 % all_days = { 'day__05232017' };
 
@@ -166,7 +171,7 @@ for ii = 1:numel(all_days)
     try
       for j = 1:size(cmbs, 1)
         iters = cell( 1, n_perms+1 );
-        for k = 1:n_perms+1
+        parfor k = 1:n_perms+1
           warning( 'off', 'all' );
           ctx = one_day.only( cmbs(j, :) );
           chans = ctx.labels.flat_uniques( 'channels' );

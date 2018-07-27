@@ -71,6 +71,11 @@ for i = 1:numel(epochs)
     dsp2.util.assertions.assert__is_cellstr( all_days );
   end
   
+  current_days = shared_utils.io.dirnames( full_save_p, '.mat' );
+  current_days = cellfun( @(x) x(1:end-4), current_days, 'un', 0 );
+  
+  all_days = setdiff( all_days, current_days );
+  
   for j = 1:numel(all_days)    
     tmp_write( {'\n\tProcessing %s (%d of %d) ...', all_days{j}, j, numel(all_days)} );
     
@@ -80,6 +85,11 @@ for i = 1:numel(epochs)
     
     num_coh = io.read( full_p, 'only', all_days{j} ); 
     num_coh = num_coh.keep_within_freqs( [0, 250] );
+    
+    if ( ~isempty(strfind(meas_type, 'coherence')) )
+      %   match labels to baseline coherence
+      num_coh = only_pairs( fix_channels(num_coh) );
+    end
     
     if ( params.remove_bad_days )
       num_coh = num_coh.rm( {'day__05172016', 'day__05192016' 'day__02142017'} );
@@ -100,10 +110,10 @@ for i = 1:numel(epochs)
     %   for drug days, if 'unspecified'
     if ( isempty(num_coh) ), continue; end;
     
-    if ( ~isempty(strfind(meas_type, 'coherence')) )
-      %   match labels to baseline coherence
-      num_coh = only_pairs( fix_channels(num_coh) );
-    end
+%     if ( ~isempty(strfind(meas_type, 'coherence')) )
+%       %   match labels to baseline coherence
+%       num_coh = only_pairs( fix_channels(num_coh) );
+%     end
     
     %   do z-scoring
     if ( is_drug )
