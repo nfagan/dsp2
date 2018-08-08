@@ -109,7 +109,7 @@ for ii = 1:numel(all_days)
   signals_ = signals_.rm( 'errors' );
   
   params.days = signals_( 'days' );
-  params.n_perms = 100;
+  params.n_perms = 1;
   params.n_perms_in_granger = 1;
   params.n_trials = Inf;
   params.max_lags = 5e3;
@@ -198,6 +198,7 @@ shuffle_within = { 'context', 'trialtypes', 'drugs', 'administration' };
 all_data = Container();
 
 for i = 1:numel(days)
+  fprintf( '\n\t Day %d of %d', i, numel(days) );
 
   one_day = signals_.only( days{i} );
   cmbs = one_day.pcombs( shuffle_within );
