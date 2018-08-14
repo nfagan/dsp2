@@ -55,7 +55,7 @@ shuff_within = { 'trialtypes', 'administration', 'regions', 'days', 'channels' }
 % shuff_within = { 'trialtypes', 'administration', 'regions', 'days' };
 % shuff_within = { 'trialtypes', 'administration', 'regions' };
 per_context = true;
-is_drug = false;
+is_drug = true;
 
 if ( is_drug )
   fname = 'lda_all_contexts_with_ci_per_drug.mat';
