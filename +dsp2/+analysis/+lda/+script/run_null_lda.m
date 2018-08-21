@@ -48,7 +48,8 @@ dsp2.util.general.require_dir( save_p );
 tmp_fname = sprintf( '%s.txt', analysis_type );
 tmp_write( '-clear', tmp_fname );
 
-n_perms = 100;
+n_perms = 1;
+% n_perms = 100;
 perc_training = 0.75;
 lda_group = 'outcomes';
 shuff_within = { 'trialtypes', 'administration', 'regions', 'days', 'channels' };
@@ -158,7 +159,9 @@ for i = 1:numel(epochs)
     end
     meaned.data = squeeze( meaned.data );
     
-    for ii = 1:size(C, 1)
+    combs_lda_results = cell( size(C, 1), 1 );
+    
+    parfor ii = 1:size(C, 1)
       subset = meaned.only( C(ii, :) );
     
       real_perc_correct = zeros( 1, size(subset.data, 2) );
@@ -172,12 +175,14 @@ for i = 1:numel(epochs)
         shuf_percs = zeros( 1, n_perms );
         real_percs = zeros( 1, n_perms );
         
-        parfor h = 1:n_perms
+%         parfor h = 1:n_perms
+        for h = 1:n_perms
           [~, real_perc] = analysis_func( current, lda_group, perc_training );
           
           real_percs(h) = real_perc;
         end
-        parfor h = 1:n_perms
+%         parfor h = 1:n_perms
+        for h = 1:n_perms
           current = subset.shuffle();
           current.data = current.data(:, k);
           
@@ -206,13 +211,15 @@ for i = 1:numel(epochs)
       clpsed( 'measure', 4 ) = 'shuffled_std';
 
       clpsed.data = [ real_perc_correct; real_perc_std; shuf_perc_correct; shuf_perc_std ];
-
-      all_lda_results = all_lda_results.append( clpsed );
+      
+      combs_lda_results{ii} = clpsed;
       
       if ( j == start )
         store_labs = append( store_labs, one(subset.labels) );
       end
     end
+    
+    all_lda_results = append( all_lda_results, SignalContainer.concat(combs_lda_results) );
   end
   
   all_real_percs = Container( store_real_percs, store_labs );
