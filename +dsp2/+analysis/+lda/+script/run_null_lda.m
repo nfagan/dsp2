@@ -161,7 +161,7 @@ for i = 1:numel(epochs)
     
     combs_lda_results = cell( size(C, 1), 1 );
     
-    parfor ii = 1:size(C, 1)
+    for ii = 1:size(C, 1)
       subset = meaned.only( C(ii, :) );
     
       real_perc_correct = zeros( 1, size(subset.data, 2) );
