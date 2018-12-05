@@ -1,7 +1,14 @@
-function run_null_lda_cc_sf(measure, start, stop)
+function run_null_lda_cc_sf(measure, varargin)
 
-if ( nargin < 2 ), start = 1; end
-if ( nargin < 3 ), stop = []; end
+defaults = struct();
+defaults.n_perms = 1;
+defaults.p_training = 0.75;
+defaults.per_context = true;
+defaults.is_drug = false;
+defaults.start = 1;
+defaults.stop = [];
+
+params = shared_utils.general.parsestruct( defaults, varargin );
 
 dsp2.cluster.init();
 
@@ -29,13 +36,16 @@ dsp2.util.general.require_dir( save_p );
 tmp_fname = sprintf( '%s.txt', analysis_type );
 tmp_write( '-clear', tmp_fname );
 
-n_perms = 1;
-% n_perms = 100;
-perc_training = 0.75;
+start = params.start;
+stop = params.stop;
+
+n_perms = params.n_perms;
+perc_training = params.p_training;
+per_context = params.per_context;
+is_drug = params.is_drug;
+
 lda_group = 'outcomes';
 shuff_within = { 'trialtypes', 'administration', 'regions', 'days', 'sites' };
-per_context = true;
-is_drug = false;
 
 if ( is_drug )
   fname = 'lda_all_contexts_with_ci_per_drug.mat';
