@@ -1,27 +1,13 @@
-addpath( '~/Repositories/dsp2' );
-addpath( '~/Repositories/dsp3/script' );
-addpath( genpath('~/Repositories/cpp/categorical/api/matlab') );
-
-sf_coh_p = '/gpfs/milgram/project/chang/CHANG_LAB/cc2586/sfc_data_for_Nick/';
+repadd( 'dsp3/script' );
 
 dsp2.cluster.init();
 
-bla_mat = fullfile( sf_coh_p, 'sfc_pre_bla_spike_all.mat' );
-acc_mat = fullfile( sf_coh_p, 'sfc_pre_acc_spike_all.mat' );
+data_p = '~/Data/Dictator/sfcoh';
 
-try
-  acc = shared_utils.io.fload( acc_mat );
-catch err
-  warning( err.message );
-  acc = {};
-end
+data = shared_utils.io.fload( fullfile(data_p, 'cc_sf_coh_data.mat') );
+labels = shared_utils.io.fload( fullfile(data_p, 'cc_sf_coh_labels.mat') );
 
-try
-  bla = shared_utils.io.fload( bla_mat );
-catch err
-  warning( err.message );
-  bla = {};
-end
+labels = fcat.from( labels );
 
 [data, labels] = dsp3_get_converted_cc_sf_data( acc, bla );
 
