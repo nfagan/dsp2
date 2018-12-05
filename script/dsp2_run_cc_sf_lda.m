@@ -9,8 +9,6 @@ labels = shared_utils.io.fload( fullfile(data_p, 'cc_sf_coh_labels.mat') );
 
 labels = fcat.from( labels );
 
-[data, labels] = dsp3_get_converted_cc_sf_data( acc, bla );
-
 %%
 
 cont = Container( data, SparseLabels.from_fcat(labels) );
