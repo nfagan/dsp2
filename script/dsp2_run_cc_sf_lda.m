@@ -1,4 +1,5 @@
 addpath( '~/Repositories/dsp2' );
+addpath( '~/Repositories/dsp3/script' );
 addpath( genpath('~/Repositories/cpp/categorical/api/matlab') );
 
 sf_coh_p = '/gpfs/milgram/project/chang/CHANG_LAB/cc2586/sfc_data_for_Nick/';
