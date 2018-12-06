@@ -45,7 +45,8 @@ per_context = params.per_context;
 is_drug = params.is_drug;
 
 lda_group = 'outcomes';
-shuff_within = { 'trialtypes', 'administration', 'regions', 'days', 'sites' };
+% shuff_within = { 'trialtypes', 'administration', 'regions', 'days', 'sites' };
+shuff_within = { 'trialtypes', 'administration', 'regions' };
 
 if ( is_drug )
   fname = 'lda_all_contexts_with_ci_per_drug.mat';
