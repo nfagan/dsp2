@@ -10,7 +10,7 @@ defaults.stop = [];
 
 params = shared_utils.general.parsestruct( defaults, varargin );
 
-dsp2.cluster.init();
+% dsp2.cluster.init();
 
 import dsp2.util.cluster.tmp_write;
 
