@@ -181,9 +181,13 @@ if ( is_per_freq )
   all_percs.frequencies = measure.frequencies;
 end
 
+fprintf( '\n\n Saving ...' );
+
 all_data_fname = sprintf( '%s_%d_%d_all_data', epoch, start, stop );
 save( fullfile(save_p, all_data_fname), 'all_percs', '-v7.3' );  
 
 save( fullfile(save_p, sprintf('%d_%d_%s', start, stop, fname)), 'all_lda_results' );
+
+fprintf( 'Done.' );
 
 end
