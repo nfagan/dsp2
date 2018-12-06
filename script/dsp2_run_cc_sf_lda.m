@@ -6,10 +6,13 @@ end
 
 repadd( 'dsp3/script' );
 
-dsp2.cluster.init();
+dsp2.util.general.add_depends();
+% p = parpool();
 
+fprintf( '\n Loading ...' );
 data = shared_utils.io.fload( fullfile(data_p, 'cc_sf_coh_data.mat') );
 labels = shared_utils.io.fload( fullfile(data_p, 'cc_sf_coh_labels.mat') );
+fprintf( ' Done.' );
 
 labels = fcat.from( labels );
 
