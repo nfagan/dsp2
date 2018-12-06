@@ -113,7 +113,7 @@ for j = start:stop
       real_percs = zeros( 1, n_perms );
 
       try
-        parfor h = 1:n_perms
+        for h = 1:n_perms
           [~, real_perc] = analysis_func( current, lda_group, perc_training );
 
           real_percs(h) = real_perc;
@@ -124,7 +124,7 @@ for j = start:stop
       end
       
       try
-        parfor h = 1:n_perms
+        for h = 1:n_perms
           current = subset.shuffle();
           current.data = current.data(:, k);
 
