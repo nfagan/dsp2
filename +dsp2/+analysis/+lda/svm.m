@@ -5,7 +5,12 @@ validate_input( obj, group_field );
 Y = full_fields( obj, group_field );
 X = obj.data;
 
-svm_mdl = fitcsvm( X, Y, 'Holdout', 1-perc_training, 'ClassNames', unique(Y), 'Standardize', true );
+svm_mdl = fitcsvm( X, Y ...
+  , 'Holdout', 1-perc_training ...
+  , 'ClassNames', unique(Y) ...
+  , 'Standardize', true ...
+);
+
 trained_mdl = svm_mdl.Trained{1};
 
 test_inds = test( svm_mdl.Partition );

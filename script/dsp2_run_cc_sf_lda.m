@@ -9,11 +9,13 @@ repadd( 'dsp3/script' );
 dsp2.cluster.init();
 
 fprintf( '\n Loading ...' );
-data = shared_utils.io.fload( fullfile(data_p, 'cc_sf_coh_data.mat') );
-labels = shared_utils.io.fload( fullfile(data_p, 'cc_sf_coh_labels.mat') );
+data = shared_utils.io.fload( fullfile(data_p, 'cc_sf_coh_data_nan.mat') );
+labels = shared_utils.io.fload( fullfile(data_p, 'cc_sf_coh_labels_nan.mat') );
 fprintf( ' Done.' );
 
 labels = fcat.from( labels );
+
+assert_ispair( data, labels );
 
 %%
 
@@ -34,7 +36,7 @@ n_freqs = size( to_lda.data, 2 );
 
 spmd
   
-  indices = shared_utils.parallel.get_loop_indices( n_freqs );
+  indices = getLocalPart( codistributed(1:n_freqs) );
   
   start = indices(1);
   stop = indices(end);
@@ -45,6 +47,7 @@ spmd
     , 'n_perms', 100 ...
     , 'start', start ...
     , 'stop', stop ...
+    , 'specificity', 'sites' ...
   );
 
 end

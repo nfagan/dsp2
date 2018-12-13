@@ -7,6 +7,8 @@ defaults.per_context = true;
 defaults.is_drug = false;
 defaults.start = 1;
 defaults.stop = [];
+defaults.analysis_type = 'lda';
+defaults.specificity = 'contexts';
 
 params = shared_utils.general.parsestruct( defaults, varargin );
 
@@ -19,7 +21,7 @@ conf = dsp2.config.load();
 epoch = 'targacq';
 
 is_per_freq = true;
-analysis_type = 'lda';
+analysis_type = params.analysis_type;
 
 switch ( analysis_type )
   case 'svm'
@@ -29,6 +31,8 @@ switch ( analysis_type )
   otherwise
     error( 'Unrecognized analysis type "%s".', analysis_type )
 end
+
+specificity = validatestring( params.specificity, {'contexts', 'sites', 'days'} );
 
 save_p = fullfile( conf.PATHS.analyses, analysis_type, dsp2.process.format.get_date_dir() );
 dsp2.util.general.require_dir( save_p );
@@ -45,8 +49,17 @@ per_context = params.per_context;
 is_drug = params.is_drug;
 
 lda_group = 'outcomes';
-% shuff_within = { 'trialtypes', 'administration', 'regions', 'days', 'sites' };
-shuff_within = { 'trialtypes', 'administration', 'regions' };
+
+switch ( specificity )
+  case 'contexts'
+    shuff_within = { 'trialtypes', 'administration', 'regions' };
+    case 'days'
+    shuff_within = { 'trialtypes', 'administration', 'regions', 'days' };
+  case 'sites'
+    shuff_within = { 'trialtypes', 'administration', 'regions', 'days', 'sites' };
+  otherwise
+    error( 'Unrecognized specificity: "%s".', specificity )
+end
 
 if ( is_drug )
   fname = 'lda_all_contexts_with_ci_per_drug.mat';
