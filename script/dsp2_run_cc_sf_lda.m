@@ -1,7 +1,7 @@
 function dsp2_run_cc_sf_lda(data_p)
 
 if ( nargin < 1 )
-  data_p = '~/Data/Dictator/sfcoh';
+  data_p = '/gpfs/milgram/project/chang/CHANG_LAB/naf3/Data/Dictator/ANALYSES/sfcoh';
 end
 
 repadd( 'dsp3/script' );

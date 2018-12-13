@@ -28,6 +28,8 @@ switch ( analysis_type )
     analysis_func = @dsp2.analysis.lda.svm;
   case 'lda'
     analysis_func = @dsp2.analysis.lda.lda;
+  case 'rf'
+    analysis_func = @dsp2.analysis.lda.rf;
   otherwise
     error( 'Unrecognized analysis type "%s".', analysis_type )
 end
