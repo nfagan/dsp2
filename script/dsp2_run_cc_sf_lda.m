@@ -1,7 +1,11 @@
-function dsp2_run_cc_sf_lda(data_p)
+function dsp2_run_cc_sf_lda(data_p, use_parallel, varargin)
 
 if ( nargin < 1 )
   data_p = '/gpfs/milgram/project/chang/CHANG_LAB/naf3/Data/Dictator/ANALYSES/sfcoh';
+end
+
+if ( nargin < 2 )
+  use_parallel = true;
 end
 
 repadd( 'dsp3/script' );
@@ -34,20 +38,38 @@ to_lda = keep_within_freqs( remove_nans_and_infs(cont), [0, 100] );
 
 n_freqs = size( to_lda.data, 2 );
 
-spmd
+base_inputs = struct();
+base_inputs.n_perms = 100;
+base_inputs.specificity = 'contexts';
+base_inputs.analysis_type = 'rf';
+
+if ( use_parallel )
+  spmd
+
+    indices = getLocalPart( codistributed(1:n_freqs) );
+
+    start = indices(1);
+    stop = indices(end);
+
+    fprintf( '\n %d : %d', start, stop );
+    
+    base_inputs.start = start;
+    base_inputs.stop = stop;
+
+    dsp2.analysis.lda.script.run_null_lda_cc_sf( to_lda, base_inputs, varargin{:} );
+  end
+  
+else
   
   indices = getLocalPart( codistributed(1:n_freqs) );
-  
+
   start = indices(1);
   stop = indices(end);
   
+  base_inputs.start = start;
+  base_inputs.stop = stop;
+
   fprintf( '\n %d : %d', start, stop );
 
-  dsp2.analysis.lda.script.run_null_lda_cc_sf( to_lda ...
-    , 'n_perms', 100 ...
-    , 'start', start ...
-    , 'stop', stop ...
-    , 'specificity', 'sites' ...
-  );
-
+  dsp2.analysis.lda.script.run_null_lda_cc_sf( to_lda, base_inputs, varargin{:} );
 end

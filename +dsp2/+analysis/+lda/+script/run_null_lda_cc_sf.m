@@ -9,6 +9,7 @@ defaults.start = 1;
 defaults.stop = [];
 defaults.analysis_type = 'lda';
 defaults.specificity = 'contexts';
+defaults.config = dsp2.config.load();
 
 params = shared_utils.general.parsestruct( defaults, varargin );
 
@@ -16,7 +17,7 @@ params = shared_utils.general.parsestruct( defaults, varargin );
 
 import dsp2.util.cluster.tmp_write;
 
-conf = dsp2.config.load();
+conf = params.config;
 
 epoch = 'targacq';
 
@@ -37,7 +38,12 @@ end
 specificity = validatestring( params.specificity, {'contexts', 'sites', 'days'} );
 
 save_p = fullfile( conf.PATHS.analyses, analysis_type, dsp2.process.format.get_date_dir() );
-dsp2.util.general.require_dir( save_p );
+
+try
+  dsp2.util.general.require_dir( save_p );
+catch err
+  warning( err.message );
+end
 
 tmp_fname = sprintf( '%s.txt', analysis_type );
 tmp_write( '-clear', tmp_fname );

@@ -5,7 +5,9 @@ validate_input( obj, group_field );
 Y = full_fields( obj, group_field );
 X = obj.data;
 
-mdl = TreeBagger( n_trees, X(:), Y(:), 'OOBPrediction', 'on' );
+n_trees = floor( n_trees * size(X, 1) );
+
+mdl = TreeBagger( 50, X(:), Y(:), 'OOBPrediction', 'on' );
 cls = oobPredict( mdl );
 
 p_corr = sum( strcmp(cls, Y) ) / numel(Y);
