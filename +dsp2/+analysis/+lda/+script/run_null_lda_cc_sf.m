@@ -9,6 +9,7 @@ defaults.start = 1;
 defaults.stop = [];
 defaults.analysis_type = 'lda';
 defaults.specificity = 'contexts';
+defaults.n_trees = 50;
 defaults.config = dsp2.config.load();
 
 params = shared_utils.general.parsestruct( defaults, varargin );
@@ -55,6 +56,7 @@ n_perms = params.n_perms;
 perc_training = params.p_training;
 per_context = params.per_context;
 is_drug = params.is_drug;
+n_trees = params.n_trees;
 
 lda_group = 'outcomes';
 
@@ -67,6 +69,10 @@ switch ( specificity )
     shuff_within = { 'trialtypes', 'administration', 'regions', 'days', 'sites' };
   otherwise
     error( 'Unrecognized specificity: "%s".', specificity )
+end
+
+if ( strcmp(analysis_type, 'rf') )
+  perc_training = n_trees;
 end
 
 if ( is_drug )

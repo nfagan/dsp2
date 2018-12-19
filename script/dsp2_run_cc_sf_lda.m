@@ -13,8 +13,8 @@ repadd( 'dsp3/script' );
 dsp2.cluster.init();
 
 fprintf( '\n Loading ...' );
-data = shared_utils.io.fload( fullfile(data_p, 'cc_sf_coh_data_nan.mat') );
-labels = shared_utils.io.fload( fullfile(data_p, 'cc_sf_coh_labels_nan.mat') );
+data = shared_utils.io.fload( fullfile(data_p, 'cc_sf_coh_data_nan_cued.mat') );
+labels = shared_utils.io.fload( fullfile(data_p, 'cc_sf_coh_labels_nan_cued.mat') );
 fprintf( ' Done.' );
 
 labels = fcat.from( labels );
@@ -41,7 +41,7 @@ n_freqs = size( to_lda.data, 2 );
 base_inputs = struct();
 base_inputs.n_perms = 100;
 base_inputs.specificity = 'contexts';
-base_inputs.analysis_type = 'rf';
+base_inputs.analysis_type = 'lda';
 
 if ( use_parallel )
   spmd
